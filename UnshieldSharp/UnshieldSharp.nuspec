@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>UnshieldSharp</id>
-    <version>1.4.2</version>
+    <version>1.4.2.1</version>
     <title>UnshieldSharp</title>
     <authors>Matt Nadareski, David Eriksson</authors>
     <owners>Matt Nadareski, David Eriksson</owners>
@@ -17,9 +17,7 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\Debug\UnshieldSharp.dll" target="lib\Debug\UnshieldSharp.dll" />
-    <file src="bin\Debug\UnshieldSharp.pdb" target="lib\Debug\UnshieldSharp.pdb" />
-    <file src="bin\Release\UnshieldSharp.dll" target="lib\Release\UnshieldSharp.dll" />
-    <file src="bin\Release\UnshieldSharp.pdb" target="lib\Release\UnshieldSharp.pdb" />
+    <file src="bin\Debug\UnshieldSharp.dll" target="lib\net461\UnshieldSharp.dll" />
+    <file src="bin\Debug\UnshieldSharp.pdb" target="lib\net461\UnshieldSharp.pdb" />
   </files>
 </package>
