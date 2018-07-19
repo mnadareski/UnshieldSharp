@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace UnshieldSharp
 {
@@ -234,7 +236,14 @@ namespace UnshieldSharp
         /// </summary>
         public string GetUTF8String(byte[] buffer, int bufferPointer)
         {
-            return BitConverter.ToUInt32(buffer, bufferPointer).ToString("X8");
+            List<byte> encoded = new List<byte>();
+            while (buffer[bufferPointer] != 0x00)
+            {
+                encoded.Add(buffer[bufferPointer]);
+                bufferPointer++;
+            }
+
+            return Encoding.UTF8.GetString(encoded.ToArray());
         }
     }
 }
