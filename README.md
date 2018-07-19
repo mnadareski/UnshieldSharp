@@ -1,5 +1,7 @@
 # UnshieldSharp
 
+[![Build status](https://ci.appveyor.com/api/projects/status/lk7iopwecojr5ejm?svg=true)](https://ci.appveyor.com/project/mnadareski/unshieldsharp)
+
 C# port of the InstallShield CAB information and extractor [Unshield](https://github.com/twogood/unshield/) with minor changes to structure to make it more object-oriented. This currently compiles as a library so it can be used with any C# application. For an example of usage, please see [BurnOutSharp](https://github.com/mnadareski/BurnOutSharp).
 
 ## Abilities
