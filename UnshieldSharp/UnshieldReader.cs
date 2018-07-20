@@ -250,38 +250,34 @@ namespace UnshieldSharp
         }
 
         /// <summary>
+        /// Deobfuscate a buffer
+        /// </summary>
+        public void Obfuscate(ref byte[] buffer, ref int bufferPointer, int size)
+        {
+            this.Obfuscate(ref buffer, ref bufferPointer, size, ref this.ObfuscationOffset);
+        }
+
+        /// <summary>
         /// Read a certain number of bytes from the current volume
         /// </summary>
         public bool Read(ref byte[] buffer, ref int bufferPointer, int size)
         {
-            bool success = false;
             int p = bufferPointer;
             int bytesLeft = size;
 
-            // unshield_trace("unshield_reader_read start: bytes_left = 0x%x, volume_bytes_left = 0x%x", bytes_left, reader->volume_bytes_left);
-
-            for (; ; )
+            for (;;)
             {
                 // Read as much as possible from this volume
                 int bytesToRead = (int)Math.Min(bytesLeft, this.VolumeBytesLeft);
 
-                // unshield_trace("Trying to read 0x%x bytes from offset %08x in volume %i", bytes_to_read, ftell(reader->volume_file), reader->volume);
                 if (bytesToRead == 0)
-                {
-                    // unshield_error("bytes_to_read can't be zero");
-                    return success;
-                }
+                    return false;
 
                 if (bytesToRead != this.VolumeFile.Read(buffer, p, bytesToRead))
-                {
-                    // unshield_error("Failed to read 0x%08x bytes of file %i (%s) from volume %i. Current offset = 0x%08x", bytes_to_read, reader->index, unshield_file_name(reader->unshield, reader->index), reader->volume, ftell(reader->volume_file));
-                    return success;
-                }
+                    return false;
 
                 bytesLeft -= bytesToRead;
                 this.VolumeBytesLeft -= (uint)bytesToRead;
-
-                // unshield_trace("bytes_left = %i, volume_bytes_left = %i", bytes_left, reader->volume_bytes_left);
 
                 if (bytesLeft == 0)
                     break;
@@ -290,17 +286,13 @@ namespace UnshieldSharp
 
                 // Open next volume
                 if (!this.OpenVolume(this.Volume + 1))
-                {
-                    // unshield_error("Failed to open volume %i to read %i more bytes", reader->volume + 1, bytes_to_read);
-                    return success;
-                }
+                    return false;
             }
 
             if ((this.FileDescriptor.Flags & Constants.FILE_OBFUSCATED) != 0)
                 this.Deobfuscate(ref buffer, ref bufferPointer, size);
 
-            success = true;
-            return success;
+            return true;
         }
 
         /// <summary>
@@ -320,8 +312,29 @@ namespace UnshieldSharp
         }
 
         /// <summary>
+        /// Obfuscate a buffer with a seed value
+        /// </summary>
+        /// <remarks>Seed is 0 at file start</remarks>
+        private void Obfuscate(ref byte[] buffer, ref int bufferPointer, int size, ref uint seed)
+        {
+            uint tmpSeed = seed;
+
+            for (; size > 0; size--, bufferPointer++, tmpSeed++)
+            {
+                buffer[bufferPointer] = (byte)(ROL8(buffer[bufferPointer] ^ 0xd5, 2) + (tmpSeed % 0x47));
+            }
+
+            seed = tmpSeed;
+        }
+
+        /// <summary>
         /// Rotate Right 8
         /// </summary>
         private int ROR8(int x, int n) { return (((x) >> ((int)(n))) | ((x) << (8 - (int)(n)))); }
+        
+        /// <summary>
+        /// Rotate Left 8
+        /// </summary>
+        private int ROL8(int x, int n) { return (((x) << ((int)(n))) | ((x) >> (8 - (int)(n)))); }
     }
 }

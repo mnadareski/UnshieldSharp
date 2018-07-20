@@ -18,29 +18,51 @@ namespace UnshieldSharp
             common.Signature = BitConverter.ToUInt32(buffer, bufferPointer); bufferPointer += 4;
 
             if (common.Signature != Constants.CAB_SIGNATURE)
-            {
-                // unshield_error("Invalid file signature");
-
-                if (common.Signature == Constants.MSCF_SIGNATURE)
-                {
-                    // unshield_warning("Found Microsoft Cabinet header. Use cabextract (http://www.kyz.uklinux.net/cabextract.php) to unpack this file.");
-                }
-
                 return false;
-            }
 
             common.Version = BitConverter.ToUInt32(buffer, bufferPointer); bufferPointer += 4;
             common.VolumeInfo = BitConverter.ToUInt32(buffer, bufferPointer); bufferPointer += 4;
             common.CabDescriptorOffset = BitConverter.ToUInt32(buffer, bufferPointer); bufferPointer += 4;
             common.CabDescriptorSize = BitConverter.ToUInt32(buffer, bufferPointer); bufferPointer += 4;
 
-            /*
-            unshield_trace("Common header: %08x %08x %08x %08x",
-            common->version, 
-            ommon->volume_info, 
-            common->cab_descriptor_offset, 
-            common->cab_descriptor_size);
-            */
+            return true;
+        }
+
+        /// <summary>
+        /// Write a CommonHeader to an input buffer
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="bufferPointer"></param>
+        /// <param name="common"></param>
+        /// <returns></returns>
+        public static bool WriteCommonHeader(ref byte[] buffer, int bufferPointer, CommonHeader common)
+        {
+            try
+            {
+                var bytes = BitConverter.GetBytes(Constants.CAB_SIGNATURE);
+                foreach (byte b in bytes)
+                    buffer[bufferPointer++] = b;
+
+                bytes = BitConverter.GetBytes(common.Version);
+                foreach (byte b in bytes)
+                    buffer[bufferPointer++] = b;
+
+                bytes = BitConverter.GetBytes(common.VolumeInfo);
+                foreach (byte b in bytes)
+                    buffer[bufferPointer++] = b;
+
+                bytes = BitConverter.GetBytes(common.CabDescriptorOffset);
+                foreach (byte b in bytes)
+                    buffer[bufferPointer++] = b;
+
+                bytes = BitConverter.GetBytes(common.CabDescriptorSize);
+                foreach (byte b in bytes)
+                    buffer[bufferPointer++] = b;
+            }
+            catch
+            {
+                return false;
+            }
 
             return true;
         }
