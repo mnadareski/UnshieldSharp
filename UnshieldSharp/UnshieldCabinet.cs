@@ -68,6 +68,7 @@ namespace UnshieldSharp
         #endregion
     }
 
+    // TODO: Figure out if individual parts of a split cab can be extracted separately
     public class UnshieldCabinet
     {
         // Linked CAB headers
