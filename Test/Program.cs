@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using UnshieldSharp;
 
 namespace Test
@@ -39,7 +40,7 @@ namespace Test
 
                 for(int i = 0; i < cab.FileCount; i++)
                 {
-                    string filename = cab.FileName(i);
+                    string filename = new string(cab.FileName(i).Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c).ToArray());
                     string directory = cab.DirectoryName(cab.FileDirectory(i));
                     string newfile = Path.Combine(baseDirectory, directory, filename);
 
