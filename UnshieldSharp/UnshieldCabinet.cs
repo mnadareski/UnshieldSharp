@@ -227,7 +227,7 @@ namespace UnshieldSharp
             int inputBufferPointer = 0;
             byte[] outputBuffer = new byte[Constants.BUFFER_SIZE];
             int outputBufferPointer = 0;
-            uint bytesLeft;
+            ulong bytesLeft;
             ulong totalWritten = 0;
             UnshieldReader reader = null;
             FileDescriptor fileDescriptor;
@@ -410,7 +410,7 @@ namespace UnshieldSharp
             int inputBufferPointer = 0;
             byte[] outputBuffer = new byte[Constants.BUFFER_SIZE];
             int outputBufferPointer = 0;
-            uint bytesLeft;
+            ulong bytesLeft;
             ulong totalWritten = 0;
             UnshieldReader reader = null;
             FileDescriptor fileDescriptor;
@@ -492,7 +492,7 @@ namespace UnshieldSharp
                     byte[] END_OF_CHUNK = { 0x00, 0x00, 0xff, 0xff };
                     int eocPointer = 0;
                     ulong readBytes;
-                    long inputSize = reader.VolumeBytesLeft;
+                    long inputSize = (long)reader.VolumeBytesLeft;
                     byte[] chunkBuffer;
                     int chunkBufferPointer;
 
@@ -638,7 +638,7 @@ namespace UnshieldSharp
             byte[] inputBuffer = new byte[Constants.BUFFER_SIZE];
             byte[] outputBuffer = new byte[Constants.BUFFER_SIZE];
             int outputBufferPointer = 0;
-            uint bytesLeft;
+            ulong bytesLeft;
             UnshieldReader reader = null;
             FileDescriptor fileDescriptor;
 
@@ -1015,12 +1015,9 @@ namespace UnshieldSharp
                     // unshield_trace("File descriptor offset: %08x", p - header->data);
 
                     fd.Flags = BitConverter.ToUInt16(p, pPointer); pPointer += 2;
-                    fd.ExpandedSize = BitConverter.ToUInt32(p, pPointer); pPointer += 4;
-                    pPointer += 4;
-                    fd.CompressedSize = BitConverter.ToUInt32(p, pPointer); pPointer += 4;
-                    pPointer += 4;
-                    fd.DataOffset = BitConverter.ToUInt32(p, pPointer); pPointer += 4;
-                    pPointer += 4;
+                    fd.ExpandedSize = BitConverter.ToUInt64(p, pPointer); pPointer += 8;
+                    fd.CompressedSize = BitConverter.ToUInt64(p, pPointer); pPointer += 8;
+                    fd.DataOffset = BitConverter.ToUInt64(p, pPointer); pPointer += 8;
                     Array.Copy(p, pPointer, fd.Md5, 0, 0x10); pPointer += 0x10;
                     pPointer += 0x10;
                     fd.NameOffset = BitConverter.ToUInt32(p, pPointer); pPointer += 4;
