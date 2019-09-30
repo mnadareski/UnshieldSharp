@@ -17,7 +17,11 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\Debug\UnshieldSharp.dll" target="lib\net461\UnshieldSharp.dll" />
-    <file src="bin\Debug\UnshieldSharp.pdb" target="lib\net461\UnshieldSharp.pdb" />
+    <file src="bin\Debug\net462\UnshieldSharp.dll" target="lib\net462\UnshieldSharp.dll" />
+    <file src="bin\Debug\net462\UnshieldSharp.pdb" target="lib\net462\UnshieldSharp.pdb" />
+    <file src="bin\Debug\net472\UnshieldSharp.dll" target="lib\net472\UnshieldSharp.dll" />
+    <file src="bin\Debug\net472\UnshieldSharp.pdb" target="lib\net472\UnshieldSharp.pdb" />
+    <file src="bin\Debug\netcoreapp3.0\UnshieldSharp.dll" target="lib\netcoreapp3.0\UnshieldSharp.dll" />
+    <file src="bin\Debug\netcoreapp3.0\UnshieldSharp.pdb" target="lib\netcoreapp3.0\UnshieldSharp.pdb" />
   </files>
 </package>
