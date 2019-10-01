@@ -11,7 +11,7 @@ namespace UnshieldSharp
         public int Volume;
         public FileStream VolumeFile;
         public VolumeHeader VolumeHeader;
-        public uint VolumeBytesLeft;
+        public ulong VolumeBytesLeft;
         public uint ObfuscationOffset;
 
         /// <summary>
@@ -64,9 +64,9 @@ namespace UnshieldSharp
         public bool OpenVolume(int volume)
         {
             bool success = false;
-            uint dataOffset = 0;
-            uint volumeBytesLeftCompressed;
-            uint volumeBytesLeftExpanded;
+            ulong dataOffset = 0;
+            ulong volumeBytesLeftCompressed;
+            ulong volumeBytesLeftExpanded;
             CommonHeader commonHeader = new CommonHeader();
 
             // unshield_trace("Open volume %i", volume);
@@ -233,7 +233,7 @@ namespace UnshieldSharp
             else
                 this.VolumeBytesLeft = volumeBytesLeftExpanded;
 
-            this.VolumeFile.Seek(dataOffset, SeekOrigin.Begin);
+            this.VolumeFile.Seek((long)dataOffset, SeekOrigin.Begin);
 
             this.Volume = volume;
             success = true;
@@ -244,7 +244,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Deobfuscate a buffer
         /// </summary>
-        public void Deobfuscate(ref byte[] buffer, ref int bufferPointer, int size)
+        public void Deobfuscate(ref byte[] buffer, ref int bufferPointer, long size)
         {
             this.Deobfuscate(ref buffer, ref bufferPointer, size, ref this.ObfuscationOffset);
         }
@@ -252,7 +252,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Deobfuscate a buffer
         /// </summary>
-        public void Obfuscate(ref byte[] buffer, ref int bufferPointer, int size)
+        public void Obfuscate(ref byte[] buffer, ref int bufferPointer, long size)
         {
             this.Obfuscate(ref buffer, ref bufferPointer, size, ref this.ObfuscationOffset);
         }
@@ -260,15 +260,15 @@ namespace UnshieldSharp
         /// <summary>
         /// Read a certain number of bytes from the current volume
         /// </summary>
-        public bool Read(ref byte[] buffer, ref int bufferPointer, int size)
+        public bool Read(ref byte[] buffer, ref int bufferPointer, long size)
         {
             int p = bufferPointer;
-            int bytesLeft = size;
+            long bytesLeft = size;
 
             for (;;)
             {
                 // Read as much as possible from this volume
-                int bytesToRead = (int)Math.Min(bytesLeft, this.VolumeBytesLeft);
+                int bytesToRead = (int)Math.Min(bytesLeft, (long)this.VolumeBytesLeft);
 
                 if (bytesToRead == 0)
                     return false;
@@ -299,7 +299,7 @@ namespace UnshieldSharp
         /// Deobfuscate a buffer with a seed value
         /// </summary>
         /// <remarks>Seed is 0 at file start</remarks>
-        private void Deobfuscate(ref byte[] buffer, ref int bufferPointer, int size, ref uint seed)
+        private void Deobfuscate(ref byte[] buffer, ref int bufferPointer, long size, ref uint seed)
         {
             uint tmpSeed = seed;
 
@@ -315,7 +315,7 @@ namespace UnshieldSharp
         /// Obfuscate a buffer with a seed value
         /// </summary>
         /// <remarks>Seed is 0 at file start</remarks>
-        private void Obfuscate(ref byte[] buffer, ref int bufferPointer, int size, ref uint seed)
+        private void Obfuscate(ref byte[] buffer, ref int bufferPointer, long size, ref uint seed)
         {
             uint tmpSeed = seed;
 

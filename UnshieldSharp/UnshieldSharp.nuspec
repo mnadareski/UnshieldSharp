@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>UnshieldSharp</id>
-    <version>1.4.2.2</version>
+    <version>1.4.2.3</version>
     <title>UnshieldSharp</title>
     <authors>Matt Nadareski, David Eriksson</authors>
     <owners>Matt Nadareski, David Eriksson</owners>
@@ -10,14 +10,18 @@
     <projectUrl>https://github.com/mnadareski/UnshieldSharp</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Port of Unshield to C#</description>
-    <copyright>Copyright (c) 2003 David Eriksson, Copyright (c)2018 Matt Nadareski</copyright>
+    <copyright>Copyright (c) 2003 David Eriksson, Copyright (c)2018-2019 Matt Nadareski</copyright>
     <tags>cabinet cab extraction installshield</tags>
     <dependencies>
       <dependency id="zlib.net" version="1.0.4.0" />
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\Debug\UnshieldSharp.dll" target="lib\net461\UnshieldSharp.dll" />
-    <file src="bin\Debug\UnshieldSharp.pdb" target="lib\net461\UnshieldSharp.pdb" />
+    <file src="bin\Debug\net462\UnshieldSharp.dll" target="lib\net462\UnshieldSharp.dll" />
+    <file src="bin\Debug\net462\UnshieldSharp.pdb" target="lib\net462\UnshieldSharp.pdb" />
+    <file src="bin\Debug\net472\UnshieldSharp.dll" target="lib\net472\UnshieldSharp.dll" />
+    <file src="bin\Debug\net472\UnshieldSharp.pdb" target="lib\net472\UnshieldSharp.pdb" />
+    <file src="bin\Debug\netcoreapp3.0\UnshieldSharp.dll" target="lib\netcoreapp3.0\UnshieldSharp.dll" />
+    <file src="bin\Debug\netcoreapp3.0\UnshieldSharp.pdb" target="lib\netcoreapp3.0\UnshieldSharp.pdb" />
   </files>
 </package>
