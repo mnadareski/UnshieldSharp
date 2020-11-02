@@ -244,7 +244,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Deobfuscate a buffer
         /// </summary>
-        public void Deobfuscate(ref byte[] buffer, ref int bufferPointer, int size)
+        public void Deobfuscate(ref byte[] buffer, ref int bufferPointer, long size)
         {
             this.Deobfuscate(ref buffer, ref bufferPointer, size, ref this.ObfuscationOffset);
         }
@@ -252,7 +252,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Deobfuscate a buffer
         /// </summary>
-        public void Obfuscate(ref byte[] buffer, ref int bufferPointer, int size)
+        public void Obfuscate(ref byte[] buffer, ref int bufferPointer, long size)
         {
             this.Obfuscate(ref buffer, ref bufferPointer, size, ref this.ObfuscationOffset);
         }
@@ -299,7 +299,7 @@ namespace UnshieldSharp
         /// Deobfuscate a buffer with a seed value
         /// </summary>
         /// <remarks>Seed is 0 at file start</remarks>
-        private void Deobfuscate(ref byte[] buffer, ref int bufferPointer, int size, ref uint seed)
+        private void Deobfuscate(ref byte[] buffer, ref int bufferPointer, long size, ref uint seed)
         {
             uint tmpSeed = seed;
 
@@ -315,7 +315,7 @@ namespace UnshieldSharp
         /// Obfuscate a buffer with a seed value
         /// </summary>
         /// <remarks>Seed is 0 at file start</remarks>
-        private void Obfuscate(ref byte[] buffer, ref int bufferPointer, int size, ref uint seed)
+        private void Obfuscate(ref byte[] buffer, ref int bufferPointer, long size, ref uint seed)
         {
             uint tmpSeed = seed;
 
