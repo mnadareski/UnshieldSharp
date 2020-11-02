@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using zlib;
+using ComponentAce.Compression.Libs.zlib;
 
 namespace UnshieldSharp
 {
@@ -23,10 +23,10 @@ namespace UnshieldSharp
         public const int MAX_FILE_GROUP_COUNT = 71;
         public const int MAX_COMPONENT_COUNT = 71;
 
-        public const int FILE_SPLIT = 1;
-        public const int FILE_OBFUSCATED = 2;
-        public const int FILE_COMPRESSED = 4;
-        public const int FILE_INVALID = 8;
+        public const ushort FILE_SPLIT = 1;
+        public const ushort FILE_OBFUSCATED = 2;
+        public const ushort FILE_COMPRESSED = 4;
+        public const ushort FILE_INVALID = 8;
 
         public const int LINK_NONE = 0;
         public const int LINK_PREV = 1;

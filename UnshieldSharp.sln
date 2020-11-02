@@ -1,11 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2026
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30406.217
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnshieldSharp", "UnshieldSharp\UnshieldSharp.csproj", "{39EDC0B8-5E96-4A16-9104-2D0025836071}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{50AFDAEE-0923-498B-8564-1FFAA2514391}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{06E02175-3BE4-42BD-9307-A063CE56EDEC}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE-IMPORTED = LICENSE-IMPORTED
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
