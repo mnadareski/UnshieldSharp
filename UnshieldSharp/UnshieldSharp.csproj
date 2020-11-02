@@ -11,9 +11,9 @@
     <Copyright>Copyright (c) 2003 David Eriksson, Copyright (c)2018-2020 Matt Nadareski</Copyright>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <RepositoryUrl>https://github.com/mnadareski/UnshieldSharp</RepositoryUrl>
-    <Version>1.4.2.3</Version>
-    <AssemblyVersion>1.4.2.3</AssemblyVersion>
-    <FileVersion>1.4.2.3</FileVersion>
+    <Version>1.4.2.4</Version>
+    <AssemblyVersion>1.4.2.4</AssemblyVersion>
+    <FileVersion>1.4.2.4</FileVersion>
     <IncludeSource>true</IncludeSource>
     <IncludeSymbols>true</IncludeSymbols>
   </PropertyGroup>
