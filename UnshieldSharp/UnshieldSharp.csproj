@@ -1,25 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net472;net48;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net48;netcoreapp3.1;net5.0</TargetFrameworks>
     <PlatformTarget>x86</PlatformTarget>
     <Title>UnshieldSharp</Title>
     <AssemblyName>UnshieldSharp</AssemblyName>
     <Description>Port of Unshield to C#</Description>
     <Authors>Matt Nadareski;David Eriksson</Authors>
     <Product>UnshieldSharp</Product>
-    <Copyright>Copyright (c) 2003 David Eriksson, Copyright (c)2018-2020 Matt Nadareski</Copyright>
+    <Copyright>Copyright (c) 2003 David Eriksson, Copyright (c)2018-2021 Matt Nadareski</Copyright>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <RepositoryUrl>https://github.com/mnadareski/UnshieldSharp</RepositoryUrl>
-    <Version>1.4.2.4</Version>
-    <AssemblyVersion>1.4.2.4</AssemblyVersion>
-    <FileVersion>1.4.2.4</FileVersion>
+    <Version>1.5.0</Version>
+    <AssemblyVersion>1.5.0</AssemblyVersion>
+    <FileVersion>1.5.0</FileVersion>
     <IncludeSource>true</IncludeSource>
     <IncludeSymbols>true</IncludeSymbols>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)'!='netcoreapp3.1'">
-    <DefineConstants>NET_FRAMEWORK</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

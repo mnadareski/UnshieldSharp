@@ -5,39 +5,68 @@ namespace UnshieldSharp
 {
     public class UnshieldReader
     {
-        public UnshieldCabinet Unshield;
-        public uint Index;
-        public FileDescriptor FileDescriptor;
-        public int Volume;
-        public FileStream VolumeFile;
-        public VolumeHeader VolumeHeader;
-        public ulong VolumeBytesLeft;
-        public uint ObfuscationOffset;
+        /// <summary>
+        /// Cabinet file to read from
+        /// </summary>
+        public UnshieldCabinet Cabinet { get; private set; }
+
+        /// <summary>
+        /// Currently selected index
+        /// </summary>
+        public uint Index { get; private set; }
+
+        /// <summary>
+        /// File descriptor defining the currently selected index
+        /// </summary>
+        public FileDescriptor FileDescriptor { get; private set; }
+
+        /// <summary>
+        /// Current volume ID
+        /// </summary>
+        public int Volume { get; private set; }
+
+        /// <summary>
+        /// Handle to the current volume stream
+        /// </summary>
+        public Stream VolumeFile { get; private set; }
+
+        /// <summary>
+        /// Current volume header
+        /// </summary>
+        public VolumeHeader VolumeHeader { get; private set; }
+
+        /// <summary>
+        /// Number of bytes left in the current volume
+        /// </summary>
+        public ulong VolumeBytesLeft { get; private set; }
+
+        /// <summary>
+        /// Offset for obfuscation seed
+        /// </summary>
+        public uint ObfuscationOffset { get; private set; }
 
         /// <summary>
         /// Create a new UnshieldReader from an existing cabinet, index, and file descriptor
         /// </summary>
-        public static UnshieldReader Create(UnshieldCabinet unshield, int index, FileDescriptor fileDescriptor)
+        public static UnshieldReader Create(UnshieldCabinet cabinet, int index, FileDescriptor fileDescriptor)
         {
-            UnshieldReader reader = new UnshieldReader();
-            if (reader == null)
-                return null;
-
-            reader.Unshield = unshield;
-            reader.Index = (uint)index;
-            reader.FileDescriptor = fileDescriptor;
+            var reader = new UnshieldReader
+            {
+                Cabinet = cabinet,
+                Index = (uint)index,
+                FileDescriptor = fileDescriptor,
+            };
 
             for (; ; )
             {
                 if (!reader.OpenVolume(fileDescriptor.Volume))
                 {
-                    // unshield_error("Failed to open volume %i", file_descriptor->volume);
+                    Console.Error.WriteLine($"Failed to open volume {fileDescriptor.Volume}");
                     return null;
                 }
 
                 // Start with the correct volume for IS5 cabinets
-                if (reader.Unshield.HeaderList.MajorVersion <= 5 &&
-                    index > (int)reader.VolumeHeader.LastFileIndex)
+                if (reader.Cabinet.HeaderList.MajorVersion <= 5 && index > (int)reader.VolumeHeader.LastFileIndex)
                 {
                     // unshield_trace("Trying next volume...");
                     fileDescriptor.Volume++;
@@ -63,109 +92,24 @@ namespace UnshieldSharp
         /// </summary>
         public bool OpenVolume(int volume)
         {
-            bool success = false;
-            ulong dataOffset = 0;
-            ulong volumeBytesLeftCompressed;
-            ulong volumeBytesLeftExpanded;
-            CommonHeader commonHeader = new CommonHeader();
-
             // unshield_trace("Open volume %i", volume);
 
             this.VolumeFile?.Close();
-
-            this.VolumeFile = this.Unshield.OpenFileForReading(volume, Constants.CABINET_SUFFIX);
+            this.VolumeFile = this.Cabinet.OpenFileForReading(volume, Constants.CABINET_SUFFIX);
             if (this.VolumeFile == null)
             {
-                // unshield_error("Failed to open input cabinet file %i", volume);
-                return success;
+                Console.Error.WriteLine("Failed to open input cabinet file %i", volume);
+                return false;
             }
 
-            {
-                byte[] tmp = new byte[Constants.COMMON_HEADER_SIZE];
-                int p = 0;
+            var commonHeader = CommonHeader.Create(this.VolumeFile);
+            if (commonHeader == default)
+                return false;
 
-                if (Constants.COMMON_HEADER_SIZE !=
-                    this.VolumeFile.Read(tmp, 0, Constants.COMMON_HEADER_SIZE))
-                    return success;
-
-                if (!CommonHeader.ReadCommonHeader(ref tmp, p, commonHeader))
-                    return success;
-            }
-
-            this.VolumeHeader = new VolumeHeader();
-
-            switch (this.Unshield.HeaderList.MajorVersion)
-            {
-                case 0:
-                case 5:
-                    {
-                        byte[] fiveHeader = new byte[Constants.VOLUME_HEADER_SIZE_V5];
-                        int p = 0;
-
-                        if (Constants.VOLUME_HEADER_SIZE_V5 !=
-                            this.VolumeFile.Read(fiveHeader, 0, Constants.VOLUME_HEADER_SIZE_V5))
-                            return success;
-
-                        this.VolumeHeader.DataOffset = BitConverter.ToUInt32(fiveHeader, p); p += 4;
-
-                        /*
-                        if (READ_UINT32(p))
-                            unshield_trace("Unknown = %08x", READ_UINT32(p));
-                        */
-
-                        /* unknown */
-                        p += 4;
-                        this.VolumeHeader.FirstFileIndex = BitConverter.ToUInt32(fiveHeader, p); p += 4;
-                        this.VolumeHeader.LastFileIndex = BitConverter.ToUInt32(fiveHeader, p); p += 4;
-                        this.VolumeHeader.FirstFileOffset = BitConverter.ToUInt32(fiveHeader, p); p += 4;
-                        this.VolumeHeader.FirstFileSizeExpanded = BitConverter.ToUInt32(fiveHeader, p); p += 4;
-                        this.VolumeHeader.FirstFileSizeCompressed = BitConverter.ToUInt32(fiveHeader, p); p += 4;
-                        this.VolumeHeader.LastFileOffset = BitConverter.ToUInt32(fiveHeader, p); p += 4;
-                        this.VolumeHeader.LastFileSizeExpanded = BitConverter.ToUInt32(fiveHeader, p); p += 4;
-                        this.VolumeHeader.LastFileSizeCompressed = BitConverter.ToUInt32(fiveHeader, p); p += 4;
-
-                        if (this.VolumeHeader.LastFileOffset == 0)
-                            this.VolumeHeader.LastFileOffset = Int32.MaxValue;
-                    }
-                    break;
-
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                case 10:
-                case 11:
-                case 12:
-                case 13:
-                default:
-                    {
-                        byte[] sixHeader = new byte[Constants.VOLUME_HEADER_SIZE_V6];
-                        int p = 0;
-
-                        if (Constants.VOLUME_HEADER_SIZE_V6 !=
-                            this.VolumeFile.Read(sixHeader, 0, Constants.VOLUME_HEADER_SIZE_V6))
-                            return success;
-
-                        this.VolumeHeader.DataOffset = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.DataOffsetHigh = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.FirstFileIndex = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.LastFileIndex = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.FirstFileOffset = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.FirstFileOffsetHigh = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.FirstFileSizeExpanded = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.FirstFileSizeExpandedHigh = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.FirstFileSizeCompressed = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.FirstFileSizeCompressedHigh = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.LastFileOffset = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.LastFileOffsetHigh = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.LastFileSizeExpanded = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.LastFileSizeExpandedHigh = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.LastFileSizeCompressed = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                        this.VolumeHeader.LastFileSizeCompressedHigh = BitConverter.ToUInt32(sixHeader, p); p += 4;
-                    }
-                    break;
-            }
-
+            this.VolumeHeader = VolumeHeader.Create(this.VolumeFile, this.Cabinet.HeaderList.MajorVersion);
+            if (this.VolumeHeader == null)
+                return false;
+            
             /*
             unshield_trace("First file index = %i, last file index = %i",
                 reader->volume_header.first_file_index, reader->volume_header.last_file_index);
@@ -174,25 +118,26 @@ namespace UnshieldSharp
             */
 
             // enable support for split archives for IS5
-            if (this.Unshield.HeaderList.MajorVersion == 5)
+            if (this.Cabinet.HeaderList.MajorVersion == 5)
             {
-                if (this.Index < (this.Unshield.HeaderList.Cab.FileCount - 1) &&
-                    this.Index == this.VolumeHeader.LastFileIndex &&
-                    this.VolumeHeader.LastFileSizeCompressed != this.FileDescriptor.CompressedSize)
+                if (this.Index < (this.Cabinet.HeaderList.CabDescriptor.FileCount - 1)
+                    && this.Index == this.VolumeHeader.LastFileIndex
+                    && this.VolumeHeader.LastFileSizeCompressed != this.FileDescriptor.CompressedSize)
                 {
                     // unshield_trace("IS5 split file last in volume");
-                    this.FileDescriptor.Flags |= Constants.FILE_SPLIT;
+                    this.FileDescriptor.Flags |= FileDescriptorFlag.FILE_SPLIT;
                 }
-                else if (this.Index > 0 &&
-                    this.Index == this.VolumeHeader.FirstFileIndex &&
-                    this.VolumeHeader.FirstFileSizeCompressed != this.FileDescriptor.CompressedSize)
+                else if (this.Index > 0
+                    && this.Index == this.VolumeHeader.FirstFileIndex
+                    && this.VolumeHeader.FirstFileSizeCompressed != this.FileDescriptor.CompressedSize)
                 {
                     // unshield_trace("IS5 split file first in volume");
-                    this.FileDescriptor.Flags |= Constants.FILE_SPLIT;
+                    this.FileDescriptor.Flags |= FileDescriptorFlag.FILE_SPLIT;
                 }
             }
 
-            if ((this.FileDescriptor.Flags & Constants.FILE_SPLIT) != 0)
+            ulong dataOffset, volumeBytesLeftCompressed, volumeBytesLeftExpanded;
+            if (this.FileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_SPLIT))
             {
                 // unshield_trace(/*"Total bytes left = 0x08%x, "*/"previous data offset = 0x08%x", /*total_bytes_left, */ data_offset);
 
@@ -215,8 +160,7 @@ namespace UnshieldSharp
                 }
                 else
                 {
-                    success = true;
-                    return success;
+                    return true;
                 }
 
                 // unshield_trace("Will read 0x%08x bytes from offset 0x%08x", volume_bytes_left_compressed, data_offset);
@@ -228,41 +172,38 @@ namespace UnshieldSharp
                 volumeBytesLeftCompressed = this.FileDescriptor.CompressedSize;
             }
 
-            if ((this.FileDescriptor.Flags & Constants.FILE_COMPRESSED) != 0)
+            if (this.FileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED))
                 this.VolumeBytesLeft = volumeBytesLeftCompressed;
             else
                 this.VolumeBytesLeft = volumeBytesLeftExpanded;
 
             this.VolumeFile.Seek((long)dataOffset, SeekOrigin.Begin);
-
             this.Volume = volume;
-            success = true;
 
-            return success;
+            return true;
         }
 
         /// <summary>
         /// Deobfuscate a buffer
         /// </summary>
-        public void Deobfuscate(ref byte[] buffer, ref int bufferPointer, long size)
+        public void Deobfuscate(ref byte[] buffer, long size)
         {
-            this.Deobfuscate(ref buffer, ref bufferPointer, size, ref this.ObfuscationOffset);
+            this.Deobfuscate(ref buffer, size, this.ObfuscationOffset);
         }
 
         /// <summary>
         /// Deobfuscate a buffer
         /// </summary>
-        public void Obfuscate(ref byte[] buffer, ref int bufferPointer, long size)
+        public void Obfuscate(ref byte[] buffer, long size)
         {
-            this.Obfuscate(ref buffer, ref bufferPointer, size, ref this.ObfuscationOffset);
+            this.ObfuscationOffset = this.Obfuscate(ref buffer, size, this.ObfuscationOffset);
         }
 
         /// <summary>
         /// Read a certain number of bytes from the current volume
         /// </summary>
-        public bool Read(ref byte[] buffer, ref int bufferPointer, long size)
+        public bool Read(byte[] buffer, int start, long size)
         {
-            int p = bufferPointer;
             long bytesLeft = size;
 
             for (;;)
@@ -273,7 +214,7 @@ namespace UnshieldSharp
                 if (bytesToRead == 0)
                     return false;
 
-                if (bytesToRead != this.VolumeFile.Read(buffer, p, bytesToRead))
+                if (bytesToRead != this.VolumeFile.Read(buffer, start, bytesToRead))
                     return false;
 
                 bytesLeft -= bytesToRead;
@@ -282,15 +223,13 @@ namespace UnshieldSharp
                 if (bytesLeft == 0)
                     break;
 
-                p += bytesToRead;
-
                 // Open next volume
                 if (!this.OpenVolume(this.Volume + 1))
                     return false;
             }
 
-            if ((this.FileDescriptor.Flags & Constants.FILE_OBFUSCATED) != 0)
-                this.Deobfuscate(ref buffer, ref bufferPointer, size);
+            if (this.FileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_OBFUSCATED))
+                this.Deobfuscate(ref buffer, size);
 
             return true;
         }
@@ -299,42 +238,38 @@ namespace UnshieldSharp
         /// Deobfuscate a buffer with a seed value
         /// </summary>
         /// <remarks>Seed is 0 at file start</remarks>
-        private void Deobfuscate(ref byte[] buffer, ref int bufferPointer, long size, ref uint seed)
+        private uint Deobfuscate(ref byte[] buffer, long size, uint seed)
         {
-            uint tmpSeed = seed;
-
-            for (; size > 0; size--, bufferPointer++, tmpSeed++)
+            for (int i = 0; size > 0; size--, i++, seed++)
             {
-                buffer[bufferPointer] = (byte)(ROR8(buffer[bufferPointer] ^ 0xd5, 2) - (tmpSeed % 0x47));
+                buffer[i] = (byte)(ROR8(buffer[i] ^ 0xd5, 2) - (seed % 0x47));
             }
 
-            seed = tmpSeed;
+            return seed;
         }
 
         /// <summary>
         /// Obfuscate a buffer with a seed value
         /// </summary>
         /// <remarks>Seed is 0 at file start</remarks>
-        private void Obfuscate(ref byte[] buffer, ref int bufferPointer, long size, ref uint seed)
+        private uint Obfuscate(ref byte[] buffer, long size, uint seed)
         {
-            uint tmpSeed = seed;
-
-            for (; size > 0; size--, bufferPointer++, tmpSeed++)
+            for (int i = 0; size > 0; size--, i++, seed++)
             {
-                buffer[bufferPointer] = (byte)(ROL8(buffer[bufferPointer] ^ 0xd5, 2) + (tmpSeed % 0x47));
+                buffer[i] = (byte)(ROL8(buffer[i] ^ 0xd5, 2) + (seed % 0x47));
             }
 
-            seed = tmpSeed;
+            return seed;
         }
 
         /// <summary>
         /// Rotate Right 8
         /// </summary>
-        private int ROR8(int x, int n) { return (((x) >> ((int)(n))) | ((x) << (8 - (int)(n)))); }
+        private int ROR8(int x, int n) { return ((x) >> ((int)(n))) | ((x) << (8 - (int)(n))); }
         
         /// <summary>
         /// Rotate Left 8
         /// </summary>
-        private int ROL8(int x, int n) { return (((x) << ((int)(n))) | ((x) >> (8 - (int)(n)))); }
+        private int ROL8(int x, int n) { return ((x) << ((int)(n))) | ((x) >> (8 - (int)(n))); }
     }
 }

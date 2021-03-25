@@ -1,31 +1,49 @@
 ﻿using System;
+using System.IO;
 
 namespace UnshieldSharp
 {
     public class CommonHeader
     {
-        public uint Signature; // 00
-        public uint Version;
-        public uint VolumeInfo;
-        public uint CabDescriptorOffset;
-        public uint CabDescriptorSize; // 10
+        public uint Signature { get; private set; } // 00
+        public uint Version { get; private set; }
+        public uint VolumeInfo { get; private set; }
+        public uint CabDescriptorOffset { get; private set; }
+        public uint CabDescriptorSize { get; private set; } // 10
+
+        private const int CAB_SIGNATURE = 0x28635349;
+        private const int COMMON_HEADER_SIZE = 20;
+
+        /// <summary>
+        /// Populate a CommonHeader from a stream
+        /// </summary>
+        public static CommonHeader Create(Stream stream)
+        {
+            byte[] tmp = new byte[COMMON_HEADER_SIZE];
+            if (COMMON_HEADER_SIZE != stream.Read(tmp, 0, COMMON_HEADER_SIZE))
+                return default;
+            
+            return Create(tmp);
+        }
 
         /// <summary>
         /// Populate a CommonHeader from an input buffer
         /// </summary>
-        public static bool ReadCommonHeader(ref byte[] buffer, int bufferPointer, CommonHeader common)
+        public static CommonHeader Create(byte[] buffer)
         {
-            common.Signature = BitConverter.ToUInt32(buffer, bufferPointer); bufferPointer += 4;
+            var commonHeader = new CommonHeader();
+            int p = 0;
 
-            if (common.Signature != Constants.CAB_SIGNATURE)
-                return false;
+            commonHeader.Signature = BitConverter.ToUInt32(buffer, p); p += 4;
+            if (commonHeader.Signature != CAB_SIGNATURE)
+                return default;
 
-            common.Version = BitConverter.ToUInt32(buffer, bufferPointer); bufferPointer += 4;
-            common.VolumeInfo = BitConverter.ToUInt32(buffer, bufferPointer); bufferPointer += 4;
-            common.CabDescriptorOffset = BitConverter.ToUInt32(buffer, bufferPointer); bufferPointer += 4;
-            common.CabDescriptorSize = BitConverter.ToUInt32(buffer, bufferPointer); bufferPointer += 4;
+            commonHeader.Version = BitConverter.ToUInt32(buffer, p); p += 4;
+            commonHeader.VolumeInfo = BitConverter.ToUInt32(buffer, p); p += 4;
+            commonHeader.CabDescriptorOffset = BitConverter.ToUInt32(buffer, p); p += 4;
+            commonHeader.CabDescriptorSize = BitConverter.ToUInt32(buffer, p); p += 4;
 
-            return true;
+            return commonHeader;
         }
 
         /// <summary>
@@ -39,7 +57,7 @@ namespace UnshieldSharp
         {
             try
             {
-                var bytes = BitConverter.GetBytes(Constants.CAB_SIGNATURE);
+                var bytes = BitConverter.GetBytes(CAB_SIGNATURE);
                 foreach (byte b in bytes)
                     buffer[bufferPointer++] = b;
 

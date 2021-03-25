@@ -1,45 +1,111 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace UnshieldSharp
 {
     public class Header
     {
-        public Header Next;
-        public int Index;
-        public byte[] Data;
-        public int DataPointer = 0;
-        public long Size;
-        public int MajorVersion;
+        public Header Next { get; set; }
+        public int Index { get; set; }
+        public byte[] Data { get; set; } // What happrns if this becomes a Stream
+        public long Size { get; set; }
+        public int MajorVersion { get; set; }
 
         // Shortcuts
-        public CommonHeader Common = new CommonHeader();
-        public CabDescriptor Cab = new CabDescriptor();
-        public uint[] FileTable;
-        public int FileTablePointer;
-        public FileDescriptor[] FileDescriptors;
-        public int FileDescriptorsPointer;
+        public CommonHeader CommonHeader { get; private set; } = new CommonHeader();
+        public CabDescriptor CabDescriptor { get; private set; } = new CabDescriptor();
+        public uint[] FileTable { get; private set; }
+        public int FileTablePointer { get; private set; }
+        public FileDescriptor[] FileDescriptors { get; set; }
+        public int FileDescriptorsPointer { get; private set; }
 
-        public int ComponentCount;
-        public UnshieldComponent[] Components;
-        public int ComponentsPointer;
+        public int ComponentCount { get; private set; }
+        public UnshieldComponent[] Components { get; private set; }
+        public int ComponentsPointer { get; private set; }
 
-        public int FileGroupCount;
-        public UnshieldFileGroup[] FileGroups;
-        public int FileGroupsCounter;
-
-        public StringBuffer StringBuffer = new StringBuffer();
+        public int FileGroupCount { get; private set; }
+        public UnshieldFileGroup[] FileGroups { get; private set; }
+        public int FileGroupsCounter { get; private set; }
 
         /// <summary>
-        /// Add a new StringBuffer to the existing list
+        /// Create a new Header from a stream, a version, and an index
         /// </summary>
-        public StringBuffer AddStringBuffer()
+        public static Header Create(Stream stream, int version, int index)
         {
-            StringBuffer result = new StringBuffer();
-            result.Next = this.StringBuffer;
-            this.StringBuffer = result;
-            return result;
+            var header = new Header
+            {
+                Index = index,
+                Size = stream.Length
+            };
+            
+            if (stream.Length < 4)
+            {
+                Console.Error.WriteLine($"Header file {index} is too small");
+                return null;
+            }
+
+            header.Data = new byte[header.Size];
+            int bytesRead = stream.Read(header.Data, 0, (int)header.Size);
+            if (bytesRead != header.Size)
+            {
+                Console.Error.WriteLine($"Failed to read from header file {index}. Expected = {header.Size}, read = {bytesRead}");
+                return null;
+            }
+
+            if (!header.GetCommmonHeader())
+            {
+                Console.Error.WriteLine($"Failed to read common header from header file {index}");
+                return null;
+            }
+
+            if (version != -1)
+            {
+                header.MajorVersion = version;
+            }
+            else if ((header.CommonHeader.Version >> 24) == 1)
+            {
+                header.MajorVersion = (int)((header.CommonHeader.Version >> 12) & 0xf);
+            }
+            else if ((header.CommonHeader.Version >> 24) == 2 || (header.CommonHeader.Version >> 24) == 4)
+            {
+                header.MajorVersion = (int)(header.CommonHeader.Version & 0xffff);
+                if (header.MajorVersion != 0)
+                    header.MajorVersion /= 100;
+            }
+
+            /*
+            if (header.MajorVersion < 5)
+                header.MajorVersion = 5;
+
+            unshield_trace($"Version {header.Common.Version} handled as major version {header.MajorVersion}");
+            */
+
+            if (!header.GetCabDescriptor())
+            {
+                Console.Error.WriteLine($"Failed to read CAB descriptor from header file {index}");
+                return null;
+            }
+
+            if (!header.GetFileTable())
+            {
+                Console.Error.WriteLine($"Failed to read file table from header file {index}");
+                return null;
+            }
+
+            if (!header.GetComponents())
+            {
+                Console.Error.WriteLine($"Failed to read components from header file {index}");
+                return null;
+            }
+
+            if (!header.GetFileGroups())
+            {
+                Console.Error.WriteLine($"Failed to read file groups from header file {index}");
+                return null;
+            }
+
+            return header;
         }
 
         /// <summary>
@@ -47,56 +113,14 @@ namespace UnshieldSharp
         /// </summary>
         public bool GetCabDescriptor()
         {
-            if (this.Common.CabDescriptorSize > 0)
+            if (this.CommonHeader.CabDescriptorSize > 0)
             {
-                int p = (int)(this.Common.CabDescriptorOffset);
-
-                p += 0xc;
-                this.Cab.FileTableOffset = BitConverter.ToUInt32(this.Data, p); p += 4;
-                p += 4;
-                this.Cab.FileTableSize = BitConverter.ToUInt32(this.Data, p); p += 4;
-                this.Cab.FileTableSize2 = BitConverter.ToUInt32(this.Data, p); p += 4;
-                this.Cab.DirectoryCount = BitConverter.ToUInt32(this.Data, p); p += 4;
-                p += 8;
-                this.Cab.FileCount = BitConverter.ToUInt32(this.Data, p); p += 4;
-                this.Cab.FileTableOffset2 = BitConverter.ToUInt32(this.Data, p); p += 4;
-
-                // assert((p - (header->data + header->common.cab_descriptor_offset)) == 0x30);
-
-                if (this.Cab.FileTableSize != this.Cab.FileTableSize2)
-                {
-                    // unshield_warning("File table sizes do not match");
-                }
-
-                /*
-                unshield_trace("Cabinet descriptor: %08x %08x %08x %08x",
-                    header->cab.file_table_offset,
-                    header->cab.file_table_size,
-                    header->cab.file_table_size2,
-                    header->cab.file_table_offset2
-                    );
-
-                unshield_trace("Directory count: %i", header->cab.directory_count);
-                unshield_trace("File count: %i", header->cab.file_count);
-                */
-
-                p += 0xe;
-
-                for (int i = 0; i < Constants.MAX_FILE_GROUP_COUNT; i++)
-                {
-                    this.Cab.FileGroupOffsets[i] = BitConverter.ToUInt32(this.Data, p); p += 4;
-                }
-                
-                for (int i = 0; i < Constants.MAX_COMPONENT_COUNT; i++)
-                {
-                    this.Cab.ComponentOffsets[i] = this.Cab.FileGroupOffsets[i] = BitConverter.ToUInt32(this.Data, p); p += 4;
-                }
-
+                this.CabDescriptor = CabDescriptor.Create(this, this.CommonHeader.CabDescriptorOffset);
                 return true;
             }
             else
             {
-                // unshield_error("No CAB descriptor available!");
+                Console.Error.WriteLine("No CAB descriptor available!");
                 return false;
             }
         }
@@ -106,7 +130,8 @@ namespace UnshieldSharp
         /// </summary>
         public bool GetCommmonHeader()
         {
-            return CommonHeader.ReadCommonHeader(ref this.Data, this.DataPointer, this.Common);
+            this.CommonHeader = CommonHeader.Create(this.Data);
+            return this.CommonHeader != default;
         }
 
         /// <summary>
@@ -115,39 +140,23 @@ namespace UnshieldSharp
         public bool GetComponents()
         {
             int count = 0;
-            int available = 16;
-
-            this.Components = new UnshieldComponent[available];
+            this.Components = new UnshieldComponent[Constants.MAX_COMPONENT_COUNT];
 
             for (int i = 0; i < Constants.MAX_COMPONENT_COUNT; i++)
             {
-                if (this.Cab.ComponentOffsets[i] > 0)
+                if (this.CabDescriptor.ComponentOffsets[i] <= 0)
+                    continue;
+
+                var list = new OffsetList(this.CabDescriptor.ComponentOffsets[i]);
+                while (list.NextOffset > 0)
                 {
-                    OffsetList list = new OffsetList();
-
-                    list.NextOffset = this.Cab.ComponentOffsets[i];
-
-                    while (list.NextOffset > 0)
-                    {
-                        int p = GetDataOffset(list.NextOffset);
-
-                        list.NameOffset = BitConverter.ToUInt32(this.Data, p); p += 4;
-                        list.DescriptorOffset = BitConverter.ToUInt32(this.Data, p); p += 4;
-                        list.NextOffset = BitConverter.ToUInt32(this.Data, p); p += 4;
-
-                        if (count == available)
-                        {
-                            available <<= 1;
-                            Array.Resize(ref this.Components, available);
-                        }
-
-                        this.Components[count++] = UnshieldComponent.Create(this, list.DescriptorOffset);
-                    }
+                    int p = GetDataOffset(list.NextOffset);
+                    list = OffsetList.Create(this, p);
+                    this.Components[count++] = UnshieldComponent.Create(this, list.DescriptorOffset);
                 }
             }
 
             this.ComponentCount = count;
-
             return true;
         }
 
@@ -157,7 +166,7 @@ namespace UnshieldSharp
         public int GetDataOffset(uint offset)
         {
             if (offset > 0)
-                return (int)(this.Common.CabDescriptorOffset + offset);
+                return (int)(this.CommonHeader.CabDescriptorOffset + offset);
             else
                 return -1;
         }
@@ -168,39 +177,23 @@ namespace UnshieldSharp
         public bool GetFileGroups()
         {
             int count = 0;
-            int available = 16;
-
-            this.FileGroups = new UnshieldFileGroup[available];
+            this.FileGroups = new UnshieldFileGroup[Constants.MAX_FILE_GROUP_COUNT];
 
             for (int i = 0; i < Constants.MAX_FILE_GROUP_COUNT; i++)
             {
-                if (this.Cab.FileGroupOffsets[i] > 0)
+                if (this.CabDescriptor.FileGroupOffsets[i] <= 0)
+                    continue;
+
+                var list = new OffsetList(this.CabDescriptor.FileGroupOffsets[i]);
+                while (list.NextOffset > 0)
                 {
-                    OffsetList list = new OffsetList();
-
-                    list.NextOffset = this.Cab.FileGroupOffsets[i];
-
-                    while (list.NextOffset > 0)
-                    {
-                        int p = GetDataOffset(list.NextOffset);
-
-                        list.NameOffset = BitConverter.ToUInt32(this.Data, p); p += 4;
-                        list.DescriptorOffset = BitConverter.ToUInt32(this.Data, p); p += 4;
-                        list.NextOffset = BitConverter.ToUInt32(this.Data, p); p += 4;
-
-                        if (count == available)
-                        {
-                            available <<= 1;
-                            Array.Resize(ref this.FileGroups, available);
-                        }
-
-                        this.FileGroups[count++] = UnshieldFileGroup.Create(this, list.DescriptorOffset);
-                    }
+                    int p = GetDataOffset(list.NextOffset);
+                    list = OffsetList.Create(this, p);
+                    this.FileGroups[count++] = UnshieldFileGroup.Create(this, list.DescriptorOffset);
                 }
             }
 
             this.FileGroupCount = count;
-
             return true;
         }
 
@@ -209,9 +202,8 @@ namespace UnshieldSharp
         /// </summary>
         public bool GetFileTable()
         {
-            int p = (int)(this.Common.CabDescriptorOffset +
-                this.Cab.FileTableOffset);
-            int count = (int)(this.Cab.DirectoryCount + this.Cab.FileCount);
+            int p = (int)(this.CommonHeader.CabDescriptorOffset + this.CabDescriptor.FileTableOffset);
+            int count = (int)(this.CabDescriptor.DirectoryCount + this.CabDescriptor.FileCount);
 
             this.FileTable = new uint[count];
 
@@ -234,16 +226,14 @@ namespace UnshieldSharp
         /// <summary>
         /// Convert a UInt32 read from a buffer to a string
         /// </summary>
-        public string GetUTF8String(byte[] buffer, int bufferPointer)
+        public static string GetUTF8String(byte[] buffer, int bufferPointer)
         {
-            List<byte> encoded = new List<byte>();
             while (buffer[bufferPointer] != 0x00)
             {
-                encoded.Add(buffer[bufferPointer]);
                 bufferPointer++;
             }
 
-            return Encoding.UTF8.GetString(encoded.ToArray());
+            return Encoding.UTF8.GetString(buffer, 0, bufferPointer);
         }
     }
 }

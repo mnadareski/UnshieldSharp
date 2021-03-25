@@ -11,7 +11,7 @@ namespace Test
         {
             foreach (string arg in args)
             {
-                UnshieldCabinet cab = UnshieldCabinet.Open(arg);
+                var cab = UnshieldCabinet.Open(arg);
 
                 // Component
                 Console.WriteLine($"Component Count: {cab.ComponentCount}");
