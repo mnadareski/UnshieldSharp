@@ -16,21 +16,18 @@ namespace UnshieldSharp
         /// </summary>
         public static CommonHeader Create(Stream stream)
         {
-            byte[] buffer = new byte[Constants.COMMON_HEADER_SIZE];
-            if (Constants.COMMON_HEADER_SIZE != stream.Read(buffer, 0, Constants.COMMON_HEADER_SIZE))
-                return default;
-            
-            var commonHeader = new CommonHeader();
-            int p = 0;
+            if (stream.Length - stream.Position < Constants.COMMON_HEADER_SIZE)
+                return null;
 
-            commonHeader.Signature = BitConverter.ToUInt32(buffer, p); p += 4;
+            var commonHeader = new CommonHeader();
+            commonHeader.Signature = stream.ReadUInt32();
             if (commonHeader.Signature != Constants.CAB_SIGNATURE)
                 return default;
 
-            commonHeader.Version = BitConverter.ToUInt32(buffer, p); p += 4;
-            commonHeader.VolumeInfo = BitConverter.ToUInt32(buffer, p); p += 4;
-            commonHeader.CabDescriptorOffset = BitConverter.ToUInt32(buffer, p); p += 4;
-            commonHeader.CabDescriptorSize = BitConverter.ToUInt32(buffer, p); p += 4;
+            commonHeader.Version = stream.ReadUInt32();
+            commonHeader.VolumeInfo = stream.ReadUInt32();
+            commonHeader.CabDescriptorOffset = stream.ReadUInt32();
+            commonHeader.CabDescriptorSize = stream.ReadUInt32();
 
             return commonHeader;
         }
