@@ -18,12 +18,13 @@
     <IncludeSymbols>true</IncludeSymbols>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
-  </ItemGroup>
+  <!-- This is needed so that the zlib.net assembly info doesn't interfere with the auto-generated ones -->
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);zlib.net\AssemblyInfo.cs</DefaultItemExcludes>
+  </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="zlib.net-mutliplatform" Version="1.0.4" />
+    <None Include="LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
   </ItemGroup>
 
 </Project>

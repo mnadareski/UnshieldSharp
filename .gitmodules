@@ -1,0 +1,3 @@
+[submodule "UnshieldSharp/zlib.net"]
+	path = UnshieldSharp/zlib.net
+	url = https://github.com/cinderblocks/zlib.net.git
