@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace UnshieldSharp
 {
@@ -22,9 +21,6 @@ namespace UnshieldSharp
         public uint LastFileSizeCompressed { get; private set; }
         public uint LastFileSizeCompressedHigh { get; private set; }
 
-        private const int VOLUME_HEADER_SIZE_V5 = 40;
-        private const int VOLUME_HEADER_SIZE_V6 = 64;
-
         /// <summary>
         /// Create a new VolumeHeader from a Stream and version
         /// </summary>
@@ -34,48 +30,44 @@ namespace UnshieldSharp
 
             if (version <= 5)
             {
-                byte[] bytes = new byte[VOLUME_HEADER_SIZE_V5];
-                if (VOLUME_HEADER_SIZE_V5 != stream.Read(bytes, 0, VOLUME_HEADER_SIZE_V5))
+                if (stream.Length - stream.Position < Constants.VOLUME_HEADER_SIZE_V5)
                     return null;
 
-                int p = 0;
-                header.DataOffset = BitConverter.ToUInt32(bytes, p); p += 4;
-                /* unknown */ p += 4;
-                header.FirstFileIndex = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileIndex = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.FirstFileOffset = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.FirstFileSizeExpanded = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.FirstFileSizeCompressed = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileOffset = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileSizeExpanded = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileSizeCompressed = BitConverter.ToUInt32(bytes, p); p += 4;
+                header.DataOffset = stream.ReadUInt32();
+                stream.Seek(4, SeekOrigin.Current);
+                header.FirstFileIndex = stream.ReadUInt32();
+                header.LastFileIndex = stream.ReadUInt32();
+                header.FirstFileOffset = stream.ReadUInt32();
+                header.FirstFileSizeExpanded = stream.ReadUInt32();
+                header.FirstFileSizeCompressed = stream.ReadUInt32();
+                header.LastFileOffset = stream.ReadUInt32();
+                header.LastFileSizeExpanded = stream.ReadUInt32();
+                header.LastFileSizeCompressed = stream.ReadUInt32();
 
                 if (header.LastFileOffset == 0)
                     header.LastFileOffset = int.MaxValue;
             }
             else
             {
-                byte[] bytes = new byte[VOLUME_HEADER_SIZE_V6];
-                if (VOLUME_HEADER_SIZE_V6 != stream.Read(bytes, 0, VOLUME_HEADER_SIZE_V6))
+                if (stream.Length - stream.Position < Constants.VOLUME_HEADER_SIZE_V6)
                     return null;
 
-                int p = 0;
-                header.DataOffset = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.DataOffsetHigh = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.FirstFileIndex = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileIndex = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.FirstFileOffset = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.FirstFileOffsetHigh = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.FirstFileSizeExpanded = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.FirstFileSizeExpandedHigh = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.FirstFileSizeCompressed = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.FirstFileSizeCompressedHigh = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileOffset = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileOffsetHigh = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileSizeExpanded = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileSizeExpandedHigh = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileSizeCompressed = BitConverter.ToUInt32(bytes, p); p += 4;
-                header.LastFileSizeCompressedHigh = BitConverter.ToUInt32(bytes, p); p += 4;
+                header.DataOffset = stream.ReadUInt32();
+                header.DataOffsetHigh = stream.ReadUInt32();
+                header.FirstFileIndex = stream.ReadUInt32();
+                header.LastFileIndex = stream.ReadUInt32();
+                header.FirstFileOffset = stream.ReadUInt32();
+                header.FirstFileOffsetHigh = stream.ReadUInt32();
+                header.FirstFileSizeExpanded = stream.ReadUInt32();
+                header.FirstFileSizeExpandedHigh = stream.ReadUInt32();
+                header.FirstFileSizeCompressed = stream.ReadUInt32();
+                header.FirstFileSizeCompressedHigh = stream.ReadUInt32();
+                header.LastFileOffset = stream.ReadUInt32();
+                header.LastFileOffsetHigh = stream.ReadUInt32();
+                header.LastFileSizeExpanded = stream.ReadUInt32();
+                header.LastFileSizeExpandedHigh = stream.ReadUInt32();
+                header.LastFileSizeCompressed = stream.ReadUInt32();
+                header.LastFileSizeCompressedHigh = stream.ReadUInt32();
             }
 
             return header;

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.IO;
 
 namespace UnshieldSharp
 {
@@ -19,11 +19,12 @@ namespace UnshieldSharp
             
             component.Name = header.GetString((uint)p); p += 4;
             p += header.MajorVersion <= 5 ? 0x6c : 0x6b;
-            component.FileGroupCount = BitConverter.ToUInt16(header.Data, p); p += 2;
+            header.Data.Seek(p, SeekOrigin.Begin);
+            component.FileGroupCount = header.Data.ReadUInt16();
             if (component.FileGroupCount > Constants.MAX_FILE_GROUP_COUNT)
                 return default;
 
-            component.FileGroupNamesPointer = BitConverter.ToUInt32(header.Data, p); p += 4;
+            component.FileGroupNamesPointer = header.Data.ReadUInt32();
             p = header.GetDataOffset(component.FileGroupNamesPointer);
             component.FileGroupNames = new string[component.FileGroupCount];
             for (int i = 0; i < component.FileGroupCount; i++)

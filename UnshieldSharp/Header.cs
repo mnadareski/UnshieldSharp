@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -8,8 +9,7 @@ namespace UnshieldSharp
     {
         public Header Next { get; set; }
         public int Index { get; set; }
-        public byte[] Data { get; set; } // What happrns if this becomes a Stream
-        public long Size { get; set; }
+        public Stream Data { get; set; } 
         public int MajorVersion { get; set; }
 
         // Shortcuts
@@ -36,7 +36,6 @@ namespace UnshieldSharp
             var header = new Header
             {
                 Index = index,
-                Size = stream.Length
             };
             
             if (stream.Length < 4)
@@ -45,14 +44,7 @@ namespace UnshieldSharp
                 return null;
             }
 
-            header.Data = new byte[header.Size];
-            int bytesRead = stream.Read(header.Data, 0, (int)header.Size);
-            if (bytesRead != header.Size)
-            {
-                Console.Error.WriteLine($"Failed to read from header file {index}. Expected = {header.Size}, read = {bytesRead}");
-                return null;
-            }
-
+            header.Data = stream;
             if (!header.GetCommmonHeader())
             {
                 Console.Error.WriteLine($"Failed to read common header from header file {index}");
@@ -73,13 +65,6 @@ namespace UnshieldSharp
                 if (header.MajorVersion != 0)
                     header.MajorVersion /= 100;
             }
-
-            /*
-            if (header.MajorVersion < 5)
-                header.MajorVersion = 5;
-
-            unshield_trace($"Version {header.Common.Version} handled as major version {header.MajorVersion}");
-            */
 
             if (!header.GetCabDescriptor())
             {
@@ -115,7 +100,7 @@ namespace UnshieldSharp
         {
             if (this.CommonHeader.CabDescriptorSize > 0)
             {
-                this.CabDescriptor = CabDescriptor.Create(this, this.CommonHeader.CabDescriptorOffset);
+                this.CabDescriptor = CabDescriptor.Create(this.Data, this.CommonHeader.CabDescriptorOffset);
                 return true;
             }
             else
@@ -151,7 +136,7 @@ namespace UnshieldSharp
                 while (list.NextOffset > 0)
                 {
                     int p = GetDataOffset(list.NextOffset);
-                    list = OffsetList.Create(this, p);
+                    list = OffsetList.Create(this.Data, p);
                     this.Components[count++] = UnshieldComponent.Create(this, list.DescriptorOffset);
                 }
             }
@@ -188,7 +173,7 @@ namespace UnshieldSharp
                 while (list.NextOffset > 0)
                 {
                     int p = GetDataOffset(list.NextOffset);
-                    list = OffsetList.Create(this, p);
+                    list = OffsetList.Create(this.Data, p);
                     this.FileGroups[count++] = UnshieldFileGroup.Create(this, list.DescriptorOffset);
                 }
             }
@@ -206,10 +191,10 @@ namespace UnshieldSharp
             int count = (int)(this.CabDescriptor.DirectoryCount + this.CabDescriptor.FileCount);
 
             this.FileTable = new uint[count];
-
+            this.Data.Seek(p, SeekOrigin.Begin);
             for (int i = 0; i < count; i++)
             {
-                this.FileTable[i] = BitConverter.ToUInt32(this.Data, p); p += 4;
+                this.FileTable[i] = this.Data.ReadUInt32();
             }
 
             return true;
@@ -220,20 +205,24 @@ namespace UnshieldSharp
         /// </summary>
         public string GetString(uint offset)
         {
-            return GetUTF8String(this.Data, GetDataOffset(offset));
+            this.Data.Seek(GetDataOffset(offset), SeekOrigin.Begin);
+            return this.Data.ReadNullTerminatedString();
         }
 
         /// <summary>
         /// Convert a UInt32 read from a buffer to a string
         /// </summary>
-        public static string GetUTF8String(byte[] buffer, int bufferPointer)
+        public static string GetUTF8String(Stream stream, int offset)
         {
-            while (buffer[bufferPointer] != 0x00)
+            List<byte> buffer = new List<byte>();
+            stream.Seek(offset, SeekOrigin.Begin);
+            byte b;
+            while ((b = (byte)stream.ReadByte()) != 0x00)
             {
-                bufferPointer++;
+                buffer.Add(b);
             }
 
-            return Encoding.UTF8.GetString(buffer, 0, bufferPointer);
+            return Encoding.UTF8.GetString(buffer.ToArray());
         }
     }
 }

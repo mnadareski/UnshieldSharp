@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.IO;
 
 namespace UnshieldSharp
 {
@@ -9,19 +9,22 @@ namespace UnshieldSharp
         public uint LastFile { get; private set; }
 
         /// <summary>
-        /// Create a new UnshieldFileGroup from a header and data offset
+        /// Create a new UnshieldFileGroup from a header and offset
         /// </summary>
         public static UnshieldFileGroup Create(Header header, uint offset)
         {
-            var fileGroup = new UnshieldFileGroup();
             int p = header.GetDataOffset(offset);
+            header.Data.Seek(p, SeekOrigin.Begin);
 
-            fileGroup.Name = header.GetString(BitConverter.ToUInt32(header.Data, p)); p += 4;
-            p += header.MajorVersion <= 5 ? 0x48 : 0x12;
-            fileGroup.FirstFile = BitConverter.ToUInt32(header.Data, p); p += 4;
-            fileGroup.LastFile = BitConverter.ToUInt32(header.Data, p); p += 4;
-
-            return fileGroup;
+            string name = header.GetString(header.Data.ReadUInt32());
+            p += 4 + (header.MajorVersion <= 5 ? 0x48 : 0x12);
+            header.Data.Seek(p, SeekOrigin.Begin);
+            return new UnshieldFileGroup
+            {
+                Name = name,
+                FirstFile = header.Data.ReadUInt32(),
+                LastFile = header.Data.ReadUInt32(),
+            };
         }
     }
 }

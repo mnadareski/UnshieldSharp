@@ -7,36 +7,6 @@ using ComponentAce.Compression.Libs.zlib;
 
 namespace UnshieldSharp
 {
-    public static class Constants
-    {
-        #region cabfile.h
-
-        public const int MAX_FILE_GROUP_COUNT = 71;
-        public const int MAX_COMPONENT_COUNT = 71;
-
-        #endregion
-
-        #region file.c
-
-        public const int BUFFER_SIZE = 64 * 1024;
-
-        #endregion
-
-        #region internal.h
-
-        public const string HEADER_SUFFIX = "hdr";
-        public const string CABINET_SUFFIX = "cab";
-
-        #endregion
-
-        #region zconf.h
-
-        public const int MAX_WBITS = 15;
-        public const int Z_BLOCK = 5;
-
-        #endregion
-    }
-
     // TODO: Figure out if individual parts of a split cab can be extracted separately
     public class UnshieldCabinet
     {
@@ -45,12 +15,12 @@ namespace UnshieldSharp
 
         // Internal CAB Counts
         public int ComponentCount { get { return this.HeaderList?.ComponentCount ?? 0; } }
-        public int DirectoryCount { get { return (int)(this.HeaderList?.CabDescriptor?.DirectoryCount ?? 0); } } // XXX: multi-volume support...
-        public int FileCount { get { return (int)(this.HeaderList?.CabDescriptor?.FileCount ?? 0); } } // XXX: multi-volume support...
+        public int DirectoryCount { get { return (int)(this.HeaderList?.CabDescriptor?.DirectoryCount ?? 0); } } // TODO: multi-volume support...
+        public int FileCount { get { return (int)(this.HeaderList?.CabDescriptor?.FileCount ?? 0); } } // TODO: multi-volume support...
         public int FileGroupCount { get { return this.HeaderList?.FileGroupCount ?? 0; } }
 
         // Unicode compatibility
-        public bool IsUnicode { get { return this.HeaderList == null ? false : this.HeaderList?.MajorVersion >= 17; } }
+        public bool IsUnicode { get { return this.HeaderList?.MajorVersion >= 17; } }
 
         // Base filename path for related CAB files
         private string filenamePattern;
@@ -106,20 +76,18 @@ namespace UnshieldSharp
         /// </summary>
         public string DirectoryName(int index)
         {
-            if (index >= 0)
+            if (index < 0 || index >= (int)this.HeaderList.CabDescriptor.DirectoryCount)
             {
-                // XXX: multi-volume support...
-                Header header = this.HeaderList;
-
-                if (index < (int)header.CabDescriptor.DirectoryCount)
-                    return Header.GetUTF8String(header.Data,
-                        (int)(header.CommonHeader.CabDescriptorOffset
-                        + header.CabDescriptor.FileTableOffset
-                        + header.FileTable[index]));
+                Console.Error.WriteLine($"Failed to get directory name {index}");
+                return null;
             }
 
-            Console.Error.WriteLine("Failed to get directory name %i", index);
-            return null;
+            // TODO: multi-volume support...
+            int location = (int)(this.HeaderList.CommonHeader.CabDescriptorOffset
+                + this.HeaderList.CabDescriptor.FileTableOffset
+                + this.HeaderList.FileTable[index]);
+            this.HeaderList.Data.Seek(location, SeekOrigin.Begin);
+            return this.HeaderList.Data.ReadNullTerminatedString();
         }
 
         /// <summary>
@@ -127,20 +95,19 @@ namespace UnshieldSharp
         /// </summary>
         public string FileName(int index)
         {
-            FileDescriptor fd = this.GetFileDescriptor(index);
-            if (fd != null)
+            if (index < 0 || index >= (int)this.HeaderList.CabDescriptor.FileCount)
             {
-                // XXX: multi-volume support...
-                Header header = this.HeaderList;
-
-                return Header.GetUTF8String(header.Data,
-                    (int)(header.CommonHeader.CabDescriptorOffset
-                    + header.CabDescriptor.FileTableOffset
-                    + fd.NameOffset));
+                Console.Error.WriteLine($"Failed to get file descriptor {index}");
+                return null;
             }
 
-            Console.Error.WriteLine("Failed to get file descriptor %i", index);
-            return null;
+            // TODO: multi-volume support...
+            FileDescriptor fd = this.GetFileDescriptor(index);
+            int location = (int)(this.HeaderList.CommonHeader.CabDescriptorOffset
+                + this.HeaderList.CabDescriptor.FileTableOffset
+                + fd.NameOffset);
+            this.HeaderList.Data.Seek(location, SeekOrigin.Begin);
+            return this.HeaderList.Data.ReadNullTerminatedString();
         }
 
         /// <summary>
@@ -173,10 +140,10 @@ namespace UnshieldSharp
             if (fd.Flags.HasFlag(FileDescriptorFlag.FILE_INVALID))
                 return false;
 
-            if (fd.NameOffset == default(uint))
+            if (fd.NameOffset == default)
                 return false;
 
-            if (fd.DataOffset == default(uint))
+            if (fd.DataOffset == default)
                 return false;
 
             return true;
@@ -187,55 +154,27 @@ namespace UnshieldSharp
         /// </summary>
         public bool FileSave(int index, string filename)
         {
-            if (string.IsNullOrWhiteSpace(filename))
-            {
-                Console.Error.WriteLine("Provided filename is invalid");
-                return false;
-            }
-
-            var fileDescriptor = this.GetFileDescriptor(index);
+            var fileDescriptor = GetFileDescriptor(filename, index);
             if (fileDescriptor == null)
-            {
-                Console.Error.WriteLine($"Failed to get file descriptor for file {index}");
                 return false;
-            }
-
-            if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_INVALID) || 0 == fileDescriptor.DataOffset)
-            {
-                Console.Error.WriteLine($"File at {index} is marked as invalid");
-                return false;
-            }
 
             if (fileDescriptor.LinkFlags == FileDescriptorLinkFlag.LINK_PREV)
                 return this.FileSave((int)fileDescriptor.LinkPrevious, filename);
 
-            var reader = UnshieldReader.Create(this, index, fileDescriptor);
+            var reader = GetReader(index, fileDescriptor);
             if (reader == null)
-            {
-                Console.Error.WriteLine($"Failed to create data reader for file {index}");
-                reader?.Dispose();
                 return false;
-            }
-
-            if (reader.VolumeFile.Length == (long)fileDescriptor.DataOffset)
-            {
-                Console.Error.WriteLine($"File {index} is not inside the cabinet.");
-                reader?.Dispose();
-                return false;
-            }
 
             var output = File.OpenWrite(filename);
-
-            ulong bytesLeft;
-            if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED))
-                bytesLeft = fileDescriptor.CompressedSize;
-            else
-                bytesLeft = fileDescriptor.ExpandedSize;
-
-            // unshield_trace("Bytes to read: %i", bytes_left);
+            if (output == null)
+            {
+                Console.Error.WriteLine($"Failed to open {filename} for writing");
+                return false;
+            }
 
             MD5 md5 = MD5.Create();
             md5.Initialize();
+            ulong bytesLeft = GetBytesToRead(fileDescriptor);
             byte[] inputBuffer = new byte[Constants.BUFFER_SIZE + 1];
             byte[] outputBuffer = new byte[Constants.BUFFER_SIZE];
             ulong totalWritten = 0;
@@ -251,8 +190,8 @@ namespace UnshieldSharp
                     if (!reader.Read(bytesToRead, 0, bytesToRead.Length))
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToRead} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
-                        reader?.Dispose();
-                        output?.Close();
+                        reader.Dispose();
+                        output.Close();
                         return false;
                     }
 
@@ -260,37 +199,31 @@ namespace UnshieldSharp
                     if (BitConverter.ToUInt16(bytesToRead, 0) == 0)
                     {
                         Console.Error.WriteLine("bytesToRead can't be zero");
-                        //Console.Error.WriteLine("HINT: Try unshield_file_save_old() or -O command line parameter!");
-                        reader?.Dispose();
-                        output?.Close();
+                        reader.Dispose();
+                        output.Close();
                         return false;
                     }
 
                     if (!reader.Read(inputBuffer, 0, BitConverter.ToUInt16(bytesToRead, 0)))
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToRead} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
-                        reader?.Dispose();
-                        output?.Close();
+                        reader.Dispose();
+                        output.Close();
                         return false;
                     }
 
                     // add a null byte to make inflate happy
                     inputBuffer[BitConverter.ToUInt16(bytesToRead, 0)] = 0;
                     readBytes = (ulong)(BitConverter.ToUInt16(bytesToRead, 0) + 1);
-                    result = Uncompress(ref outputBuffer, ref bytesToWrite, ref inputBuffer, ref readBytes);
+                    result = Uncompress(outputBuffer, ref bytesToWrite, inputBuffer, ref readBytes);
 
                     if (result != zlibConst.Z_OK)
                     {
                         Console.Error.WriteLine($"Decompression failed with code {result}. bytes_to_read={bytesToRead}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
-                        if (result == zlibConst.Z_DATA_ERROR)
-                            Console.Error.WriteLine("HINT: Try unshield_file_save_old() or -O command line parameter!");
-
-                        reader?.Dispose();
-                        output?.Close();
+                        reader.Dispose();
+                        output.Close();
                         return false;
                     }
-
-                    // unshield_trace("read_bytes = %i", read_bytes);
 
                     bytesLeft -= 2;
                     bytesLeft -= BitConverter.ToUInt16(bytesToRead, 0);
@@ -298,12 +231,11 @@ namespace UnshieldSharp
                 else
                 {
                     bytesToWrite = Math.Min(bytesLeft, Constants.BUFFER_SIZE);
-
                     if (!reader.Read(outputBuffer, 0, (int)bytesToWrite))
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
-                        reader?.Dispose();
-                        output?.Close();
+                        reader.Dispose();
+                        output.Close();
                         return false;
                     }
 
@@ -313,9 +245,7 @@ namespace UnshieldSharp
                 md5.TransformBlock(outputBuffer, 0, (int)bytesToWrite, outputBuffer, 0);
 
                 if (output != null)
-                {
                     output.Write(outputBuffer, 0, (int)bytesToWrite);
-                }
 
                 totalWritten += bytesToWrite;
             }
@@ -323,8 +253,8 @@ namespace UnshieldSharp
             if (fileDescriptor.ExpandedSize != totalWritten)
             {
                 Console.Error.WriteLine($"Expanded size expected to be {fileDescriptor.ExpandedSize}, but was {totalWritten}");
-                reader?.Dispose();
-                output?.Close();
+                reader.Dispose();
+                output.Close();
                 return false;
             }
 
@@ -336,14 +266,14 @@ namespace UnshieldSharp
                 if (!md5result.SequenceEqual(fileDescriptor.Md5))
                 {
                     Console.Error.WriteLine($"MD5 checksum failure for file {index} ({FileName(index)})");
-                    reader?.Dispose();
-                    output?.Close();
+                    reader.Dispose();
+                    output.Close();
                     return false;
                 }
             }
 
             reader?.Dispose();
-            output?.Close();
+            output.Close();
             return true;
         }
 
@@ -352,54 +282,25 @@ namespace UnshieldSharp
         /// </summary>
         public bool FileSaveOld(int index, string filename)
         {
-            // TODO: Thou Shalt Not Cut & Paste
-            if (string.IsNullOrWhiteSpace(filename))
-            {
-                Console.Error.WriteLine("Provided filename is invalid");
-                return false;
-            }
-            
-            var fileDescriptor = this.GetFileDescriptor(index);
+            var fileDescriptor = GetFileDescriptor(filename, index);
             if (fileDescriptor == null)
-            {
-                Console.Error.WriteLine($"Failed to get file descriptor for file {index}");
                 return false;
-            }
-
-            if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_INVALID) || fileDescriptor.DataOffset == 0)
-            {
-                Console.Error.WriteLine($"File at {index} is marked as invalid");
-                return false;
-            }
 
             if (fileDescriptor.LinkFlags == FileDescriptorLinkFlag.LINK_PREV)
                 return FileSaveRaw((int)fileDescriptor.LinkPrevious, filename);
 
-            var reader = UnshieldReader.Create(this, index, fileDescriptor);
+            var reader = GetReader(index, fileDescriptor);
             if (reader == null)
-            {
-                Console.Error.WriteLine($"Failed to create data reader for file {index}");
-                reader?.Dispose();
                 return false;
-            }
-
-            if (reader.VolumeFile.Length == (long)fileDescriptor.DataOffset)
-            {
-                Console.Error.WriteLine($"File {index} is not inside the cabinet.");
-                reader?.Dispose();
-                return false;
-            }
 
             var output = File.OpenWrite(filename);
+            if (output == null)
+            {
+                Console.Error.WriteLine($"Failed to open {filename} for writing");
+                return false;
+            }
 
-            ulong bytesLeft;
-            if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED))
-                bytesLeft = fileDescriptor.CompressedSize;
-            else
-                bytesLeft = fileDescriptor.ExpandedSize;
-
-            // unshield_trace("Bytes to read: %i", bytes_left);
-
+            ulong bytesLeft = GetBytesToRead(fileDescriptor);
             long inputBufferSize = Constants.BUFFER_SIZE;
             byte[] inputBuffer = new byte[Constants.BUFFER_SIZE];
             byte[] outputBuffer = new byte[Constants.BUFFER_SIZE];
@@ -412,7 +313,7 @@ namespace UnshieldSharp
                 if (reader.VolumeBytesLeft == 0 && !reader.OpenVolume(reader.Volume + 1))
                 {
                     Console.Error.WriteLine($"Failed to open volume {reader.Volume + 1} to read {bytesLeft} more bytes");
-                    reader?.Dispose();
+                    reader.Dispose();
                     output.Close();
                     return false;
                 }
@@ -426,16 +327,13 @@ namespace UnshieldSharp
                     while (inputSize > inputBufferSize)
                     {
                         inputBufferSize *= 2;
-                        // unshield_trace("increased input_buffer_size to 0x%x", input_buffer_size);
-
                         Array.Resize(ref inputBuffer, (int)inputBufferSize);
-                        // assert(input_buffer)
                     }
 
                     if (!reader.Read(inputBuffer, 0, (int)inputSize))
                     {
                         Console.Error.WriteLine($"Failed to read {inputSize} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
-                        reader?.Dispose();
+                        reader.Dispose();
                         output.Close();
                         return false;
                     }
@@ -443,11 +341,11 @@ namespace UnshieldSharp
                     bytesLeft -= (uint)inputSize;
                     for (int p = 0; inputSize > 0;)
                     {
-                        int match = FindBytes(inputBuffer, p, inputSize, END_OF_CHUNK, END_OF_CHUNK.Length);
+                        int match = FindBytes(inputBuffer, p, inputSize, END_OF_CHUNK);
                         if (match == -1)
                         {
                             Console.Error.WriteLine($"Could not find end of chunk for file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
-                            reader?.Dispose();
+                            reader.Dispose();
                             output.Close();
                             return false;
                         }
@@ -471,19 +369,17 @@ namespace UnshieldSharp
                         {
                             Console.Error.WriteLine("It seems like we have an end of chunk marker inside of a chunk.");
                             chunkSize += END_OF_CHUNK.Length;
-                            match = FindBytes(inputBuffer, (int)(p + chunkSize), inputSize - chunkSize, END_OF_CHUNK, END_OF_CHUNK.Length);
+                            match = FindBytes(inputBuffer, (int)(p + chunkSize), inputSize - chunkSize, END_OF_CHUNK);
                             if (match == -1)
                             {
                                 Console.Error.WriteLine($"Could not find end of chunk for file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
-                                reader?.Dispose();
+                                reader.Dispose();
                                 output.Close();
                                 return false;
                             }
 
                             chunkSize = match - p;
                         }
-
-                        // unshield_trace("chunk_size = 0x%x", chunk_size);
 
                         // add a null byte to make inflate happy
                         inputBuffer[chunkSize] = 0;
@@ -495,12 +391,10 @@ namespace UnshieldSharp
                         if (result != zlibConst.Z_OK)
                         {
                             Console.Error.WriteLine($"Decompression failed with code {result}. input_size={inputSize}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
-                            reader?.Dispose();
+                            reader.Dispose();
                             output.Close();
                             return false;
                         }
-
-                        // unshield_trace("read_bytes = 0x%x", read_bytes);
 
                         p += (int)chunkSize;
                         p += END_OF_CHUNK.Length;
@@ -520,7 +414,7 @@ namespace UnshieldSharp
                     if (!reader.Read(outputBuffer, 0, (int)bytesToWrite))
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
-                        reader?.Dispose();
+                        reader.Dispose();
                         output.Close();
                         return false;
                     }
@@ -537,12 +431,12 @@ namespace UnshieldSharp
             if (fileDescriptor.ExpandedSize != totalWritten)
             {
                 Console.Error.WriteLine($"Expanded size expected to be {fileDescriptor.ExpandedSize}, but was {totalWritten}");
-                reader?.Dispose();
+                reader.Dispose();
                 output.Close();
                 return false;
             }
 
-            reader?.Dispose();
+            reader.Dispose();
             output.Close();
             return true;
         }
@@ -552,54 +446,25 @@ namespace UnshieldSharp
         /// </summary>
         public bool FileSaveRaw(int index, string filename)
         {
-            // TODO: Thou Shalt Not Cut & Paste
-            if (string.IsNullOrWhiteSpace(filename))
-            {
-                Console.Error.WriteLine("Provided filename is invalid");
-                return false;
-            }
-
-            var fileDescriptor = this.GetFileDescriptor(index);
+            var fileDescriptor = GetFileDescriptor(filename, index);
             if (fileDescriptor == null)
-            {
-                Console.Error.WriteLine("Failed to get file descriptor for file %i", index);
                 return false;
-            }
-
-            if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_INVALID) || fileDescriptor.DataOffset == 0)
-            {
-                Console.Error.WriteLine($"File at {index} is marked as invalid");
-                return false;
-            }
 
             if (fileDescriptor.LinkFlags == FileDescriptorLinkFlag.LINK_PREV)
                 return FileSaveRaw((int)fileDescriptor.LinkPrevious, filename);
 
-            var reader = UnshieldReader.Create(this, index, fileDescriptor);
+            var reader = GetReader(index, fileDescriptor);
             if (reader == null)
-            {
-                Console.Error.WriteLine("Failed to create data reader for file %i", index);
-                reader?.Dispose();
                 return false;
-            }
-
-            if (reader.VolumeFile.Length == (long)(fileDescriptor.DataOffset))
-            {
-                Console.Error.WriteLine("File %i is not inside the cabinet.", index);
-                reader?.Dispose();
-                return false;
-            }
 
             var output = File.OpenWrite(filename);
+            if (output == null)
+            {
+                Console.Error.WriteLine($"Failed to open {filename} for writing");
+                return false;
+            }
             
-            ulong bytesLeft;
-            if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED))
-                bytesLeft = fileDescriptor.CompressedSize;
-            else
-                bytesLeft = fileDescriptor.ExpandedSize;
-
-            // unshield_trace("Bytes to read: %i", bytes_left);
-
+            ulong bytesLeft = GetBytesToRead(fileDescriptor);
             byte[] outputBuffer = new byte[Constants.BUFFER_SIZE];
             while (bytesLeft > 0)
             {
@@ -607,7 +472,7 @@ namespace UnshieldSharp
                 if (!reader.Read(outputBuffer, 0, (int)bytesToWrite))
                 {
                     Console.Error.WriteLine($"Failed to read {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
-                    reader?.Dispose();
+                    reader.Dispose();
                     output.Close();
                     return false;
                 }
@@ -616,7 +481,7 @@ namespace UnshieldSharp
                 output.Write(outputBuffer, 0, (int)bytesToWrite);
             }
 
-            reader?.Dispose();
+            reader.Dispose();
             output.Close();
             return true;
         }
@@ -643,6 +508,66 @@ namespace UnshieldSharp
                 return (int)fd.ExpandedSize;
             else
                 return 0;
+        }
+
+        /// <summary>
+        /// Common code for getting the bytes to read
+        /// </summary>
+        private ulong GetBytesToRead(FileDescriptor fd)
+        {
+            if (fd.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED))
+                return fd.CompressedSize;
+            else
+                return fd.ExpandedSize;
+        }
+
+        /// <summary>
+        /// Common code for getting the file descriptor
+        /// </summary>
+        private FileDescriptor GetFileDescriptor(string filename, int index)
+        {
+            if (string.IsNullOrWhiteSpace(filename))
+            {
+                Console.Error.WriteLine("Provided filename is invalid");
+                return null;
+            }
+
+            var fileDescriptor = this.GetFileDescriptor(index);
+            if (fileDescriptor == null)
+            {
+                Console.Error.WriteLine($"Failed to get file descriptor for file {index}");
+                return null;
+            }
+
+            if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_INVALID) || fileDescriptor.DataOffset == 0)
+            {
+                Console.Error.WriteLine($"File at {index} is marked as invalid");
+                return null;
+            }
+
+            return fileDescriptor;
+        }
+
+        /// <summary>
+        /// Common code for getting the reader
+        /// </summary>
+        private UnshieldReader GetReader(int index, FileDescriptor fd)
+        {
+            var reader = UnshieldReader.Create(this, index, fd);
+            if (reader == null)
+            {
+                Console.Error.WriteLine($"Failed to create data reader for file {index}");
+                return null;
+            }
+
+            if (reader.VolumeFile.Length == (long)fd.DataOffset)
+            {
+                Console.Error.WriteLine($"File {index} is not inside the cabinet.");
+                reader.Dispose();
+                return null;
+            }
+
+            return reader;
         }
 
         #endregion
@@ -681,22 +606,18 @@ namespace UnshieldSharp
         /// <summary>
         /// Uncompress a source byte array to a destination
         /// </summary>
-        public static int Uncompress(ref byte[] dest, ref ulong destLen, ref byte[] source, ref ulong sourceLen)
+        public static int Uncompress(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
-            ZStream stream = new ZStream();
-            int err;
-
-            stream.next_in = source;
-            stream.avail_in = (int)sourceLen;
-
-            stream.next_out = dest;
-            stream.avail_out = (int)destLen;
-
-            //stream.zalloc = (alloc_func)0;
-            //stream.zfree = (free_func)0;
+            var stream = new ZStream
+            {
+                next_in = source,
+                avail_in = (int)sourceLen,
+                next_out = dest,
+                avail_out = (int)destLen,
+            };
 
             // make second parameter negative to disable checksum verification
-            err = stream.inflateInit(-Constants.MAX_WBITS);
+            int err = stream.inflateInit(-Constants.MAX_WBITS);
             if (err != zlibConst.Z_OK) return err;
 
             err = stream.inflate(zlibConst.Z_FINISH);
@@ -708,9 +629,7 @@ namespace UnshieldSharp
 
             destLen = (ulong)stream.total_out;
             sourceLen = (ulong)stream.total_in;
-
-            err = stream.inflateEnd();
-            return err;
+            return stream.inflateEnd();
         }
 
         /// <summary>
@@ -725,9 +644,6 @@ namespace UnshieldSharp
                 next_out = dest,
                 avail_out = (int)destLen, 
             };
-
-            //stream.zalloc = (alloc_func)0;
-            //stream.zfree = (free_func)0;
 
             destLen = 0;
             sourceLen = 0;
@@ -749,7 +665,6 @@ namespace UnshieldSharp
 
             destLen = (ulong)stream.total_out;
             sourceLen = (ulong)stream.total_in;
-
             return stream.inflateEnd();
         }
 
@@ -775,21 +690,18 @@ namespace UnshieldSharp
         /// <summary>
         /// Get the start index of a pattern in a byte array
         /// </summary>
-        private int FindBytes(byte[] buffer, int bufferPointer, long bufferSize, byte[] pattern, long patternSize)
+        private int FindBytes(byte[] buffer, int offset, long bufferLeft, byte[] pattern)
         {
-            if (bufferSize - bufferPointer < patternSize)
-                return -1;
-
-            long bufferLeft = bufferSize;
-            while((bufferPointer = Array.IndexOf(buffer, pattern[0], bufferPointer, (int)bufferLeft)) != -1)
+            while((offset = Array.IndexOf(buffer, pattern[0], offset, (int)bufferLeft)) != -1)
             {
-                if (patternSize > bufferLeft)
+                if (pattern.Length > bufferLeft)
                     break;
 
-                if (BitConverter.ToString(buffer, bufferPointer, (int)patternSize) != BitConverter.ToString(pattern, 0, (int)patternSize))
-                    return bufferPointer;
+                var temp = new ArraySegment<byte>(buffer, offset, pattern.Length);
+                if (temp.SequenceEqual(pattern))
+                    return offset;
 
-                ++bufferPointer;
+                ++offset;
                 --bufferLeft;
             }
 
@@ -804,9 +716,7 @@ namespace UnshieldSharp
             if (string.IsNullOrWhiteSpace(filename))
                 return false;
 
-            this.filenamePattern = Path.Combine(
-                Path.GetDirectoryName(filename),
-                Path.GetFileNameWithoutExtension(filename));
+            this.filenamePattern = Path.Combine(Path.GetDirectoryName(filename), Path.GetFileNameWithoutExtension(filename));
             this.filenamePattern = new Regex(@"\d+$").Replace(this.filenamePattern, string.Empty);
 
             return true;
@@ -839,7 +749,7 @@ namespace UnshieldSharp
         private FileDescriptor ReadFileDescriptor(int index)
         {
             // TODO: multi-volume support...
-            FileDescriptor fd = FileDescriptor.Create(this.HeaderList, this.HeaderList.MajorVersion, index);
+            FileDescriptor fd = FileDescriptor.Create(this.HeaderList, index);
             if (!fd.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED) && fd.CompressedSize != fd.ExpandedSize)
                 Console.Error.WriteLine($"File is not compressed but compressed size is {fd.CompressedSize} and expanded size is {fd.ExpandedSize}");
 
@@ -851,28 +761,21 @@ namespace UnshieldSharp
         /// </summary>
         private bool ReadHeaders(int version)
         {
-            bool iterate = true;
-            Header previous = null;
-
             if (this.HeaderList != null)
             {
                 Console.Error.WriteLine("Already have a header list");
                 return true;
             }
 
+            bool iterate = true;
+            Header previous = null;
             for (int i = 1; iterate; i++)
             {
                 var file = OpenFileForReading(i, Constants.HEADER_SUFFIX);
                 if (file != null)
-                {
-                    // unshield_trace("Reading header from .hdr file %i.", i);
                     iterate = false;
-                }
                 else
-                {
-                    // unshield_trace("Could not open .hdr file %i. Reading header from .cab file %i instead.", i, i);
                     file = OpenFileForReading(i, Constants.CABINET_SUFFIX);
-                }
 
                 if (file == null)
                     break;

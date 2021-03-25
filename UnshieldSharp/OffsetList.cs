@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.IO;
 
 namespace UnshieldSharp
 {
@@ -14,17 +14,17 @@ namespace UnshieldSharp
         }
 
         /// <summary>
-        /// Create a new OffsetList from a header and data offset
+        /// Create a new OffsetList from a stream and offset
         /// </summary>
-        public static OffsetList Create(Header header, int offset)
+        public static OffsetList Create(Stream stream, int offset)
         {
-            var list = new OffsetList();
-
-            list.NameOffset = BitConverter.ToUInt32(header.Data, offset); offset += 4;
-            list.DescriptorOffset = BitConverter.ToUInt32(header.Data, offset); offset += 4;
-            list.NextOffset = BitConverter.ToUInt32(header.Data, offset); offset += 4;
-
-            return list;
+            stream.Seek(offset, SeekOrigin.Begin);
+            return new OffsetList
+            {
+                NameOffset = stream.ReadUInt32(),
+                DescriptorOffset = stream.ReadUInt32(),
+                NextOffset = stream.ReadUInt32(),
+            };
         }
     }
 }
