@@ -73,6 +73,25 @@ namespace UnshieldSharp.Blast
         #endregion
 
         /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="inhow">Input byte array</param>
+        /// <param name="outhow">Output byte list</param>
+        public State(byte[] inhow, List<byte> outhow)
+        {
+            InHow = inhow;
+            Input = new List<byte>();
+            InputPtr = 0;
+            Left = 0;
+            BitBuf = 0;
+            BitCnt = 0;
+
+            OutHow = outhow;
+            Next = 0;
+            First = true;
+        }
+
+        /// <summary>
         /// Return need bits from the input stream.  This always leaves less than
         /// eight bits in the buffer.  bits() works properly for need == 0.
         /// </summary>

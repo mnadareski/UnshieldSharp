@@ -117,25 +117,13 @@ namespace UnshieldSharp.Blast
         public static int Blast(byte[] inhow, List<byte> outhow)
         {
             // Input/output state
-            State s = new State
-            {
-                InHow = inhow,
-                Input = new List<byte>(),
-                InputPtr = 0,
-                Left = 0,
-                BitBuf = 0,
-                BitCnt = 0,
-
-                OutHow = outhow,
-                Next = 0,
-                First = true,
-            };
+            State state = new State(inhow, outhow);
 
             // Attempt to decompress using the above state
             int err;
             try
             {
-                err = Decomp(s);
+                err = Decomp(state);
             }
             catch (IndexOutOfRangeException)
             {
@@ -144,7 +132,7 @@ namespace UnshieldSharp.Blast
             }
 
             // Write any leftover output and update the error code if needed
-            if (err != 1 && s.Next != 0 && !s.ProcessOutput() && err == 0)
+            if (err != 1 && state.Next != 0 && !state.ProcessOutput() && err == 0)
                 err = 1;
 
             return err;
@@ -187,7 +175,7 @@ namespace UnshieldSharp.Blast
         /// ignoring whether the length is greater than the distance or not implements
         /// this correctly.
         /// </remarks>
-        private static int Decomp(State s)
+        private static int Decomp(State state)
         {
             int symbol;         // decoded symbol, extra bits for distance
             int len;            // length for copy
@@ -196,64 +184,64 @@ namespace UnshieldSharp.Blast
             int from, to;       // copy pointers
 
             // Read header
-            int lit = s.Bits(8); // true if literals are coded
+            int lit = state.Bits(8); // true if literals are coded
             if (lit > 1)
                 return -1;
 
-            int dict = s.Bits(8); // log2(dictionary size) - 6
+            int dict = state.Bits(8); // log2(dictionary size) - 6
             if (dict < 4 || dict > 6)
                 return -2;
 
             // Decode literals and length/distance pairs
             do
             {
-                if (s.Bits(1) != 0)
+                if (state.Bits(1) != 0)
                 {
                     // Get length
-                    symbol = lencode.Decode(s);
-                    len = baseLength[symbol] + s.Bits(extra[symbol]);
+                    symbol = lencode.Decode(state);
+                    len = baseLength[symbol] + state.Bits(extra[symbol]);
                     if (len == 519)
                         break; // end code
 
                     // Get distance
                     symbol = len == 2 ? 2 : dict;
-                    dist = (uint)(distcode.Decode(s) << symbol);
-                    dist += (uint)s.Bits(symbol);
+                    dist = (uint)(distcode.Decode(state) << symbol);
+                    dist += (uint)state.Bits(symbol);
                     dist++;
-                    if (s.First && dist > s.Next)
+                    if (state.First && dist > state.Next)
                         return -3; //distance too far back
 
                     // Copy length bytes from distance bytes back
                     do
                     {
-                        to = (int)(s.OutputPtr + s.Next);
+                        to = (int)(state.OutputPtr + state.Next);
                         from = (int)(to - dist);
                         copy = Constants.MAXWIN;
-                        if (s.Next < dist)
+                        if (state.Next < dist)
                         {
                             from += copy;
                             copy = (int)dist;
                         }
 
-                        copy -= (int)s.Next;
+                        copy -= (int)state.Next;
                         if (copy > len)
                             copy = len;
 
                         len -= copy;
-                        s.Next += (uint)copy;
+                        state.Next += (uint)copy;
                         do
                         {
-                            s.Output[to++] = s.Output[from++];
+                            state.Output[to++] = state.Output[from++];
                         }
                         while (--copy != 0);
 
-                        if (s.Next == Constants.MAXWIN)
+                        if (state.Next == Constants.MAXWIN)
                         {
-                            if (!s.ProcessOutput())
+                            if (!state.ProcessOutput())
                                 return 1;
 
-                            s.Next = 0;
-                            s.First = false;
+                            state.Next = 0;
+                            state.First = false;
                         }
                     }
                     while (len != 0);
@@ -261,15 +249,15 @@ namespace UnshieldSharp.Blast
                 else
                 {
                     // Get literal and write it
-                    symbol = lit != 0 ? litcode.Decode(s) : s.Bits(8);
-                    s.Output[s.Next++] = (byte)symbol;
-                    if (s.Next == Constants.MAXWIN)
+                    symbol = lit != 0 ? litcode.Decode(state) : state.Bits(8);
+                    state.Output[state.Next++] = (byte)symbol;
+                    if (state.Next == Constants.MAXWIN)
                     {
-                        if (!s.ProcessOutput())
+                        if (!state.ProcessOutput())
                             return 1;
                         
-                        s.Next = 0;
-                        s.First = false;
+                        state.Next = 0;
+                        state.First = false;
                     }
                 }
             }
