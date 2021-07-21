@@ -11,11 +11,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using UnshieldSharp.Blast;
 
 namespace UnshieldSharp.Archive
@@ -126,11 +124,6 @@ namespace UnshieldSharp.Archive
                 return (false, "Cannot open file");
             }
             
-            // Validate that we have at least some data to read
-            long fileSize = inputStream.Length;
-            if (fileSize <= 51) // sizeof(Header)
-                return (false, "File too small");
-
             // Create the header from the input file
             Header = Header.Create(inputStream);
             if (Header == null)
@@ -141,11 +134,12 @@ namespace UnshieldSharp.Archive
                 return (false, "Invalid signature");
 
             // Validate the TOC
+            long fileSize = inputStream.Length;
             if (Header.TocAddress >= fileSize)
                 return (false, $"Invalid TOC address: {Header.TocAddress}");
 
             // Move to the TOC
-            inputStream.Seek((long)Header.TocAddress, SeekOrigin.Begin);
+            inputStream.Seek(Header.TocAddress, SeekOrigin.Begin);
 
             // Read all directory info
             for (int i = 0; i < Header.DirCount; i++)
@@ -165,12 +159,12 @@ namespace UnshieldSharp.Archive
                 for (int i = 0; i < directory.FileCount; i++)
                 {
                     // Read in the file information
-                    inputStream.Seek(7, SeekOrigin.Current);        // 00-06
-                    uint compressedSize = inputStream.ReadUInt32(); // 07-10
-                    inputStream.Seek(12, SeekOrigin.Current);       // 11-22
-                    ushort chunkSize = inputStream.ReadUInt16();    // 23-24
-                    inputStream.Seek(4, SeekOrigin.Current);        // 25-28
-                    string filename = inputStream.ReadUInt8HeaderedString();
+                    inputStream.Seek(7, SeekOrigin.Current);                    // 00-06
+                    uint compressedSize = inputStream.ReadUInt32();             // 07-10
+                    inputStream.Seek(12, SeekOrigin.Current);                   // 11-22
+                    ushort chunkSize = inputStream.ReadUInt16();                // 23-24
+                    inputStream.Seek(4, SeekOrigin.Current);                    // 25-28
+                    string filename = inputStream.ReadUInt8HeaderedString();    // 29-XX
                     inputStream.Seek(chunkSize - filename.Length - 30, SeekOrigin.Current);
 
                     // Determine the full path of the internal file
