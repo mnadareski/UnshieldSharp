@@ -18,12 +18,15 @@ using UnshieldSharp.Blast;
 
 namespace UnshieldSharp.Archive
 {
-    /* InstallShield V3 .Z archive reader.
-    *
-    * Reference (de)compressor: https://www.sac.sk/download/pack/icomp95.zip
-    *
-    * Assumes little-endian byte order. Don't bother,
-    * until someone verifies that blast.c works on big-endian. */
+    /// <summary>
+    /// InstallShield V3 .Z archive reader.
+    /// 
+    /// Reference (de)compressor: https://www.sac.sk/download/pack/icomp95.zip
+    /// </summary>
+    /// <remarks>
+    /// Assumes little-endian byte order. Don't bother,
+    /// until someone verifies that blast.c works on big-endian.
+    /// </remarks>
     public unsafe class InstallShieldArchiveV3
     {
         /// <summary>

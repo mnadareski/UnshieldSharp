@@ -19,12 +19,12 @@ namespace UnshieldSharp.Blast
         /// <summary>
         /// Pointer to number of symbols of each length
         /// </summary>
-        public int CountPtr;
+        public int CountPtr { get; set; }
 
         /// <summary>
         /// Canonically ordered symbols
         /// </summary>
-        public short[] Symbol;
+        public short[] Symbol { get; set; }
 
         /// <summary>
         /// Constructor

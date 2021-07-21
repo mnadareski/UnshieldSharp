@@ -120,7 +120,6 @@ namespace UnshieldSharp.Blast
             State s = new State
             {
                 InHow = inhow,
-                InHowPtr = 0,
                 Input = new List<byte>(),
                 InputPtr = 0,
                 Left = 0,
@@ -128,7 +127,6 @@ namespace UnshieldSharp.Blast
                 BitCnt = 0,
 
                 OutHow = outhow,
-                OutHowPtr = 0,
                 Next = 0,
                 First = true,
             };

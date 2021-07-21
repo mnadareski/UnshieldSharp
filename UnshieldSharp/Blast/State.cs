@@ -14,37 +14,32 @@ namespace UnshieldSharp.Blast
         /// <summary>
         /// Opaque information passed to InputFunction()
         /// </summary>
-        public byte[] InHow;
-
-        /// <summary>
-        /// Pointer to opaque information
-        /// </summary>
-        public int InHowPtr;
+        public byte[] InHow { get; set; }
         
         /// <summary>
         /// Next input location
         /// </summary>
-        public List<byte> Input;
-        
+        public List<byte> Input { get; set; }
+
         /// <summary>
         /// Pointer to the next input location
         /// </summary>
-        public int InputPtr;
-        
+        public int InputPtr { get; set; }
+
         /// <summary>
         /// Available input at in
         /// </summary>
-        public uint Left;
-        
+        public uint Left { get; set; }
+
         /// <summary>
         /// Bit buffer
         /// </summary>
-        public int BitBuf;
-        
+        public int BitBuf { get; set; }
+
         /// <summary>
         /// Number of bits in bit buffer
         /// </summary>
-        public int BitCnt;
+        public int BitCnt { get; set; }
 
         #endregion
 
@@ -53,32 +48,27 @@ namespace UnshieldSharp.Blast
         /// <summary>
         /// Opaque information passed to OutputFunction()
         /// </summary>
-        public List<byte> OutHow;
+        public List<byte> OutHow { get; set; }
 
-        /// <summary>
-        /// Pointer to opaque information
-        /// </summary>
-        public int OutHowPtr;
-        
         /// <summary>
         /// Index of next write location in out[]
         /// </summary>
-        public uint Next;
-        
+        public uint Next { get; set; }
+
         /// <summary>
         /// True to check distances (for first 4K)
         /// </summary>
-        public bool First;
-        
+        public bool First { get; set; }
+
         /// <summary>
         /// Output buffer and sliding window
         /// </summary>
-        public byte[] Output = new byte[Constants.MAXWIN];
+        public byte[] Output { get; set; } = new byte[Constants.MAXWIN];
 
         /// <summary>
         /// Pointer to the next output location
         /// </summary>
-        public int OutputPtr;
+        public int OutputPtr { get; set; }
 
         #endregion
 
