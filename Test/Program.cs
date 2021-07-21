@@ -43,11 +43,11 @@ namespace Test
 
                 Console.WriteLine("Directory List:");
                 foreach (ArchiveDirectory directory in archive.Directories)
-                    Console.WriteLine($"Directory: {directory.Name}");
+                    Console.WriteLine($"Directory: {directory.Name ?? string.Empty}, File Count: {directory.FileCount}");
 
                 Console.WriteLine("File list:");
-                foreach (var kvp in archive.Files)
-                    Console.WriteLine($"File: {kvp.Key}, {kvp.Value.Name}");
+                foreach (CompressedFile cfile in archive.Files.Select(kvp => kvp.Value))
+                    Console.WriteLine($"File: {cfile.FullPath ?? string.Empty}, Compressed Size: {cfile.CompressedSize}, Offset: {cfile.Offset}");
             }
 
             if (extract)
