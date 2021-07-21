@@ -97,13 +97,13 @@ namespace UnshieldSharp.Archive
                 return (null, "Could not read all required data");
 
             // Decompress the data
-            byte[] output = new byte[0];
+            List<byte> output = new List<byte>();
             int ret = BlastDecoder.Blast(compressedData, output);
             if (ret != 0)
                 return (null, $"Blast error: {ret}");
 
             // Return the decompressed data
-            return (output, null);
+            return (output.ToArray(), null);
         }
 
         /// <summary>

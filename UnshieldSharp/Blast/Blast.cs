@@ -30,6 +30,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace UnshieldSharp.Blast
 {
@@ -117,14 +118,14 @@ namespace UnshieldSharp.Blast
         /// compressed data is not corrupted when read or written.  For example:
         /// fopen(..., "rb") and fopen(..., "wb").
         /// </summary>
-        public static int Blast(byte[] inhow, byte[] outhow)
+        public static int Blast(byte[] inhow, List<byte> outhow)
         {
             // Input/output state
             State s = new State
             {
                 InHow = inhow,
                 InHowPtr = 0,
-                Input = null,
+                Input = new List<byte>(),
                 InputPtr = 0,
                 Left = 0,
                 BitBuf = 0,

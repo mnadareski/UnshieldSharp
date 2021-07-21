@@ -1,4 +1,5 @@
-using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace UnshieldSharp.Blast
 {
@@ -22,7 +23,7 @@ namespace UnshieldSharp.Blast
         /// <summary>
         /// Next input location
         /// </summary>
-        public byte[] Input;
+        public List<byte> Input;
         
         /// <summary>
         /// Pointer to the next input location
@@ -51,7 +52,7 @@ namespace UnshieldSharp.Blast
         /// <summary>
         /// Opaque information passed to OutputFunction()
         /// </summary>
-        public byte[] OutHow;
+        public List<byte> OutHow;
 
         /// <summary>
         /// Pointer to opaque information
@@ -85,16 +86,8 @@ namespace UnshieldSharp.Blast
         /// </summary>
         public uint ProcessInput()
         {
-            // TODO: Verify that this matches the original implementation properly
-            // int _blast_out(void *how, unsigned char *buf, unsigned len) {
-            //     std::vector<unsigned char> *outbuf = reinterpret_cast<std::vector<unsigned char>*>(how);
-            //     outbuf->insert(outbuf->end(), &buf[0], &buf[len]);
-            //     return false; // would indicate write error
-            // }
-
-            int length = InHow.Length - InHowPtr;
-            Array.Copy(InHow, InHowPtr, Input, InputPtr, length);
-            return (uint)length;
+            Input = new List<byte>(InHow);
+            return (uint)Input.Count;
         }
 
         /// <summary>
@@ -102,14 +95,7 @@ namespace UnshieldSharp.Blast
         /// </summary>
         public int ProcessOutput()
         {
-            // TODO: Verify that this matches the original implementation properly
-            // unsigned _blast_in(void *how, unsigned char **buf) {
-            //     std::vector<unsigned char> *inbuf = reinterpret_cast<std::vector<unsigned char>*>(how);
-            //     *buf = inbuf->data();
-            //     return unsigned(inbuf->size());
-            // }
-
-            Array.Copy(Output, 0, OutHow, OutHowPtr, Next);
+            OutHow.AddRange(Output.Take((int)Next));
             return 0; // would indicate write error
         }
     }
