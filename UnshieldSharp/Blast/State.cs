@@ -116,7 +116,7 @@ namespace UnshieldSharp.Blast
                 }
 
                 // Load eight bits
-                val |= Input[InputPtr++] << BitCnt;
+                val |= (int)(Input[InputPtr++]) << BitCnt;
                 Left--;
                 BitCnt += 8;
             }

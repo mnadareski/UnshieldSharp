@@ -193,7 +193,7 @@ namespace UnshieldSharp.Blast
                         throw new IndexOutOfRangeException();
                 }
 
-                bitbuf = state.InputPtr++;
+                bitbuf = state.Input[state.InputPtr++];
                 state.Left--;
                 if (left > 8)
                     left = 8;
