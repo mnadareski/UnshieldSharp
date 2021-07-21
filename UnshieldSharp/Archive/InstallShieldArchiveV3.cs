@@ -42,12 +42,12 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// List of directories found in the archive
         /// </summary>
-        public List<ArchiveDirectory> Directories { get; private set; }
+        public List<ArchiveDirectory> Directories { get; private set; } = new List<ArchiveDirectory>();
 
         /// <summary>
         /// List of files found in the archive
         /// </summary>
-        public Dictionary<string, CompressedFile> Files { get; private set; }
+        public Dictionary<string, CompressedFile> Files { get; private set; } = new Dictionary<string, CompressedFile>();
 
         /// <summary>
         /// Stream representing the input archive
