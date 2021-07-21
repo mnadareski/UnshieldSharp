@@ -2,11 +2,16 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/lk7iopwecojr5ejm?svg=true)](https://ci.appveyor.com/project/mnadareski/unshieldsharp)
 
-C# port of the InstallShield CAB information and extractor [Unshield](https://github.com/twogood/unshield/) with changes to structure to make it more object-oriented. This currently compiles as a library. For an example of usage, please see [BurnOutSharp](https://github.com/mnadareski/BurnOutSharp).
+This library is a C# port of the following projects:
+- [Unshield](https://github.com/twogood/unshield/) - InstallShield CAB information and extractor 
+- [unshieldv3](https://github.com/wfr/unshieldv3) - InstallShield v3 (Z) extractor
+
+Both of the above library code has had changes to structure to make them more object-oriented.
+For an example of usage, please see [BurnOutSharp](https://github.com/mnadareski/BurnOutSharp).
 
 ## Abilities
 
-This code can currently list and extract the contents of all InstalShield CAB files that the base project can. As more things are added to the C library, they will be ported to this as well so the code should be relatively up to date.
+This code can currently list and extract the contents of all supported files that the base projects can. As more things are added to the source libraries, they will be ported to this as well so the code should be relatively up to date.
 
 ## Contributions
 
@@ -14,6 +19,6 @@ Contributions to the project are welcome. Please follow the current coding style
 
 ## External Libraries
 
-UnshieldSharp uses imports the following libraries:
+UnshieldSharp uses the following libraries:
 
 - **zlib.net** - [GitHub](https://github.com/cinderblocks/zlib.net)

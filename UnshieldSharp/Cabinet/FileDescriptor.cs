@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace UnshieldSharp
+namespace UnshieldSharp.Cabinet
 {
     public class FileDescriptor
     {
@@ -25,9 +25,9 @@ namespace UnshieldSharp
 
             if (header.MajorVersion <= 5)
             {
-                int p = (int)(header.CommonHeader.CabDescriptorOffset
-                    + header.CabDescriptor.FileTableOffset
-                    + header.FileTable[header.CabDescriptor.DirectoryCount + index]);
+                int p = (int)(header.CommonHeader.DescriptorOffset
+                    + header.Descriptor.FileTableOffset
+                    + header.FileTable[header.Descriptor.DirectoryCount + index]);
 
                 header.Data.Seek(p, SeekOrigin.Begin);
                 fd.Volume = (ushort)header.Index;
@@ -44,9 +44,9 @@ namespace UnshieldSharp
             }
             else
             {
-                int p = (int)(header.CommonHeader.CabDescriptorOffset
-                    + header.CabDescriptor.FileTableOffset
-                    + header.CabDescriptor.FileTableOffset2
+                int p = (int)(header.CommonHeader.DescriptorOffset
+                    + header.Descriptor.FileTableOffset
+                    + header.Descriptor.FileTableOffset2
                     + index * 0x57);
 
                 header.Data.Seek(p, SeekOrigin.Begin);

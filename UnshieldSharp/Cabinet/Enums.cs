@@ -1,6 +1,6 @@
 using System;
 
-namespace UnshieldSharp
+namespace UnshieldSharp.Cabinet
 {
     [Flags]
     public enum FileDescriptorFlag : ushort

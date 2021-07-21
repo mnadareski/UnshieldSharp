@@ -5,18 +5,18 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using ComponentAce.Compression.Libs.zlib;
 
-namespace UnshieldSharp
+namespace UnshieldSharp.Cabinet
 {
     // TODO: Figure out if individual parts of a split cab can be extracted separately
-    public class UnshieldCabinet
+    public class InstallShieldCabinet
     {
         // Linked CAB headers
         public Header HeaderList { get; set; }
 
         // Internal CAB Counts
         public int ComponentCount { get { return this.HeaderList?.ComponentCount ?? 0; } }
-        public int DirectoryCount { get { return (int)(this.HeaderList?.CabDescriptor?.DirectoryCount ?? 0); } } // TODO: multi-volume support...
-        public int FileCount { get { return (int)(this.HeaderList?.CabDescriptor?.FileCount ?? 0); } } // TODO: multi-volume support...
+        public int DirectoryCount { get { return (int)(this.HeaderList?.Descriptor?.DirectoryCount ?? 0); } } // TODO: multi-volume support...
+        public int FileCount { get { return (int)(this.HeaderList?.Descriptor?.FileCount ?? 0); } } // TODO: multi-volume support...
         public int FileGroupCount { get { return this.HeaderList?.FileGroupCount ?? 0; } }
 
         // Unicode compatibility
@@ -30,7 +30,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Open a file as an InstallShield CAB
         /// </summary>
-        public static UnshieldCabinet Open(string filename)
+        public static InstallShieldCabinet Open(string filename)
         {
             return OpenForceVersion(filename, -1);
         }
@@ -38,9 +38,9 @@ namespace UnshieldSharp
         /// <summary>
         /// Open a file as an InstallShield CAB, forcing a version
         /// </summary>
-        public static UnshieldCabinet OpenForceVersion(string filename, int version)
+        public static InstallShieldCabinet OpenForceVersion(string filename, int version)
         {
-            var cabinet = new UnshieldCabinet();
+            var cabinet = new InstallShieldCabinet();
             if (!cabinet.CreateFilenamePattern(filename))
             {
                 Console.Error.WriteLine("Failed to create filename pattern");
@@ -76,15 +76,15 @@ namespace UnshieldSharp
         /// </summary>
         public string DirectoryName(int index)
         {
-            if (index < 0 || index >= (int)this.HeaderList.CabDescriptor.DirectoryCount)
+            if (index < 0 || index >= (int)this.HeaderList.Descriptor.DirectoryCount)
             {
                 Console.Error.WriteLine($"Failed to get directory name {index}");
                 return null;
             }
 
             // TODO: multi-volume support...
-            int location = (int)(this.HeaderList.CommonHeader.CabDescriptorOffset
-                + this.HeaderList.CabDescriptor.FileTableOffset
+            int location = (int)(this.HeaderList.CommonHeader.DescriptorOffset
+                + this.HeaderList.Descriptor.FileTableOffset
                 + this.HeaderList.FileTable[index]);
             this.HeaderList.Data.Seek(location, SeekOrigin.Begin);
             return this.HeaderList.Data.ReadNullTerminatedString();
@@ -95,7 +95,7 @@ namespace UnshieldSharp
         /// </summary>
         public string FileName(int index)
         {
-            if (index < 0 || index >= (int)this.HeaderList.CabDescriptor.FileCount)
+            if (index < 0 || index >= (int)this.HeaderList.Descriptor.FileCount)
             {
                 Console.Error.WriteLine($"Failed to get file descriptor {index}");
                 return null;
@@ -103,8 +103,8 @@ namespace UnshieldSharp
 
             // TODO: multi-volume support...
             FileDescriptor fd = this.GetFileDescriptor(index);
-            int location = (int)(this.HeaderList.CommonHeader.CabDescriptorOffset
-                + this.HeaderList.CabDescriptor.FileTableOffset
+            int location = (int)(this.HeaderList.CommonHeader.DescriptorOffset
+                + this.HeaderList.Descriptor.FileTableOffset
                 + fd.NameOffset);
             this.HeaderList.Data.Seek(location, SeekOrigin.Begin);
             return this.HeaderList.Data.ReadNullTerminatedString();
@@ -551,9 +551,9 @@ namespace UnshieldSharp
         /// <summary>
         /// Common code for getting the reader
         /// </summary>
-        private UnshieldReader GetReader(int index, FileDescriptor fd)
+        private Reader GetReader(int index, FileDescriptor fd)
         {
-            var reader = UnshieldReader.Create(this, index, fd);
+            var reader = Reader.Create(this, index, fd);
             if (reader == null)
             {
                 Console.Error.WriteLine($"Failed to create data reader for file {index}");
@@ -577,7 +577,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Retrieve a file group based on index
         /// </summary>
-        public UnshieldFileGroup FileGroupGet(int index)
+        public FileGroup FileGroupGet(int index)
         {
             if (index >= 0 && index < this.HeaderList.FileGroupCount)
                 return this.HeaderList.FileGroups[index];
@@ -588,7 +588,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Retrieve a file group based on name
         /// </summary>
-        public UnshieldFileGroup FileGroupFind(string name)
+        public FileGroup FileGroupFind(string name)
         {
             for (int i = 0; i < this.HeaderList.FileGroupCount; i++)
             {
@@ -728,14 +728,14 @@ namespace UnshieldSharp
         private FileDescriptor GetFileDescriptor(int index)
         {
             // TODO: multi-volume support...
-            if (index < 0 || index >= (int)this.HeaderList.CabDescriptor.FileCount)
+            if (index < 0 || index >= (int)this.HeaderList.Descriptor.FileCount)
             {
                 Console.Error.WriteLine("Invalid index");
                 return null;
             }
 
             if (this.HeaderList.FileDescriptors == null)
-                this.HeaderList.FileDescriptors = new FileDescriptor[this.HeaderList.CabDescriptor.FileCount];
+                this.HeaderList.FileDescriptors = new FileDescriptor[this.HeaderList.Descriptor.FileCount];
 
             if (this.HeaderList.FileDescriptors[index] == null)
                 this.HeaderList.FileDescriptors[index] = this.ReadFileDescriptor(index);

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace UnshieldSharp
+namespace UnshieldSharp.Cabinet
 {
     public class OffsetList
     {

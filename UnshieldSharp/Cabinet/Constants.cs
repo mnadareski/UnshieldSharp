@@ -1,4 +1,4 @@
-namespace UnshieldSharp
+namespace UnshieldSharp.Cabinet
 {
     internal static class Constants
     {

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 
-namespace UnshieldSharp
+namespace UnshieldSharp.Cabinet
 {
-    public class CabDescriptor
+    public class Descriptor
     {
         public uint FileTableOffset { get; private set; }             /* 0c */
         public uint FileTableSize { get; private set; }               /* 14 */
@@ -16,11 +16,11 @@ namespace UnshieldSharp
         public uint[] ComponentOffsets { get; private set; } = new uint[Constants.MAX_COMPONENT_COUNT];   /* 0x15a */
     
         /// <summary>
-        /// Create a new CabDescriptor from a Stream and offset
+        /// Create a new Descriptor from a Stream and offset
         /// </summary>
-        public static CabDescriptor Create(Stream stream, uint offset)
+        public static Descriptor Create(Stream stream, uint offset)
         {
-            var descriptor = new CabDescriptor();
+            var descriptor = new Descriptor();
             int p = (int)offset + 0xC;
             stream.Seek(p, SeekOrigin.Begin);
 
