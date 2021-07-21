@@ -1,15 +1,15 @@
 ﻿using System;
 using System.IO;
 
-namespace UnshieldSharp
+namespace UnshieldSharp.Cabinet
 {
     public class CommonHeader
     {
         public uint Signature { get; private set; } // 00
         public uint Version { get; private set; }
         public uint VolumeInfo { get; private set; }
-        public uint CabDescriptorOffset { get; private set; }
-        public uint CabDescriptorSize { get; private set; } // 10
+        public uint DescriptorOffset { get; private set; }
+        public uint DescriptorSize { get; private set; } // 10
 
         /// <summary>
         /// Populate a CommonHeader from a stream
@@ -26,8 +26,8 @@ namespace UnshieldSharp
 
             commonHeader.Version = stream.ReadUInt32();
             commonHeader.VolumeInfo = stream.ReadUInt32();
-            commonHeader.CabDescriptorOffset = stream.ReadUInt32();
-            commonHeader.CabDescriptorSize = stream.ReadUInt32();
+            commonHeader.DescriptorOffset = stream.ReadUInt32();
+            commonHeader.DescriptorSize = stream.ReadUInt32();
 
             return commonHeader;
         }
@@ -55,11 +55,11 @@ namespace UnshieldSharp
                 foreach (byte b in bytes)
                     buffer[bufferPointer++] = b;
 
-                bytes = BitConverter.GetBytes(common.CabDescriptorOffset);
+                bytes = BitConverter.GetBytes(common.DescriptorOffset);
                 foreach (byte b in bytes)
                     buffer[bufferPointer++] = b;
 
-                bytes = BitConverter.GetBytes(common.CabDescriptorSize);
+                bytes = BitConverter.GetBytes(common.DescriptorSize);
                 foreach (byte b in bytes)
                     buffer[bufferPointer++] = b;
             }

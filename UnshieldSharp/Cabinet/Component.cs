@@ -1,8 +1,8 @@
 ﻿using System.IO;
 
-namespace UnshieldSharp
+namespace UnshieldSharp.Cabinet
 {
-    public class UnshieldComponent
+    public class Component
     {
         public string Name { get; private set; }
         public uint FileGroupCount { get; private set; }
@@ -10,11 +10,11 @@ namespace UnshieldSharp
         public uint FileGroupNamesPointer { get; private set; } = 0;
 
         /// <summary>
-        /// Create a new UnshieldComponent from a header and data offset
+        /// Create a new Component from a header and data offset
         /// </summary>
-        public static UnshieldComponent Create(Header header, uint offset)
+        public static Component Create(Header header, uint offset)
         {
-            var component = new UnshieldComponent();
+            var component = new Component();
             int p = header.GetDataOffset(offset);
             
             component.Name = header.GetString((uint)p); p += 4;

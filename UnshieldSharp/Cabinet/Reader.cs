@@ -1,14 +1,14 @@
 ﻿using System;
 using System.IO;
 
-namespace UnshieldSharp
+namespace UnshieldSharp.Cabinet
 {
-    public class UnshieldReader
+    public class Reader
     {
         /// <summary>
         /// Cabinet file to read from
         /// </summary>
-        public UnshieldCabinet Cabinet { get; private set; }
+        public InstallShieldCabinet Cabinet { get; private set; }
 
         /// <summary>
         /// Currently selected index
@@ -48,9 +48,9 @@ namespace UnshieldSharp
         /// <summary>
         /// Create a new UnshieldReader from an existing cabinet, index, and file descriptor
         /// </summary>
-        public static UnshieldReader Create(UnshieldCabinet cabinet, int index, FileDescriptor fileDescriptor)
+        public static Reader Create(InstallShieldCabinet cabinet, int index, FileDescriptor fileDescriptor)
         {
-            var reader = new UnshieldReader
+            var reader = new Reader
             {
                 Cabinet = cabinet,
                 Index = (uint)index,
@@ -110,7 +110,7 @@ namespace UnshieldSharp
             // enable support for split archives for IS5
             if (this.Cabinet.HeaderList.MajorVersion == 5)
             {
-                if (this.Index < (this.Cabinet.HeaderList.CabDescriptor.FileCount - 1)
+                if (this.Index < (this.Cabinet.HeaderList.Descriptor.FileCount - 1)
                     && this.Index == this.VolumeHeader.LastFileIndex
                     && this.VolumeHeader.LastFileSizeCompressed != this.FileDescriptor.CompressedSize)
                 {
