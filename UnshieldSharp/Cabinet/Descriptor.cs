@@ -44,7 +44,7 @@ namespace UnshieldSharp.Cabinet
             
             for (int i = 0; i < MAX_COMPONENT_COUNT; i++)
             {
-                descriptor.ComponentOffsets[i] = descriptor.FileGroupOffsets[i] = stream.ReadUInt32();
+                descriptor.ComponentOffsets[i] = stream.ReadUInt32();
             }
 
             return descriptor;

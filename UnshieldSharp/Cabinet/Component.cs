@@ -16,21 +16,23 @@ namespace UnshieldSharp.Cabinet
         public static Component Create(Header header, uint offset)
         {
             var component = new Component();
-            int p = header.GetDataOffset(offset);
+            int dataOffset = header.GetDataOffset(offset);
+            if (dataOffset == -1 || dataOffset >= header.Data.Length)
+                return null;
             
-            component.Name = header.GetString((uint)p); p += 4;
-            p += header.MajorVersion <= 5 ? 0x6c : 0x6b;
-            header.Data.Seek(p, SeekOrigin.Begin);
+            component.Name = header.GetString((uint)dataOffset); dataOffset += 4;
+            dataOffset += header.MajorVersion <= 5 ? 0x6c : 0x6b;
+            header.Data.Seek(dataOffset, SeekOrigin.Begin);
             component.FileGroupCount = header.Data.ReadUInt16();
             if (component.FileGroupCount > MAX_FILE_GROUP_COUNT)
                 return default;
 
             component.FileGroupNamesPointer = header.Data.ReadUInt32();
-            p = header.GetDataOffset(component.FileGroupNamesPointer);
+            dataOffset = header.GetDataOffset(component.FileGroupNamesPointer);
             component.FileGroupNames = new string[component.FileGroupCount];
             for (int i = 0; i < component.FileGroupCount; i++)
             {
-                component.FileGroupNames[i] = header.GetString((uint)p); p += 4;
+                component.FileGroupNames[i] = header.GetString((uint)dataOffset); dataOffset += 4;
             }
 
             return component;
