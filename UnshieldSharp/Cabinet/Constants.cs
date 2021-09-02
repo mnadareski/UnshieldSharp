@@ -13,8 +13,8 @@ namespace UnshieldSharp.Cabinet
         public const int VOLUME_HEADER_SIZE_V5 = 40;
         public const int VOLUME_HEADER_SIZE_V6 = 64;
 
-        public const int MAX_FILE_GROUP_COUNT = 71;
-        public const int MAX_COMPONENT_COUNT = 71;
+        public const int MAX_FILE_GROUP_COUNT = 81; // Originally 71 - Hangs on 82+
+        public const int MAX_COMPONENT_COUNT = 81; // Originally 71 - Hangs on 82+
 
         #endregion
 
