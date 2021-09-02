@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
 {
@@ -125,17 +126,20 @@ namespace UnshieldSharp.Cabinet
         public bool GetComponents()
         {
             int count = 0;
-            this.Components = new Component[Constants.MAX_COMPONENT_COUNT];
+            this.Components = new Component[MAX_COMPONENT_COUNT];
 
-            for (int i = 0; i < Constants.MAX_COMPONENT_COUNT; i++)
+            for (int i = 0; i < MAX_COMPONENT_COUNT; i++)
             {
                 if (this.Descriptor.ComponentOffsets[i] <= 0)
                     continue;
 
                 var list = new OffsetList(this.Descriptor.ComponentOffsets[i]);
-                while (list.NextOffset > 0)
+                while (list.NextOffset > 0 && count < MAX_COMPONENT_COUNT)
                 {
                     int p = GetDataOffset(list.NextOffset);
+                    if (p == -1)
+                        break;
+
                     list = OffsetList.Create(this.Data, p);
                     this.Components[count++] = Component.Create(this, list.DescriptorOffset);
                 }
@@ -162,17 +166,20 @@ namespace UnshieldSharp.Cabinet
         public bool GetFileGroups()
         {
             int count = 0;
-            this.FileGroups = new FileGroup[Constants.MAX_FILE_GROUP_COUNT];
+            this.FileGroups = new FileGroup[MAX_FILE_GROUP_COUNT];
 
-            for (int i = 0; i < Constants.MAX_FILE_GROUP_COUNT; i++)
+            for (int i = 0; i < MAX_FILE_GROUP_COUNT; i++)
             {
                 if (this.Descriptor.FileGroupOffsets[i] <= 0)
                     continue;
 
                 var list = new OffsetList(this.Descriptor.FileGroupOffsets[i]);
-                while (list.NextOffset > 0)
+                while (list.NextOffset > 0 && count < MAX_FILE_GROUP_COUNT)
                 {
                     int p = GetDataOffset(list.NextOffset);
+                    if (p == -1)
+                        break;
+
                     list = OffsetList.Create(this.Data, p);
                     this.FileGroups[count++] = FileGroup.Create(this, list.DescriptorOffset);
                 }

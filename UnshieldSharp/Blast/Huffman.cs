@@ -1,4 +1,5 @@
 using System;
+using static UnshieldSharp.Blast.Constants;
 
 namespace UnshieldSharp.Blast
 {
@@ -61,7 +62,7 @@ namespace UnshieldSharp.Blast
             short symbol = 0;   // Current symbol when stepping through length[]
             short len;          // Current length when stepping through h.Count[]
             int left;           // Number of possible codes left of current length
-            short[] offs = new short[Constants.MAXBITS + 1];      // offsets in symbol table for each length
+            short[] offs = new short[MAXBITS + 1];      // offsets in symbol table for each length
             short[] length = new short[256];  // Code lengths
 
             // Convert compact repeat counts into symbol bit length list
@@ -82,7 +83,7 @@ namespace UnshieldSharp.Blast
             n = symbol;
 
             // Count number of codes of each length
-            for (len = 0; len <= Constants.MAXBITS; len++)
+            for (len = 0; len <= MAXBITS; len++)
             {
                 Count[len] = 0;
             }
@@ -99,7 +100,7 @@ namespace UnshieldSharp.Blast
 
             // Check for an over-subscribed or incomplete set of lengths
             left = 1; // One possible code of zero length
-            for (len = 1; len <= Constants.MAXBITS; len++)
+            for (len = 1; len <= MAXBITS; len++)
             {
                 left <<= 1;             // One more bit, double codes left
                 left -= Count[len];   // Deduct count from possible codes
@@ -109,7 +110,7 @@ namespace UnshieldSharp.Blast
 
             // Generate offsets into symbol table for each length for sorting
             offs[1] = 0;
-            for (len = 1; len < Constants.MAXBITS; len++)
+            for (len = 1; len < MAXBITS; len++)
             {
                 offs[len + 1] = (short)(offs[len] + Count[len]);
             }
@@ -182,7 +183,7 @@ namespace UnshieldSharp.Blast
                     len++;
                 }
 
-                left = (Constants.MAXBITS + 1) - len;
+                left = (MAXBITS + 1) - len;
                 if (left == 0)
                     break;
 

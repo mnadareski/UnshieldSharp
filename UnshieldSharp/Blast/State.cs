@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static UnshieldSharp.Blast.Constants;
 
 namespace UnshieldSharp.Blast
 {
@@ -63,7 +64,7 @@ namespace UnshieldSharp.Blast
         /// <summary>
         /// Output buffer and sliding window
         /// </summary>
-        public byte[] Output { get; set; } = new byte[Constants.MAXWIN];
+        public byte[] Output { get; set; } = new byte[MAXWIN];
 
         /// <summary>
         /// Pointer to the next output location

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
 {
@@ -12,8 +13,8 @@ namespace UnshieldSharp.Cabinet
         public uint FileCount { get; private set; }                   /* 28 */
         public uint FileTableOffset2 { get; private set; }            /* 2c */
 
-        public uint[] FileGroupOffsets { get; private set; } = new uint[Constants.MAX_FILE_GROUP_COUNT];  /* 0x3e  */
-        public uint[] ComponentOffsets { get; private set; } = new uint[Constants.MAX_COMPONENT_COUNT];   /* 0x15a */
+        public uint[] FileGroupOffsets { get; private set; } = new uint[MAX_FILE_GROUP_COUNT];  /* 0x3e  */
+        public uint[] ComponentOffsets { get; private set; } = new uint[MAX_COMPONENT_COUNT];   /* 0x15a */
     
         /// <summary>
         /// Create a new Descriptor from a Stream and offset
@@ -36,12 +37,12 @@ namespace UnshieldSharp.Cabinet
                 Console.Error.WriteLine("File table sizes do not match");
 
             stream.Seek(0xE, SeekOrigin.Current);
-            for (int i = 0; i < Constants.MAX_FILE_GROUP_COUNT; i++)
+            for (int i = 0; i < MAX_FILE_GROUP_COUNT; i++)
             {
                 descriptor.FileGroupOffsets[i] = stream.ReadUInt32();
             }
             
-            for (int i = 0; i < Constants.MAX_COMPONENT_COUNT; i++)
+            for (int i = 0; i < MAX_COMPONENT_COUNT; i++)
             {
                 descriptor.ComponentOffsets[i] = descriptor.FileGroupOffsets[i] = stream.ReadUInt32();
             }

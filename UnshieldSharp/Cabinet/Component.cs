@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
 {
@@ -21,7 +22,7 @@ namespace UnshieldSharp.Cabinet
             p += header.MajorVersion <= 5 ? 0x6c : 0x6b;
             header.Data.Seek(p, SeekOrigin.Begin);
             component.FileGroupCount = header.Data.ReadUInt16();
-            if (component.FileGroupCount > Constants.MAX_FILE_GROUP_COUNT)
+            if (component.FileGroupCount > MAX_FILE_GROUP_COUNT)
                 return default;
 
             component.FileGroupNamesPointer = header.Data.ReadUInt32();

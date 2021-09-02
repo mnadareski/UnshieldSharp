@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using ComponentAce.Compression.Libs.zlib;
+using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
 {
@@ -175,12 +176,12 @@ namespace UnshieldSharp.Cabinet
             MD5 md5 = MD5.Create();
             md5.Initialize();
             ulong bytesLeft = GetBytesToRead(fileDescriptor);
-            byte[] inputBuffer = new byte[Constants.BUFFER_SIZE + 1];
-            byte[] outputBuffer = new byte[Constants.BUFFER_SIZE];
+            byte[] inputBuffer = new byte[BUFFER_SIZE + 1];
+            byte[] outputBuffer = new byte[BUFFER_SIZE];
             ulong totalWritten = 0;
             while (bytesLeft > 0)
             {
-                ulong bytesToWrite = Constants.BUFFER_SIZE;
+                ulong bytesToWrite = BUFFER_SIZE;
                 int result;
 
                 if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED))
@@ -219,7 +220,7 @@ namespace UnshieldSharp.Cabinet
 
                     if (result != zlibConst.Z_OK)
                     {
-                        Console.Error.WriteLine($"Decompression failed with code {result}. bytes_to_read={bytesToRead}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
+                        Console.Error.WriteLine($"Decompression failed with code {result}. bytes_to_read={BitConverter.ToUInt16(bytesToRead, 0)}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
                         reader.Dispose();
                         output.Close();
                         return false;
@@ -230,7 +231,7 @@ namespace UnshieldSharp.Cabinet
                 }
                 else
                 {
-                    bytesToWrite = Math.Min(bytesLeft, Constants.BUFFER_SIZE);
+                    bytesToWrite = Math.Min(bytesLeft, BUFFER_SIZE);
                     if (!reader.Read(outputBuffer, 0, (int)bytesToWrite))
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
@@ -301,9 +302,9 @@ namespace UnshieldSharp.Cabinet
             }
 
             ulong bytesLeft = GetBytesToRead(fileDescriptor);
-            long inputBufferSize = Constants.BUFFER_SIZE;
-            byte[] inputBuffer = new byte[Constants.BUFFER_SIZE];
-            byte[] outputBuffer = new byte[Constants.BUFFER_SIZE];
+            long inputBufferSize = BUFFER_SIZE;
+            byte[] inputBuffer = new byte[BUFFER_SIZE];
+            byte[] outputBuffer = new byte[BUFFER_SIZE];
             ulong totalWritten = 0;
             while (bytesLeft > 0)
             {
@@ -384,7 +385,7 @@ namespace UnshieldSharp.Cabinet
                         // add a null byte to make inflate happy
                         inputBuffer[chunkSize] = 0;
 
-                        bytesToWrite = Constants.BUFFER_SIZE;
+                        bytesToWrite = BUFFER_SIZE;
                         readBytes = (ulong)chunkSize;
                         result = UncompressOld(outputBuffer, ref bytesToWrite, inputBuffer, ref readBytes);
 
@@ -410,7 +411,7 @@ namespace UnshieldSharp.Cabinet
                 }
                 else
                 {
-                    bytesToWrite = Math.Min(bytesLeft, Constants.BUFFER_SIZE);
+                    bytesToWrite = Math.Min(bytesLeft, BUFFER_SIZE);
                     if (!reader.Read(outputBuffer, 0, (int)bytesToWrite))
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
@@ -465,10 +466,10 @@ namespace UnshieldSharp.Cabinet
             }
             
             ulong bytesLeft = GetBytesToRead(fileDescriptor);
-            byte[] outputBuffer = new byte[Constants.BUFFER_SIZE];
+            byte[] outputBuffer = new byte[BUFFER_SIZE];
             while (bytesLeft > 0)
             {
-                ulong bytesToWrite = Math.Min(bytesLeft, Constants.BUFFER_SIZE);
+                ulong bytesToWrite = Math.Min(bytesLeft, BUFFER_SIZE);
                 if (!reader.Read(outputBuffer, 0, (int)bytesToWrite))
                 {
                     Console.Error.WriteLine($"Failed to read {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
@@ -617,7 +618,7 @@ namespace UnshieldSharp.Cabinet
             };
 
             // make second parameter negative to disable checksum verification
-            int err = stream.inflateInit(-Constants.MAX_WBITS);
+            int err = stream.inflateInit(-MAX_WBITS);
             if (err != zlibConst.Z_OK) return err;
 
             err = stream.inflate(zlibConst.Z_FINISH);
@@ -649,13 +650,13 @@ namespace UnshieldSharp.Cabinet
             sourceLen = 0;
 
             // make second parameter negative to disable checksum verification
-            int err = stream.inflateInit(-Constants.MAX_WBITS);
+            int err = stream.inflateInit(-MAX_WBITS);
             if (err != zlibConst.Z_OK)
                 return err;
 
             while (stream.avail_in > 1)
             {
-                err = stream.inflate(Constants.Z_BLOCK);
+                err = stream.inflate(Z_BLOCK);
                 if (err != zlibConst.Z_OK)
                 {
                     stream.inflateEnd();
@@ -771,11 +772,11 @@ namespace UnshieldSharp.Cabinet
             Header previous = null;
             for (int i = 1; iterate; i++)
             {
-                var file = OpenFileForReading(i, Constants.HEADER_SUFFIX);
+                var file = OpenFileForReading(i, HEADER_SUFFIX);
                 if (file != null)
                     iterate = false;
                 else
-                    file = OpenFileForReading(i, Constants.CABINET_SUFFIX);
+                    file = OpenFileForReading(i, CABINET_SUFFIX);
 
                 if (file == null)
                     break;

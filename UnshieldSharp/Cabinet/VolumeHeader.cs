@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
 {
@@ -30,7 +31,7 @@ namespace UnshieldSharp.Cabinet
 
             if (version <= 5)
             {
-                if (stream.Length - stream.Position < Constants.VOLUME_HEADER_SIZE_V5)
+                if (stream.Length - stream.Position < VOLUME_HEADER_SIZE_V5)
                     return null;
 
                 header.DataOffset = stream.ReadUInt32();
@@ -49,7 +50,7 @@ namespace UnshieldSharp.Cabinet
             }
             else
             {
-                if (stream.Length - stream.Position < Constants.VOLUME_HEADER_SIZE_V6)
+                if (stream.Length - stream.Position < VOLUME_HEADER_SIZE_V6)
                     return null;
 
                 header.DataOffset = stream.ReadUInt32();

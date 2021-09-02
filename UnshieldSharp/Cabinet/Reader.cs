@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
 {
@@ -92,7 +93,7 @@ namespace UnshieldSharp.Cabinet
         public bool OpenVolume(int volume)
         {
             this.VolumeFile?.Close();
-            this.VolumeFile = this.Cabinet.OpenFileForReading(volume, Constants.CABINET_SUFFIX);
+            this.VolumeFile = this.Cabinet.OpenFileForReading(volume, CABINET_SUFFIX);
             if (this.VolumeFile == null)
             {
                 Console.Error.WriteLine($"Failed to open input cabinet file {volume}");

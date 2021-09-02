@@ -31,6 +31,7 @@
 
 using System;
 using System.Collections.Generic;
+using static UnshieldSharp.Blast.Constants;
 
 namespace UnshieldSharp.Blast
 {
@@ -41,17 +42,17 @@ namespace UnshieldSharp.Blast
         /// <summary>
         /// Literal code
         /// </summary>
-        private static readonly Huffman litcode = new Huffman(Constants.MAXBITS + 1, 256);
+        private static readonly Huffman litcode = new Huffman(MAXBITS + 1, 256);
 
         /// <summary>
         /// Length code
         /// </summary>
-        private static readonly Huffman lencode = new Huffman(Constants.MAXBITS + 1, 16);
+        private static readonly Huffman lencode = new Huffman(MAXBITS + 1, 16);
 
         /// <summary>
         /// Distance code
         /// </summary>
-        private static readonly Huffman distcode = new Huffman(Constants.MAXBITS + 1, 64);
+        private static readonly Huffman distcode = new Huffman(MAXBITS + 1, 64);
 
         /// <summary>
         /// Base for length codes
@@ -216,7 +217,7 @@ namespace UnshieldSharp.Blast
                     {
                         to = (int)(state.OutputPtr + state.Next);
                         from = (int)(to - dist);
-                        copy = Constants.MAXWIN;
+                        copy = MAXWIN;
                         if (state.Next < dist)
                         {
                             from += copy;
@@ -235,7 +236,7 @@ namespace UnshieldSharp.Blast
                         }
                         while (--copy != 0);
 
-                        if (state.Next == Constants.MAXWIN)
+                        if (state.Next == MAXWIN)
                         {
                             if (!state.ProcessOutput())
                                 return 1;
@@ -251,7 +252,7 @@ namespace UnshieldSharp.Blast
                     // Get literal and write it
                     symbol = lit != 0 ? litcode.Decode(state) : state.Bits(8);
                     state.Output[state.Next++] = (byte)symbol;
-                    if (state.Next == Constants.MAXWIN)
+                    if (state.Next == MAXWIN)
                     {
                         if (!state.ProcessOutput())
                             return 1;

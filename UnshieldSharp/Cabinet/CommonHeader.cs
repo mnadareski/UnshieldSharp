@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
 {
@@ -16,12 +17,12 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public static CommonHeader Create(Stream stream)
         {
-            if (stream.Length - stream.Position < Constants.COMMON_HEADER_SIZE)
+            if (stream.Length - stream.Position < COMMON_HEADER_SIZE)
                 return null;
 
             var commonHeader = new CommonHeader();
             commonHeader.Signature = stream.ReadUInt32();
-            if (commonHeader.Signature != Constants.CAB_SIGNATURE)
+            if (commonHeader.Signature != CAB_SIGNATURE)
                 return default;
 
             commonHeader.Version = stream.ReadUInt32();
@@ -43,7 +44,7 @@ namespace UnshieldSharp.Cabinet
         {
             try
             {
-                var bytes = BitConverter.GetBytes(Constants.CAB_SIGNATURE);
+                var bytes = BitConverter.GetBytes(CAB_SIGNATURE);
                 foreach (byte b in bytes)
                     buffer[bufferPointer++] = b;
 
