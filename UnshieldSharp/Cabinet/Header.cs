@@ -110,7 +110,11 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public string GetString(uint offset)
         {
-            this.Data.Seek(GetDataOffset(offset), SeekOrigin.Begin);
+            int dataOffset = GetDataOffset(offset);
+            if (dataOffset <= 0)
+                return string.Empty;
+
+            this.Data.Seek(dataOffset, SeekOrigin.Begin);
             return this.Data.ReadNullTerminatedString();
         }
 
@@ -119,6 +123,9 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public static string GetUTF8String(Stream stream, int offset)
         {
+            if (offset <= 0)
+                return string.Empty;
+
             List<byte> buffer = new List<byte>();
             stream.Seek(offset, SeekOrigin.Begin);
             byte b;

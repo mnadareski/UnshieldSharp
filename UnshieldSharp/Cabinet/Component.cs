@@ -17,7 +17,7 @@ namespace UnshieldSharp.Cabinet
         {
             var component = new Component();
             int dataOffset = header.GetDataOffset(offset);
-            if (dataOffset == -1 || dataOffset >= header.Data.Length)
+            if (dataOffset < 0 || dataOffset >= header.Data.Length)
                 return null;
             
             component.Name = header.GetString((uint)dataOffset); dataOffset += 4;
