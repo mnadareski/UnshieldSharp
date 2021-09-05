@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net48;netcoreapp3.1;net5.0</TargetFrameworks>
-    <PlatformTarget>x86</PlatformTarget>
     <Title>UnshieldSharp</Title>
     <AssemblyName>UnshieldSharp</AssemblyName>
     <Description>Port of Unshield to C#</Description>
