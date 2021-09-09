@@ -18,13 +18,12 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <!-- This is needed so that the zlib.net assembly info doesn't interfere with the auto-generated ones -->
-  <PropertyGroup>
-    <DefaultItemExcludes>$(DefaultItemExcludes);zlib.net\AssemblyInfo.cs</DefaultItemExcludes>
-  </PropertyGroup>
-
   <ItemGroup>
     <None Include="LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\zlib.net\zlib.net.csproj" />
   </ItemGroup>
 
 </Project>
