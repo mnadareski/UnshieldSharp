@@ -10,9 +10,9 @@
     <Copyright>Copyright (c)2003-2021 David Eriksson (MIT License), Copyright (c)2018-2021 Matt Nadareski</Copyright>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <RepositoryUrl>https://github.com/mnadareski/UnshieldSharp</RepositoryUrl>
-    <Version>1.6.0</Version>
-    <AssemblyVersion>1.6.0</AssemblyVersion>
-    <FileVersion>1.6.0</FileVersion>
+    <Version>1.6.5</Version>
+    <AssemblyVersion>1.6.5</AssemblyVersion>
+    <FileVersion>1.6.5</FileVersion>
     <IncludeSource>true</IncludeSource>
     <IncludeSymbols>true</IncludeSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
