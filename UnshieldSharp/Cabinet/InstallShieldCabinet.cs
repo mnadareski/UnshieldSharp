@@ -67,7 +67,7 @@ namespace UnshieldSharp.Cabinet
         public string ComponentName(int index)
         {
             if (index >= 0 && index < this.HeaderList.ComponentCount)
-                return this.HeaderList.Components[index].Name;
+                return this.HeaderList.Components[index].Identifier;
             else
                 return null;
         }

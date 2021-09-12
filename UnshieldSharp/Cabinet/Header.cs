@@ -114,8 +114,11 @@ namespace UnshieldSharp.Cabinet
             if (dataOffset <= 0)
                 return string.Empty;
 
+            long originalPosition = this.Data.Position;
             this.Data.Seek(dataOffset, SeekOrigin.Begin);
-            return this.Data.ReadNullTerminatedString();
+            string str = this.Data.ReadNullTerminatedString();
+            this.Data.Seek(originalPosition, SeekOrigin.Begin);
+            return str;
         }
 
         /// <summary>
@@ -144,7 +147,7 @@ namespace UnshieldSharp.Cabinet
         {
             if (this.CommonHeader.DescriptorSize > 0)
             {
-                this.Descriptor = Descriptor.Create(this.Data, this.CommonHeader.DescriptorOffset);
+                this.Descriptor = Descriptor.Create(this.Data, this.CommonHeader);
                 return true;
             }
             else
@@ -168,16 +171,14 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private bool GetComponents()
         {
-            int count = 0;
-            this.Components = new Component[MAX_COMPONENT_COUNT];
-
-            for (int i = 0; i < MAX_COMPONENT_COUNT; i++)
+            var tempComponents = new List<Component>();
+            for (int i = 0; i < this.Descriptor.ComponentOffsets.Length; i++)
             {
                 if (this.Descriptor.ComponentOffsets[i] <= 0)
                     continue;
 
                 var list = new OffsetList(this.Descriptor.ComponentOffsets[i]);
-                while (list.NextOffset > 0 && count < MAX_COMPONENT_COUNT)
+                while (list.NextOffset > 0)
                 {
                     int dataOffset = GetDataOffset(list.NextOffset);
                     if (dataOffset <= 0)
@@ -188,11 +189,16 @@ namespace UnshieldSharp.Cabinet
                     if (component == null)
                         break;
 
-                    this.Components[count++] = component;
+                    tempComponents.Add(component);
                 }
             }
 
-            this.ComponentCount = count;
+            this.Components = tempComponents.ToArray();
+            this.ComponentCount = this.Components.Length;
+
+            if (this.ComponentCount >= MAX_COMPONENT_COUNT)
+                Console.Error.WriteLine($"Read {this.ComponentCount} components but only expected {MAX_COMPONENT_COUNT}");
+
             return true;
         }
 
@@ -201,27 +207,34 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private bool GetFileGroups()
         {
-            int count = 0;
-            this.FileGroups = new FileGroup[MAX_FILE_GROUP_COUNT];
-
-            for (int i = 0; i < MAX_FILE_GROUP_COUNT; i++)
+            var tempFileGroups = new List<FileGroup>();
+            for (int i = 0; i < this.Descriptor.FileGroupOffsets.Length; i++)
             {
                 if (this.Descriptor.FileGroupOffsets[i] <= 0)
                     continue;
 
                 var list = new OffsetList(this.Descriptor.FileGroupOffsets[i]);
-                while (list.NextOffset > 0 && count < MAX_FILE_GROUP_COUNT)
+                while (list.NextOffset > 0)
                 {
                     int dataOffset = GetDataOffset(list.NextOffset);
                     if (dataOffset <= 0)
                         break;
 
                     list = OffsetList.Create(this.Data, dataOffset);
-                    this.FileGroups[count++] = FileGroup.Create(this, list.DescriptorOffset);
+                    var fileGroup = FileGroup.Create(this, list.DescriptorOffset);
+                    if (fileGroup == null)
+                        break;
+
+                    tempFileGroups.Add(fileGroup);
                 }
             }
 
-            this.FileGroupCount = count;
+            this.FileGroups = tempFileGroups.ToArray();
+            this.FileGroupCount = this.FileGroups.Length;
+
+            if (this.FileGroupCount >= MAX_COMPONENT_COUNT)
+                Console.Error.WriteLine($"Read {this.FileGroupCount} file groups but only expected {MAX_FILE_GROUP_COUNT}");
+
             return true;
         }
 
