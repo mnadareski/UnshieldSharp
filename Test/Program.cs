@@ -124,7 +124,7 @@ namespace Test
                 for(int i = 0; i < cab.FileCount; i++)
                 {
                     string filename = new string(cab.FileName(i).Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c).ToArray());
-                    string directory = cab.DirectoryName(cab.FileDirectory(i));
+                    string directory = new string(cab.DirectoryName(cab.FileDirectory(i)).Select(c => Path.GetInvalidPathChars().Contains(c) ? '_' : c).ToArray());
                     string newfile = Path.Combine(baseDirectory, directory, filename);
 
                     if (!Directory.Exists(Path.GetDirectoryName(newfile)))
