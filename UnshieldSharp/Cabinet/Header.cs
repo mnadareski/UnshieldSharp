@@ -216,7 +216,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private void GetFileOffsetTable()
         {
-            int fileTableOffset = (int)(this.CommonHeader.DescriptorOffset + this.Descriptor.FileTableOffset);
+            int fileTableOffset = GetDataOffset(this.Descriptor.FileTableOffset);
             int count = (int)(this.Descriptor.DirectoryCount + this.Descriptor.FileCount);
 
             this.FileOffsetTable = new uint[count];

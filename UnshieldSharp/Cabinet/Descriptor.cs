@@ -25,8 +25,8 @@ namespace UnshieldSharp.Cabinet
         public uint Reserved6 { get; private set; }
         public uint[] FileGroupOffsets { get; private set; } = new uint[MAX_FILE_GROUP_COUNT];
         public uint[] ComponentOffsets { get; private set; } = new uint[MAX_COMPONENT_COUNT];
-        public uint STypesOffset { get; private set; }
-        public uint STableOffset { get; private set; }
+        public uint SetupTypesOffset { get; private set; }
+        public uint SetupTableOffset { get; private set; }
         public uint Reserved7 { get; private set; }
         public uint Reserved8 { get; private set; }
 
@@ -35,6 +35,9 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public static Descriptor Create(Stream stream, CommonHeader commonHeader)
         {
+            if (commonHeader.DescriptorSize <= 0)
+                return default;
+
             stream.Seek(commonHeader.DescriptorOffset, SeekOrigin.Begin);
 
             var descriptor = new Descriptor();
@@ -70,8 +73,8 @@ namespace UnshieldSharp.Cabinet
                 descriptor.ComponentOffsets[i] = stream.ReadUInt32();
             }
 
-            descriptor.STypesOffset = stream.ReadUInt32();
-            descriptor.STableOffset = stream.ReadUInt32();
+            descriptor.SetupTypesOffset = stream.ReadUInt32();
+            descriptor.SetupTableOffset = stream.ReadUInt32();
             descriptor.Reserved7 = stream.ReadUInt32();
             descriptor.Reserved8 = stream.ReadUInt32();
 
