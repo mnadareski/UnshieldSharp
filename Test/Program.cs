@@ -145,6 +145,12 @@ namespace Test
                 return;
 
             var archive = new InstallShieldArchiveV3(file);
+            if (archive == null)
+            {
+                Console.WriteLine($"{file} could not be opened as an InstallShield V3 Archive!");
+                return;
+            }
+
             if (outputInfo)
             {
                 Console.WriteLine($"File count: {archive.Header.FileCount}");
@@ -203,6 +209,12 @@ namespace Test
                 return;
 
             var cab = InstallShieldCabinet.Open(file);
+            if (cab == null)
+            {
+                Console.WriteLine($"{file} could not be opened as an InstallShield Cabinet!");
+                return;
+            }
+
             if (outputInfo)
             {
                 // Component
