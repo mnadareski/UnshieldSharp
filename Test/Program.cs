@@ -10,12 +10,26 @@ namespace Test
     {
         public static void Main(string[] args)
         {
+            // TODO: Add these as parameters in the future
+            bool outputInfo = true;
+            bool extract = true;
             foreach (string arg in args)
             {
+                // TODO: Add this as a parameter in the future
+                string outputDirectory;
+                try
+                {
+                    outputDirectory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(arg)), Path.GetFileNameWithoutExtension(arg));
+                }
+                catch
+                {
+                    outputDirectory = string.Empty;
+                }
+
                 if (arg.EndsWith(".cab", StringComparison.OrdinalIgnoreCase) || arg.EndsWith(".hdr", StringComparison.OrdinalIgnoreCase))
-                    ProcessCabinetPath(arg);
+                    ProcessCabinetPath(arg, outputInfo, extract, outputDirectory);
                 else if (arg.EndsWith(".z", StringComparison.OrdinalIgnoreCase))
-                    ProcessArchivePath(arg);
+                    ProcessArchivePath(arg, outputInfo, extract, outputDirectory);
             }
 
             Console.WriteLine();
@@ -29,7 +43,8 @@ namespace Test
         /// <param name="file">Name of the file to process</param>
         /// <param name="outputInfo">True to display the cabinet information, false otherwise</param>
         /// <param name="extract">True to extract the cabinet, false otherwise</param>
-        private static void ProcessArchivePath(string file, bool outputInfo = true, bool extract = true)
+        /// <param name="outputDirectory">Output directory for extraction</param>
+        private static void ProcessArchivePath(string file, bool outputInfo, bool extract, string outputDirectory)
         {
             if (!File.Exists(file))
                 return;
@@ -52,13 +67,12 @@ namespace Test
 
             if (extract)
             {
-                string baseDirectory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(file)), Path.GetFileNameWithoutExtension(file));
-                if (!Directory.Exists(baseDirectory))
-                    Directory.CreateDirectory(baseDirectory);
+                if (!Directory.Exists(outputDirectory))
+                    Directory.CreateDirectory(outputDirectory);
 
                 foreach (CompressedFile internalFile in archive.Files.Select(kvp => kvp.Value))
                 {
-                    string newfile = Path.Combine(baseDirectory, internalFile.FullPath);
+                    string newfile = Path.Combine(outputDirectory, internalFile.FullPath.Replace('\\', '/'));
 
                     if (!Directory.Exists(Path.GetDirectoryName(newfile)))
                         Directory.CreateDirectory(Path.GetDirectoryName(newfile));
@@ -84,8 +98,8 @@ namespace Test
         /// </summary>
         /// <param name="file">Name of the file to process</param>
         /// <param name="outputInfo">True to display the cabinet information, false otherwise</param>
-        /// <param name="extract">True to extract the cabinet, false otherwise</param>
-        private static void ProcessCabinetPath(string file, bool outputInfo = true, bool extract = true)
+        /// <param name="outputDirectory">Output directory for extraction</param>
+        private static void ProcessCabinetPath(string file, bool outputInfo, bool extract, string outputDirectory)
         {
             if (!File.Exists(file))
                 return;
@@ -117,15 +131,14 @@ namespace Test
             if (extract)
             {
                 // Extract
-                string baseDirectory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(file)), Path.GetFileNameWithoutExtension(file));
-                if (!Directory.Exists(baseDirectory))
-                    Directory.CreateDirectory(baseDirectory);
+                if (!Directory.Exists(outputDirectory))
+                    Directory.CreateDirectory(outputDirectory);
 
                 for(int i = 0; i < cab.FileCount; i++)
                 {
                     string filename = new string(cab.FileName(i).Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c).ToArray());
                     string directory = new string(cab.DirectoryName(cab.FileDirectory(i)).Select(c => Path.GetInvalidPathChars().Contains(c) ? '_' : c).ToArray());
-                    string newfile = Path.Combine(baseDirectory, directory, filename);
+                    string newfile = Path.Combine(outputDirectory, directory, filename);
 
                     if (!Directory.Exists(Path.GetDirectoryName(newfile)))
                         Directory.CreateDirectory(Path.GetDirectoryName(newfile));
