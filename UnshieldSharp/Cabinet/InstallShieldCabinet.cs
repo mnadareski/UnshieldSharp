@@ -190,7 +190,7 @@ namespace UnshieldSharp.Cabinet
                     byte[] bytesToRead = new byte[sizeof(ushort)];
                     if (!reader.Read(bytesToRead, 0, bytesToRead.Length))
                     {
-                        Console.Error.WriteLine($"Failed to read {bytesToRead} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
+                        Console.Error.WriteLine($"Failed to read {bytesToRead.Length} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
                         output.Close();
                         return false;
@@ -207,7 +207,7 @@ namespace UnshieldSharp.Cabinet
 
                     if (!reader.Read(inputBuffer, 0, BitConverter.ToUInt16(bytesToRead, 0)))
                     {
-                        Console.Error.WriteLine($"Failed to read {bytesToRead} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
+                        Console.Error.WriteLine($"Failed to read {bytesToRead.Length} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
                         output.Close();
                         return false;
@@ -234,7 +234,7 @@ namespace UnshieldSharp.Cabinet
                     bytesToWrite = Math.Min(bytesLeft, BUFFER_SIZE);
                     if (!reader.Read(outputBuffer, 0, (int)bytesToWrite))
                     {
-                        Console.Error.WriteLine($"Failed to read {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
+                        Console.Error.WriteLine($"Failed to write {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
                         output.Close();
                         return false;

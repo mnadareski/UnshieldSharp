@@ -10,31 +10,126 @@ namespace Test
     {
         public static void Main(string[] args)
         {
-            // TODO: Add these as parameters in the future
-            bool outputInfo = true;
+            // Setup options
             bool extract = true;
-            foreach (string arg in args)
-            {
-                // TODO: Add this as a parameter in the future
-                string outputDirectory;
-                try
-                {
-                    outputDirectory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(arg)), Path.GetFileNameWithoutExtension(arg));
-                }
-                catch
-                {
-                    outputDirectory = string.Empty;
-                }
+            bool outputInfo = false;
+            bool script = false;
+            string outputDirectory = string.Empty;
 
+            // If we have no args, show the help and quit
+            if (args == null || args.Length == 0)
+            {
+                DisplayHelp();
+                Console.WriteLine("Press Enter to exit the program");
+                Console.ReadLine();
+                return;
+            }
+
+            // Loop through and process the options
+            int firstFileIndex = 0;
+            for (; firstFileIndex < args.Length; firstFileIndex++)
+            {
+                string arg = args[firstFileIndex];
+                if (string.IsNullOrWhiteSpace(arg))
+                    continue;
+
+                if (arg == "-?" || arg == "-h" || arg == "--help")
+                {
+                    DisplayHelp();
+                    Console.WriteLine("Press Enter to exit the program");
+                    Console.ReadLine();
+                    return;
+                }
+                else if (arg == "-i" || arg == "--info")
+                {
+                    outputInfo = true;
+                }
+                else if (arg == "-n" || arg == "--no-extract")
+                {
+                    extract = false;
+                }
+                else if (arg == "-o" || arg == "--output")
+                {
+                    if (firstFileIndex == args.Length - 1)
+                    {
+                        Console.WriteLine("ERROR: No output directory provided");
+                        DisplayHelp();
+                        Console.WriteLine("Press Enter to exit the program");
+                        Console.ReadLine();
+                        return;
+                    }
+
+                    firstFileIndex++;
+                    outputDirectory = args[firstFileIndex].Trim('"');
+                }
+                else if (arg == "-s" || arg == "--script")
+                {
+                    script = true;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            // If we have a no-op situation, just cancel out
+            if (!outputInfo && !extract)
+            {
+                Console.WriteLine("Neither info nor extraction were selected, skipping all files...");
+                    
+                // Only prompt to close when not in script mode
+                if (!script)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Press Enter to exit the program");
+                    Console.ReadLine();
+                }
+            }
+
+            // Loop through all of the input files
+            for (int i = firstFileIndex; i < args.Length; i++)
+            {
+                string arg = args[i];
                 if (arg.EndsWith(".cab", StringComparison.OrdinalIgnoreCase) || arg.EndsWith(".hdr", StringComparison.OrdinalIgnoreCase))
                     ProcessCabinetPath(arg, outputInfo, extract, outputDirectory);
                 else if (arg.EndsWith(".z", StringComparison.OrdinalIgnoreCase))
                     ProcessArchivePath(arg, outputInfo, extract, outputDirectory);
-            }
+                else
+                    Console.WriteLine($"{arg} is not a recognized file by extension");
+            }    
 
+            // Only prompt to close when not in script mode
+            if (!script)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Press Enter to exit the program");
+                Console.ReadLine();
+            }
+        }
+
+        /// <summary>
+        /// Display the help text to console
+        /// </summary>
+        private static void DisplayHelp()
+        {
+            Console.WriteLine("Test     - UnshieldSharp test program");
             Console.WriteLine();
-            Console.WriteLine("Program execution finished!");
-            Console.ReadLine();
+            Console.WriteLine("This program was created to test the functionality found");
+            Console.WriteLine("in the UnshieldSharp library. It is deliberately barebones");
+            Console.WriteLine("due to this purpose. Currently this library supports both");
+            Console.WriteLine("InstallShield cabinet and V3 archive files. Default behavior");
+            Console.WriteLine("extracts the archive/cabinet to a named folder next to the");
+            Console.WriteLine("original file.");
+            Console.WriteLine();
+            Console.WriteLine("Usage: Test.exe <options> <path/to/file> ...");
+            Console.WriteLine();
+            Console.WriteLine("Options:");
+            Console.WriteLine("    -?, -h, --help       Display this help text");
+            Console.WriteLine("    -i, --info           Display archive/cabinet information");
+            Console.WriteLine("    -n, --no-extract     Don't extract the archive");
+            Console.WriteLine("    -o, --output <path>  Set the output directory for extraction");
+            Console.WriteLine("    -s, --script         Script mode (doesn't prompt to close)");
+            Console.WriteLine();
         }
 
         /// <summary>
@@ -67,6 +162,9 @@ namespace Test
 
             if (extract)
             {
+                if (string.IsNullOrWhiteSpace(outputDirectory))
+                    outputDirectory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(file)), Path.GetFileNameWithoutExtension(file));
+
                 if (!Directory.Exists(outputDirectory))
                     Directory.CreateDirectory(outputDirectory);
 
@@ -130,7 +228,9 @@ namespace Test
             
             if (extract)
             {
-                // Extract
+                if (string.IsNullOrWhiteSpace(outputDirectory))
+                    outputDirectory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(file)), Path.GetFileNameWithoutExtension(file));
+
                 if (!Directory.Exists(outputDirectory))
                     Directory.CreateDirectory(outputDirectory);
 
