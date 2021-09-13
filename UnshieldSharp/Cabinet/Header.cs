@@ -1,44 +1,81 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
 {
     public class Header
     {
+        #region Fields
+
+        /// <summary>
+        /// Reference to the next cabinet header
+        /// </summary>
         public Header Next { get; set; }
-        public int Index { get; set; }
-        public Stream Data { get; set; } 
-        public int MajorVersion { get; set; }
 
-        // Shortcuts
-        public CommonHeader CommonHeader { get; private set; } = new CommonHeader();
+        /// <summary>
+        /// Current cabinet header index
+        /// </summary>
+        public int Index { get; private set; }
+
+        /// <summary>
+        /// Stream representing the cabinet set
+        /// </summary>
+        public Stream Data { get; private set; }
+
+        /// <summary>
+        /// Internal major version of the cabinet set
+        /// </summary>
+        public int MajorVersion { get; private set; }
+
+        /// <summary>
+        /// Common file header information
+        /// </summary>
+        public CommonHeader CommonHeader { get; private set; }
+
+        /// <summary>
+        /// Cabinet file descriptor
+        /// </summary>
         public Descriptor Descriptor { get; private set; } = new Descriptor();
-        public uint[] FileTable { get; private set; }
-        public int FileTablePointer { get; private set; }
+
+        /// <summary>
+        /// File offset table
+        /// </summary>
+        public uint[] FileOffsetTable { get; private set; }
+
+        /// <summary>
+        /// File descriptors table
+        /// </summary>
         public FileDescriptor[] FileDescriptors { get; set; }
-        public int FileDescriptorsPointer { get; private set; }
 
-        public int ComponentCount { get; private set; }
+        /// <summary>
+        /// Set of components inside of the cabinet set
+        /// </summary>
         public Component[] Components { get; private set; }
-        public int ComponentsPointer { get; private set; }
 
-        public int FileGroupCount { get; private set; }
+        /// <summary>
+        /// Number of components in the cabinet set
+        /// </summary>
+        public int ComponentCount => this.Components?.Length ?? 0;
+
+        /// <summary>
+        /// Set of file groups inside of the cabinet set
+        /// </summary>
         public FileGroup[] FileGroups { get; private set; }
-        public int FileGroupsCounter { get; private set; }
+
+        /// <summary>
+        /// Number of file groups in the cabinet set
+        /// </summary>
+        public int FileGroupCount => this.FileGroups?.Length ?? 0;
+
+        #endregion
 
         /// <summary>
         /// Create a new Header from a stream, a version, and an index
         /// </summary>
         public static Header Create(Stream stream, int version, int index)
         {
-            var header = new Header
-            {
-                Index = index,
-            };
-            
+            var header = new Header { Index = index };
             if (stream.Length < 4)
             {
                 Console.Error.WriteLine($"Header file {index} is too small");
@@ -52,20 +89,7 @@ namespace UnshieldSharp.Cabinet
                 return null;
             }
 
-            if (version != -1)
-            {
-                header.MajorVersion = version;
-            }
-            else if ((header.CommonHeader.Version >> 24) == 1)
-            {
-                header.MajorVersion = (int)((header.CommonHeader.Version >> 12) & 0xf);
-            }
-            else if ((header.CommonHeader.Version >> 24) == 2 || (header.CommonHeader.Version >> 24) == 4)
-            {
-                header.MajorVersion = (int)(header.CommonHeader.Version & 0xffff);
-                if (header.MajorVersion != 0)
-                    header.MajorVersion /= 100;
-            }
+            header.MajorVersion = version != -1 ? version : header.CommonHeader?.MajorVersion ?? 0;
 
             if (!header.GetDescriptor())
             {
@@ -73,26 +97,14 @@ namespace UnshieldSharp.Cabinet
                 return null;
             }
 
-            if (!header.GetFileTable())
-            {
-                Console.Error.WriteLine($"Failed to read file table from header file {index}");
-                return null;
-            }
-
-            if (!header.GetComponents())
-            {
-                Console.Error.WriteLine($"Failed to read components from header file {index}");
-                return null;
-            }
-            
-            if (!header.GetFileGroups())
-            {
-                Console.Error.WriteLine($"Failed to read file groups from header file {index}");
-                return null;
-            }
+            header.GetFileOffsetTable();
+            header.GetComponents();
+            header.GetFileGroups();
 
             return header;
         }
+
+        #region Helpers
 
         /// <summary>
         /// Get the real data offset
@@ -122,42 +134,6 @@ namespace UnshieldSharp.Cabinet
         }
 
         /// <summary>
-        /// Convert a UInt32 read from a buffer to a string
-        /// </summary>
-        public static string GetUTF8String(Stream stream, int offset)
-        {
-            if (offset <= 0)
-                return string.Empty;
-
-            List<byte> buffer = new List<byte>();
-            stream.Seek(offset, SeekOrigin.Begin);
-            byte b;
-            while ((b = (byte)stream.ReadByte()) != 0x00)
-            {
-                buffer.Add(b);
-            }
-
-            return Encoding.UTF8.GetString(buffer.ToArray());
-        }
-
-        /// <summary>
-        /// Populate the Descriptor from header data
-        /// </summary>
-        private bool GetDescriptor()
-        {
-            if (this.CommonHeader.DescriptorSize > 0)
-            {
-                this.Descriptor = Descriptor.Create(this.Data, this.CommonHeader);
-                return true;
-            }
-            else
-            {
-                Console.Error.WriteLine("No CAB descriptor available!");
-                return false;
-            }
-        }
-
-        /// <summary>
         /// Populate the CommonHeader from header data
         /// </summary>
         private bool GetCommmonHeader()
@@ -167,9 +143,18 @@ namespace UnshieldSharp.Cabinet
         }
 
         /// <summary>
+        /// Populate the Descriptor from header data
+        /// </summary>
+        private bool GetDescriptor()
+        {
+            this.Descriptor = Descriptor.Create(this.Data, this.CommonHeader);
+            return this.Descriptor != default;
+        }
+
+        /// <summary>
         /// Populate the component list from header data
         /// </summary>
-        private bool GetComponents()
+        private void GetComponents()
         {
             var tempComponents = new List<Component>();
             for (int i = 0; i < this.Descriptor.ComponentOffsets.Length; i++)
@@ -194,18 +179,12 @@ namespace UnshieldSharp.Cabinet
             }
 
             this.Components = tempComponents.ToArray();
-            this.ComponentCount = this.Components.Length;
-
-            if (this.ComponentCount >= MAX_COMPONENT_COUNT)
-                Console.Error.WriteLine($"Read {this.ComponentCount} components but only expected {MAX_COMPONENT_COUNT}");
-
-            return true;
         }
 
         /// <summary>
         /// Populate the file group list from header data
         /// </summary>
-        private bool GetFileGroups()
+        private void GetFileGroups()
         {
             var tempFileGroups = new List<FileGroup>();
             for (int i = 0; i < this.Descriptor.FileGroupOffsets.Length; i++)
@@ -230,30 +209,24 @@ namespace UnshieldSharp.Cabinet
             }
 
             this.FileGroups = tempFileGroups.ToArray();
-            this.FileGroupCount = this.FileGroups.Length;
-
-            if (this.FileGroupCount >= MAX_COMPONENT_COUNT)
-                Console.Error.WriteLine($"Read {this.FileGroupCount} file groups but only expected {MAX_FILE_GROUP_COUNT}");
-
-            return true;
         }
 
         /// <summary>
-        /// Populate the file table from header data
+        /// Populate the file offset table from header data
         /// </summary>
-        private bool GetFileTable()
+        private void GetFileOffsetTable()
         {
             int fileTableOffset = (int)(this.CommonHeader.DescriptorOffset + this.Descriptor.FileTableOffset);
             int count = (int)(this.Descriptor.DirectoryCount + this.Descriptor.FileCount);
 
-            this.FileTable = new uint[count];
+            this.FileOffsetTable = new uint[count];
             this.Data.Seek(fileTableOffset, SeekOrigin.Begin);
             for (int i = 0; i < count; i++)
             {
-                this.FileTable[i] = this.Data.ReadUInt32();
+                this.FileOffsetTable[i] = this.Data.ReadUInt32();
             }
-
-            return true;
         }
+
+        #endregion
     }
 }

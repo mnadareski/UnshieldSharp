@@ -27,7 +27,7 @@ namespace UnshieldSharp.Cabinet
             {
                 int p = (int)(header.CommonHeader.DescriptorOffset
                     + header.Descriptor.FileTableOffset
-                    + header.FileTable[header.Descriptor.DirectoryCount + index]);
+                    + header.FileOffsetTable[header.Descriptor.DirectoryCount + index]);
 
                 header.Data.Seek(p, SeekOrigin.Begin);
                 fd.Volume = (ushort)header.Index;

@@ -86,7 +86,7 @@ namespace UnshieldSharp.Cabinet
             // TODO: multi-volume support...
             int location = (int)(this.HeaderList.CommonHeader.DescriptorOffset
                 + this.HeaderList.Descriptor.FileTableOffset
-                + this.HeaderList.FileTable[index]);
+                + this.HeaderList.FileOffsetTable[index]);
             this.HeaderList.Data.Seek(location, SeekOrigin.Begin);
             return this.HeaderList.Data.ReadNullTerminatedString();
         }

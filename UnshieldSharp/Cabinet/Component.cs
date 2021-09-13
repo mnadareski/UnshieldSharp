@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using static UnshieldSharp.Cabinet.Constants;
+﻿using System.IO;
 
 namespace UnshieldSharp.Cabinet
 {
@@ -21,7 +19,7 @@ namespace UnshieldSharp.Cabinet
         public uint[] Reserved1 { get; private set; } = new uint[8];
         public uint CLSIDOffset { get; private set; }
         public uint[] Reserved2 { get; private set; } = new uint[7];
-        public ushort Reserved3 { get; private set; } // WORD for versions below 6, BYTE above that
+        public ushort Reserved3 { get; private set; } // ushort for versions below 6, byte above that
         public ushort DependsCount { get; private set; }
         public uint DependsOffset { get; private set; }
         public uint FileGroupCount { get; private set; }
@@ -82,9 +80,6 @@ namespace UnshieldSharp.Cabinet
             component.DependsOffset = header.Data.ReadUInt32(); // TODO: Read this into a table
 
             component.FileGroupCount = header.Data.ReadUInt16();
-            if (component.FileGroupCount > MAX_FILE_GROUP_COUNT)
-                Console.Error.WriteLine($"Parsed file group count {component.FileGroupCount} but only expected {MAX_FILE_GROUP_COUNT}");
-
             component.FileGroupNamesOffset = header.Data.ReadUInt32();
             dataOffset = header.GetDataOffset(component.FileGroupNamesOffset);
             component.FileGroupNames = new string[component.FileGroupCount];

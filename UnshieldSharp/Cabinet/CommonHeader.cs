@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
@@ -8,6 +7,25 @@ namespace UnshieldSharp.Cabinet
     {
         public uint Signature { get; private set; }
         public uint Version { get; private set; }
+        public int MajorVersion
+        {
+            get
+            {
+                int version = default;
+                if ((this.Version >> 24) == 1)
+                {
+                    version = (int)((Version >> 12) & 0xf);
+                }
+                else if ((Version >> 24) == 2 || (Version >> 24) == 4)
+                {
+                    version = (int)(Version & 0xffff);
+                    if (version != 0)
+                        version /= 100;
+                }
+
+                return version;
+            }
+        }
         public byte NextVolume { get; private set; }
         public byte Reserved0 { get; private set; }
         public ushort Reserved1 { get; private set; }
