@@ -67,7 +67,7 @@ namespace UnshieldSharp.Cabinet
         public string ComponentName(int index)
         {
             if (index >= 0 && index < this.HeaderList.ComponentCount)
-                return this.HeaderList.Components[index].Identifier;
+                return this.HeaderList.Components[index].Identifier.Replace('\\', '/');
             else
                 return null;
         }
@@ -88,7 +88,7 @@ namespace UnshieldSharp.Cabinet
                 + this.HeaderList.Descriptor.FileTableOffset
                 + this.HeaderList.FileOffsetTable[index]);
             this.HeaderList.Data.Seek(location, SeekOrigin.Begin);
-            return this.HeaderList.Data.ReadNullTerminatedString();
+            return this.HeaderList.Data.ReadNullTerminatedString().Replace('\\', '/');
         }
 
         /// <summary>
