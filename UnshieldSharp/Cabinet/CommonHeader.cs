@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
@@ -43,7 +44,14 @@ namespace UnshieldSharp.Cabinet
             var commonHeader = new CommonHeader();
             commonHeader.Signature = stream.ReadUInt32();
             if (commonHeader.Signature != CAB_SIGNATURE)
+            {
+                if (commonHeader.Signature == MSCF_SIGNATURE)
+                    Console.WriteLine("Microsoft CAB found! This cannot be extracted by this library.");
+                else
+                    Console.WriteLine("Non-InstallShield file found! This cannot be extracted by this library.");
+
                 return default;
+            }
 
             commonHeader.Version = stream.ReadUInt32();
             commonHeader.NextVolume = stream.ReadUInt8();
