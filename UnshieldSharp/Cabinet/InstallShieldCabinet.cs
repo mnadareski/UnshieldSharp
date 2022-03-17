@@ -220,7 +220,7 @@ namespace UnshieldSharp.Cabinet
 
                     if (result != zlibConst.Z_OK)
                     {
-                        Console.Error.WriteLine($"Decompression failed with code {result}. bytes_to_read={BitConverter.ToUInt16(bytesToRead, 0)}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
+                        Console.Error.WriteLine($"Decompression failed with code {result.ToZlibConstName()}. bytes_to_read={BitConverter.ToUInt16(bytesToRead, 0)}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
                         reader.Dispose();
                         output.Close();
                         return false;
@@ -391,7 +391,7 @@ namespace UnshieldSharp.Cabinet
 
                         if (result != zlibConst.Z_OK)
                         {
-                            Console.Error.WriteLine($"Decompression failed with code {result}. input_size={inputSize}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
+                            Console.Error.WriteLine($"Decompression failed with code {result.ToZlibConstName()}. input_size={inputSize}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
                             reader.Dispose();
                             output.Close();
                             return false;
