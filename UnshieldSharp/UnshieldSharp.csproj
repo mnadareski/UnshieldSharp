@@ -7,12 +7,12 @@
     <Description>Port of Unshield to C#</Description>
     <Authors>Matt Nadareski;David Eriksson</Authors>
     <Product>UnshieldSharp</Product>
-    <Copyright>Copyright (c)2003-2021 David Eriksson (MIT License), Copyright (c)2018-2021 Matt Nadareski</Copyright>
+    <Copyright>Copyright (c)2003-2022 David Eriksson (MIT License), Copyright (c)2018-2022 Matt Nadareski</Copyright>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <RepositoryUrl>https://github.com/mnadareski/UnshieldSharp</RepositoryUrl>
-    <Version>1.6.6</Version>
-    <AssemblyVersion>1.6.6</AssemblyVersion>
-    <FileVersion>1.6.6</FileVersion>
+    <Version>1.6.7</Version>
+    <AssemblyVersion>1.6.7</AssemblyVersion>
+    <FileVersion>1.6.7</FileVersion>
     <IncludeSource>true</IncludeSource>
     <IncludeSymbols>true</IncludeSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
