@@ -188,6 +188,8 @@ namespace UnshieldSharp.Cabinet
                 {
                     ulong readBytes;
                     byte[] bytesToRead = new byte[sizeof(ushort)];
+
+                    // Attempt to read the length value
                     if (!reader.Read(bytesToRead, 0, bytesToRead.Length))
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToRead.Length} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
@@ -196,8 +198,9 @@ namespace UnshieldSharp.Cabinet
                         return false;
                     }
 
-                    // bytesToRead = letoh16(bytesToRead); // TODO: No-op?
-                    if (BitConverter.ToUInt16(bytesToRead, 0) == 0)
+                    // Validate the number of bytes to read
+                    ushort bytesToReadValue = BitConverter.ToUInt16(bytesToRead, 0);
+                    if (bytesToReadValue == 0)
                     {
                         Console.Error.WriteLine("bytesToRead can't be zero");
                         reader.Dispose();
@@ -205,7 +208,9 @@ namespace UnshieldSharp.Cabinet
                         return false;
                     }
 
-                    if (!reader.Read(inputBuffer, 0, BitConverter.ToUInt16(bytesToRead, 0)))
+                    // Attempt to read the specified number of bytes
+                    inputBuffer = new byte[BUFFER_SIZE + 1];
+                    if (!reader.Read(inputBuffer, 0, bytesToReadValue))
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToRead.Length} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
@@ -213,21 +218,24 @@ namespace UnshieldSharp.Cabinet
                         return false;
                     }
 
-                    // add a null byte to make inflate happy
-                    inputBuffer[BitConverter.ToUInt16(bytesToRead, 0)] = 0;
-                    readBytes = (ulong)(BitConverter.ToUInt16(bytesToRead, 0) + 1);
+                    // Add a null byte to make inflate happy
+                    inputBuffer[bytesToReadValue] = 0;
+                    readBytes = (ulong)(bytesToReadValue + 1);
+                    
+                    // Uncompress into a buffer
                     result = Uncompress(outputBuffer, ref bytesToWrite, inputBuffer, ref readBytes);
 
-                    if (result != zlibConst.Z_OK)
+                    // If we didn't get a positive result that's not a data error (false positives)
+                    if (result != zlibConst.Z_OK && result != zlibConst.Z_DATA_ERROR)
                     {
-                        Console.Error.WriteLine($"Decompression failed with code {result.ToZlibConstName()}. bytes_to_read={BitConverter.ToUInt16(bytesToRead, 0)}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
+                        Console.Error.WriteLine($"Decompression failed with code {result.ToZlibConstName()}. bytes_to_read={bytesToReadValue}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
                         reader.Dispose();
                         output.Close();
                         return false;
                     }
 
                     bytesLeft -= 2;
-                    bytesLeft -= BitConverter.ToUInt16(bytesToRead, 0);
+                    bytesLeft -= bytesToReadValue;
                 }
                 else
                 {
