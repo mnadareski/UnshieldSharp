@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30406.217
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32407.343
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnshieldSharp", "UnshieldSharp\UnshieldSharp.csproj", "{39EDC0B8-5E96-4A16-9104-2D0025836071}"
 EndProject
@@ -9,12 +9,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{06E02175-3BE4-42BD-9307-A063CE56EDEC}"
 	ProjectSection(SolutionItems) = preProject
+		appveyor.yml = appveyor.yml
 		LICENSE-UNSHIELD = LICENSE-UNSHIELD
 		LICENSE-UNSHIELDV3 = LICENSE-UNSHIELDV3
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "zlib.net", "zlib.net\zlib.net.csproj", "{56AD6392-5B95-44B6-B617-A349968047B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "zlib.net", "zlib.net\zlib.net.csproj", "{56AD6392-5B95-44B6-B617-A349968047B4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
