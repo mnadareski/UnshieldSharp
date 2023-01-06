@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net48;net6.0</TargetFrameworks>
     <Title>UnshieldSharp</Title>
     <AssemblyName>UnshieldSharp</AssemblyName>
-    <Description>Port of Unshield to C#</Description>
+    <Description>Port of Unshield and unshieldv3 to C#</Description>
     <Authors>Matt Nadareski;David Eriksson</Authors>
     <Product>UnshieldSharp</Product>
-    <Copyright>Copyright (c)2003-2022 David Eriksson (MIT License), Copyright (c)2018-2022 Matt Nadareski</Copyright>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <Copyright>Copyright(c)2003-2023 David Eriksson (MIT License), Copyright(c) Wolfgang Frisch, Copyright (c)2018-2023 Matt Nadareski</Copyright>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/mnadareski/UnshieldSharp</RepositoryUrl>
     <Version>1.6.8</Version>
     <AssemblyVersion>1.6.8</AssemblyVersion>
@@ -17,10 +17,6 @@
     <IncludeSymbols>true</IncludeSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\zlib.net\zlib.net.csproj">
