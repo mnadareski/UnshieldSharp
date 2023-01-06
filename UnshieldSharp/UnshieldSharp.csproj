@@ -7,7 +7,7 @@
     <Description>Port of Unshield and unshieldv3 to C#</Description>
     <Authors>Matt Nadareski;David Eriksson</Authors>
     <Product>UnshieldSharp</Product>
-    <Copyright>Copyright(c)2003-2023 David Eriksson (MIT License), Copyright(c) Wolfgang Frisch, Copyright (c)2018-2023 Matt Nadareski</Copyright>
+    <Copyright>Copyright (c)2018-2023 Matt Nadareski</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/mnadareski/UnshieldSharp</RepositoryUrl>
     <Version>1.6.8</Version>
