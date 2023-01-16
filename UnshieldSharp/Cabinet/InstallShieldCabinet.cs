@@ -87,6 +87,13 @@ namespace UnshieldSharp.Cabinet
             int location = (int)(this.HeaderList.CommonHeader.DescriptorOffset
                 + this.HeaderList.Descriptor.FileTableOffset
                 + this.HeaderList.FileOffsetTable[index]);
+
+            if (location < 0 || location >= this.HeaderList.Data.Length)
+            {
+                Console.Error.WriteLine($"Failed to get file descriptor {index}");
+                return null;
+            }
+
             this.HeaderList.Data.Seek(location, SeekOrigin.Begin);
             return this.HeaderList.Data.ReadNullTerminatedString().Replace('\\', '/');
         }
@@ -104,9 +111,22 @@ namespace UnshieldSharp.Cabinet
 
             // TODO: multi-volume support...
             FileDescriptor fd = this.GetFileDescriptor(index);
+            if (fd.Flags.HasFlag(FileDescriptorFlag.FILE_INVALID))
+            {
+                Console.Error.WriteLine($"Failed to get file descriptor {index}");
+                return null;
+            }
+
             int location = (int)(this.HeaderList.CommonHeader.DescriptorOffset
                 + this.HeaderList.Descriptor.FileTableOffset
                 + fd.NameOffset);
+
+            if (location < 0 || location >= this.HeaderList.Data.Length)
+            {
+                Console.Error.WriteLine($"Failed to get file descriptor {index}");
+                return null;
+            }
+
             this.HeaderList.Data.Seek(location, SeekOrigin.Begin);
             return this.HeaderList.Data.ReadNullTerminatedString();
         }
