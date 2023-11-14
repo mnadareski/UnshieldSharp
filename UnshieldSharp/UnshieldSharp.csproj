@@ -22,18 +22,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\zlib.net\zlib.net.csproj">
-      <PrivateAssets>all</PrivateAssets>
-    </ProjectReference>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath=""/>
   </ItemGroup>
 
   <!-- Support for old .NET versions -->
   <ItemGroup Condition="$(TargetFramework.StartsWith(`net4`))">
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="zlib.net-mutliplatform" Version="1.0.6" />
   </ItemGroup>
 
 </Project>
