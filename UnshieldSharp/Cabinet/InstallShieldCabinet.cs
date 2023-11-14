@@ -247,7 +247,7 @@ namespace UnshieldSharp.Cabinet
                     // Add a null byte to make inflate happy
                     inputBuffer[bytesToReadValue] = 0;
                     readBytes = (ulong)(bytesToReadValue + 1);
-                    
+
                     // Uncompress into a buffer
                     result = Uncompress(outputBuffer, ref bytesToWrite, inputBuffer, ref readBytes);
 
@@ -498,7 +498,7 @@ namespace UnshieldSharp.Cabinet
                 Console.Error.WriteLine($"Failed to open {filename} for writing");
                 return false;
             }
-            
+
             ulong bytesLeft = GetBytesToRead(fileDescriptor);
             byte[] outputBuffer = new byte[BUFFER_SIZE];
             while (bytesLeft > 0)
@@ -677,7 +677,7 @@ namespace UnshieldSharp.Cabinet
                 next_in = source,
                 avail_in = (int)sourceLen,
                 next_out = dest,
-                avail_out = (int)destLen, 
+                avail_out = (int)destLen,
             };
 
             destLen = 0;
@@ -713,12 +713,12 @@ namespace UnshieldSharp.Cabinet
         public Stream? OpenFileForReading(int index, string suffix)
         {
             if (string.IsNullOrWhiteSpace(this.filenamePattern))
-               return null;
+                return null;
 
             string filename = $"{this.filenamePattern}{index}.{suffix}";
             if (File.Exists(filename))
                 return File.OpenRead(filename);
-            
+
             return null;
         }
 
@@ -727,14 +727,21 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private int FindBytes(byte[] buffer, int offset, long bufferLeft, byte[] pattern)
         {
-            while((offset = Array.IndexOf(buffer, pattern[0], offset, (int)bufferLeft)) != -1)
+            while ((offset = Array.IndexOf(buffer, pattern[0], offset, (int)bufferLeft)) != -1)
             {
                 if (pattern.Length > bufferLeft)
                     break;
 
+#if NET40
+                byte[] temp = new byte[pattern.Length];
+                Array.Copy(buffer, offset, temp, 0, pattern.Length);
+                if (temp.SequenceEqual(pattern))
+                    return offset;
+#else
                 var temp = new ArraySegment<byte>(buffer, offset, pattern.Length);
                 if (temp.SequenceEqual(pattern))
                     return offset;
+#endif
 
                 ++offset;
                 --bufferLeft;
