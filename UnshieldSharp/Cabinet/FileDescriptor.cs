@@ -25,11 +25,11 @@ namespace UnshieldSharp.Cabinet
 
             if (header.MajorVersion <= 5)
             {
-                int p = (int)(header.CommonHeader.DescriptorOffset
-                    + header.Descriptor.FileTableOffset
-                    + header.FileOffsetTable[header.Descriptor.DirectoryCount + index]);
+                int p = (int)(header.CommonHeader!.DescriptorOffset
+                    + header.Descriptor!.FileTableOffset
+                    + header.FileOffsetTable![header.Descriptor.DirectoryCount + index]);
 
-                header.Data.Seek(p, SeekOrigin.Begin);
+                header.Data!.Seek(p, SeekOrigin.Begin);
                 fd.Volume = (ushort)header.Index;
                 fd.NameOffset = header.Data.ReadUInt32();
                 fd.DirectoryIndex = header.Data.ReadUInt32();
@@ -44,12 +44,12 @@ namespace UnshieldSharp.Cabinet
             }
             else
             {
-                int p = (int)(header.CommonHeader.DescriptorOffset
-                    + header.Descriptor.FileTableOffset
+                int p = (int)(header.CommonHeader!.DescriptorOffset
+                    + header.Descriptor!.FileTableOffset
                     + header.Descriptor.FileTableOffset2
                     + index * 0x57);
 
-                header.Data.Seek(p, SeekOrigin.Begin);
+                header.Data!.Seek(p, SeekOrigin.Begin);
                 fd.Flags = (FileDescriptorFlag)header.Data.ReadUInt16();
                 fd.ExpandedSize = header.Data.ReadUInt64();
                 fd.CompressedSize = header.Data.ReadUInt64();

@@ -1,21 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net48;net6.0</TargetFrameworks>
-    <Title>UnshieldSharp</Title>
-    <AssemblyName>UnshieldSharp</AssemblyName>
-    <Description>Port of Unshield and unshieldv3 to C#</Description>
-    <Authors>Matt Nadareski;David Eriksson</Authors>
-    <Product>UnshieldSharp</Product>
-    <Copyright>Copyright (c)2018-2023 Matt Nadareski</Copyright>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/mnadareski/UnshieldSharp</RepositoryUrl>
-    <Version>1.6.9</Version>
-    <AssemblyVersion>1.6.9</AssemblyVersion>
-    <FileVersion>1.6.9</FileVersion>
-    <IncludeSource>true</IncludeSource>
-    <IncludeSymbols>true</IncludeSymbols>
+    <!-- Assembly Properties -->
+    <TargetFrameworks>net472;net48;netcoreapp3.1;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64;linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Version>1.7.0</Version>
+
+    <!-- Package Properties -->
+    <Authors>Matt Nadareski;David Eriksson</Authors>
+    <Description>Port of Unshield and unshieldv3 to C#</Description>
+    <Copyright>Copyright (c)2018-2023 Matt Nadareski</Copyright>
+    <PackageProjectUrl>https://github.com/SabreTools/</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/mnadareski/UnshieldSharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,10 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Teronis.MSBuild.Packaging.ProjectBuildInPackage" Version="0.1.7">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <None Include="../README.md" Pack="true" PackagePath=""/>
   </ItemGroup>
 
 </Project>

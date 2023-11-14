@@ -9,7 +9,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Cabinet file to read from
         /// </summary>
-        public InstallShieldCabinet Cabinet { get; private set; }
+        public InstallShieldCabinet? Cabinet { get; private set; }
 
         /// <summary>
         /// Currently selected index
@@ -19,7 +19,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// File descriptor defining the currently selected index
         /// </summary>
-        public FileDescriptor FileDescriptor { get; private set; }
+        public FileDescriptor? FileDescriptor { get; private set; }
 
         /// <summary>
         /// Current volume ID
@@ -29,12 +29,12 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Handle to the current volume stream
         /// </summary>
-        public Stream VolumeFile { get; private set; }
+        public Stream? VolumeFile { get; private set; }
 
         /// <summary>
         /// Current volume header
         /// </summary>
-        public VolumeHeader VolumeHeader { get; private set; }
+        public VolumeHeader? VolumeHeader { get; private set; }
 
         /// <summary>
         /// Number of bytes left in the current volume
@@ -49,7 +49,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Create a new UnshieldReader from an existing cabinet, index, and file descriptor
         /// </summary>
-        public static Reader Create(InstallShieldCabinet cabinet, int index, FileDescriptor fileDescriptor)
+        public static Reader? Create(InstallShieldCabinet cabinet, int index, FileDescriptor fileDescriptor)
         {
             var reader = new Reader
             {
@@ -67,7 +67,7 @@ namespace UnshieldSharp.Cabinet
                 }
 
                 // Start with the correct volume for IS5 cabinets
-                if (reader.Cabinet.HeaderList.MajorVersion <= 5 && index > (int)reader.VolumeHeader.LastFileIndex)
+                if (reader.Cabinet!.HeaderList!.MajorVersion <= 5 && index > (int)reader.VolumeHeader!.LastFileIndex)
                 {
                     fileDescriptor.Volume++;
                     continue;
@@ -93,7 +93,7 @@ namespace UnshieldSharp.Cabinet
         public bool OpenVolume(int volume)
         {
             this.VolumeFile?.Close();
-            this.VolumeFile = this.Cabinet.OpenFileForReading(volume, CABINET_SUFFIX);
+            this.VolumeFile = this.Cabinet!.OpenFileForReading(volume, CABINET_SUFFIX);
             if (this.VolumeFile == null)
             {
                 Console.Error.WriteLine($"Failed to open input cabinet file {volume}");
@@ -104,29 +104,29 @@ namespace UnshieldSharp.Cabinet
             if (commonHeader == default)
                 return false;
 
-            this.VolumeHeader = VolumeHeader.Create(this.VolumeFile, this.Cabinet.HeaderList.MajorVersion);
+            this.VolumeHeader = VolumeHeader.Create(this.VolumeFile, this.Cabinet.HeaderList!.MajorVersion);
             if (this.VolumeHeader == null)
                 return false;
 
             // enable support for split archives for IS5
             if (this.Cabinet.HeaderList.MajorVersion == 5)
             {
-                if (this.Index < (this.Cabinet.HeaderList.Descriptor.FileCount - 1)
+                if (this.Index < (this.Cabinet.HeaderList.Descriptor!.FileCount - 1)
                     && this.Index == this.VolumeHeader.LastFileIndex
-                    && this.VolumeHeader.LastFileSizeCompressed != this.FileDescriptor.CompressedSize)
+                    && this.VolumeHeader.LastFileSizeCompressed != this.FileDescriptor!.CompressedSize)
                 {
                     this.FileDescriptor.Flags |= FileDescriptorFlag.FILE_SPLIT;
                 }
                 else if (this.Index > 0
                     && this.Index == this.VolumeHeader.FirstFileIndex
-                    && this.VolumeHeader.FirstFileSizeCompressed != this.FileDescriptor.CompressedSize)
+                    && this.VolumeHeader.FirstFileSizeCompressed != this.FileDescriptor!.CompressedSize)
                 {
                     this.FileDescriptor.Flags |= FileDescriptorFlag.FILE_SPLIT;
                 }
             }
 
             ulong dataOffset, volumeBytesLeftCompressed, volumeBytesLeftExpanded;
-            if (this.FileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_SPLIT))
+            if (this.FileDescriptor!.Flags.HasFlag(FileDescriptorFlag.FILE_SPLIT))
             {
                 if (this.Index == this.VolumeHeader.LastFileIndex && this.VolumeHeader.LastFileOffset != 0x7FFFFFFF)
                 {
@@ -194,7 +194,7 @@ namespace UnshieldSharp.Cabinet
                 if (bytesToRead == 0)
                     return false;
 
-                if (bytesToRead != this.VolumeFile.Read(buffer, start, bytesToRead))
+                if (bytesToRead != this.VolumeFile!.Read(buffer, start, bytesToRead))
                     return false;
 
                 bytesLeft -= bytesToRead;
@@ -208,7 +208,7 @@ namespace UnshieldSharp.Cabinet
                 }
             }
 
-            if (this.FileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_OBFUSCATED))
+            if (this.FileDescriptor!.Flags.HasFlag(FileDescriptorFlag.FILE_OBFUSCATED))
                 this.Deobfuscate(buffer, size);
 
             return true;

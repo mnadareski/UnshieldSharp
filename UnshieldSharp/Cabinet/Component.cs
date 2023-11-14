@@ -5,7 +5,7 @@ namespace UnshieldSharp.Cabinet
     public class Component
     {
         public uint IdentifierOffset { get; private set; }
-        public string Identifier { get; private set; }
+        public string? Identifier { get; private set; }
         public uint DescriptorOffset { get; private set; }
         public uint DisplayNameOffset { get; private set; }
         public ushort Reserved0 { get; private set; }
@@ -24,7 +24,7 @@ namespace UnshieldSharp.Cabinet
         public uint DependsOffset { get; private set; }
         public uint FileGroupCount { get; private set; }
         public uint FileGroupNamesOffset { get; private set; }
-        public string[] FileGroupNames { get; private set; }
+        public string[]? FileGroupNames { get; private set; }
         public ushort X3Count { get; private set; }
         public uint X3Offset { get; private set; }
         public ushort SubComponentsCount { get; private set; }
@@ -38,10 +38,10 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Create a new Component from a header and data offset
         /// </summary>
-        public static Component Create(Header header, uint offset)
+        public static Component? Create(Header header, uint offset)
         {
             int dataOffset = header.GetDataOffset(offset);
-            if (dataOffset < 0 || dataOffset >= header.Data.Length)
+            if (dataOffset < 0 || dataOffset >= header.Data!.Length)
                 return null;
 
             header.Data.Seek(dataOffset, SeekOrigin.Begin);

@@ -32,7 +32,7 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// Archive header information
         /// </summary>
-        public Header Header { get; private set; }
+        public Header? Header { get; private set; }
 
         /// <summary>
         /// Currently loaded file path
@@ -52,7 +52,7 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// Stream representing the input archive
         /// </summary>
-        private Stream inputStream;
+        private Stream? inputStream;
 
         /// <summary>
         /// Data offset for all archives
@@ -81,7 +81,7 @@ namespace UnshieldSharp.Archive
         /// </summary>
         /// <param name="fullPath">Internal full path for the file to extract</param>
         /// <returns>Uncompressed data and no error string on success, null data and an error string otherwise</returns>
-        public (byte[] data, string err) Extract(string fullPath)
+        public (byte[]? data, string? err) Extract(string fullPath)
         {
             // If the file isn't in the archive, we can't extract it
             if (!Exists(fullPath))
@@ -91,7 +91,7 @@ namespace UnshieldSharp.Archive
             CompressedFile file = Files[fullPath];
 
             // Attempt to read the compressed data
-            inputStream.Seek(DataStart + file.Offset, SeekOrigin.Begin);
+            inputStream!.Seek(DataStart + file.Offset, SeekOrigin.Begin);
             byte[] compressedData = new byte[file.CompressedSize];
             int read = inputStream.Read(compressedData, 0, (int)file.CompressedSize);
             if (read != (int)file.CompressedSize)
@@ -111,7 +111,7 @@ namespace UnshieldSharp.Archive
         /// Load the file set as the current path
         /// </summary>
         /// <returns>Success and error strings, if applicable</returns>
-        private (bool success, string err) LoadFile()
+        private (bool success, string? err) LoadFile()
         {
             // If the file doesn't exist, we can't do anything
             if (!File.Exists(FilePath))
@@ -172,7 +172,7 @@ namespace UnshieldSharp.Archive
 
                     // Determine the full path of the internal file
                     string fullpath;
-                    if (!string.IsNullOrWhiteSpace(directory.Name) && directory.Name.Length > 0)
+                    if (!string.IsNullOrWhiteSpace(directory.Name) && directory.Name!.Length > 0)
                         fullpath = Path.Combine(directory.Name, filename);
                     else
                         fullpath = filename;

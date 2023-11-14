@@ -33,10 +33,10 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Create a new Descriptor from a Stream and CommonHeader
         /// </summary>
-        public static Descriptor Create(Stream stream, CommonHeader commonHeader)
+        public static Descriptor? Create(Stream stream, CommonHeader commonHeader)
         {
             if (commonHeader.DescriptorSize <= 0)
-                return default;
+                return null;
 
             stream.Seek(commonHeader.DescriptorOffset, SeekOrigin.Begin);
 

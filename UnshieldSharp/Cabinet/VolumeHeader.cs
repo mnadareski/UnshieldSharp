@@ -25,7 +25,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Create a new VolumeHeader from a Stream and version
         /// </summary>
-        public static VolumeHeader Create(Stream stream, int version)
+        public static VolumeHeader? Create(Stream stream, int version)
         {
             var header = new VolumeHeader();
 

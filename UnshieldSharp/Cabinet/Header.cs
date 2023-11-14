@@ -11,7 +11,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Reference to the next cabinet header
         /// </summary>
-        public Header Next { get; set; }
+        public Header? Next { get; set; }
 
         /// <summary>
         /// Current cabinet header index
@@ -21,7 +21,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Stream representing the cabinet set
         /// </summary>
-        public Stream Data { get; private set; }
+        public Stream? Data { get; private set; }
 
         /// <summary>
         /// Internal major version of the cabinet set
@@ -31,27 +31,27 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Common file header information
         /// </summary>
-        public CommonHeader CommonHeader { get; private set; }
+        public CommonHeader? CommonHeader { get; private set; }
 
         /// <summary>
         /// Cabinet file descriptor
         /// </summary>
-        public Descriptor Descriptor { get; private set; } = new Descriptor();
+        public Descriptor? Descriptor { get; private set; } = new Descriptor();
 
         /// <summary>
         /// File offset table
         /// </summary>
-        public uint[] FileOffsetTable { get; private set; }
+        public uint[]? FileOffsetTable { get; private set; }
 
         /// <summary>
         /// File descriptors table
         /// </summary>
-        public FileDescriptor[] FileDescriptors { get; set; }
+        public FileDescriptor[]? FileDescriptors { get; set; }
 
         /// <summary>
         /// Set of components inside of the cabinet set
         /// </summary>
-        public Component[] Components { get; private set; }
+        public Component[]? Components { get; private set; }
 
         /// <summary>
         /// Number of components in the cabinet set
@@ -61,7 +61,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Set of file groups inside of the cabinet set
         /// </summary>
-        public FileGroup[] FileGroups { get; private set; }
+        public FileGroup[]? FileGroups { get; private set; }
 
         /// <summary>
         /// Number of file groups in the cabinet set
@@ -73,7 +73,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Create a new Header from a stream, a version, and an index
         /// </summary>
-        public static Header Create(Stream stream, int version, int index)
+        public static Header? Create(Stream stream, int version, int index)
         {
             var header = new Header { Index = index };
             if (stream.Length < 4)
@@ -112,7 +112,7 @@ namespace UnshieldSharp.Cabinet
         public int GetDataOffset(uint offset)
         {
             if (offset > 0)
-                return (int)(this.CommonHeader.DescriptorOffset + offset);
+                return (int)(this.CommonHeader!.DescriptorOffset + offset);
             else
                 return -1;
         }
@@ -126,7 +126,7 @@ namespace UnshieldSharp.Cabinet
             if (dataOffset <= 0)
                 return string.Empty;
 
-            long originalPosition = this.Data.Position;
+            long originalPosition = this.Data!.Position;
             this.Data.Seek(dataOffset, SeekOrigin.Begin);
             string str = this.Data.ReadNullTerminatedString();
             this.Data.Seek(originalPosition, SeekOrigin.Begin);
@@ -138,7 +138,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private bool GetCommmonHeader()
         {
-            this.CommonHeader = CommonHeader.Create(this.Data);
+            this.CommonHeader = CommonHeader.Create(this.Data!);
             return this.CommonHeader != default;
         }
 
@@ -147,7 +147,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private bool GetDescriptor()
         {
-            this.Descriptor = Descriptor.Create(this.Data, this.CommonHeader);
+            this.Descriptor = Descriptor.Create(this.Data!, this.CommonHeader!);
             return this.Descriptor != default;
         }
 
@@ -157,7 +157,7 @@ namespace UnshieldSharp.Cabinet
         private void GetComponents()
         {
             var tempComponents = new List<Component>();
-            for (int i = 0; i < this.Descriptor.ComponentOffsets.Length; i++)
+            for (int i = 0; i < this.Descriptor!.ComponentOffsets.Length; i++)
             {
                 if (this.Descriptor.ComponentOffsets[i] <= 0)
                     continue;
@@ -169,7 +169,7 @@ namespace UnshieldSharp.Cabinet
                     if (dataOffset <= 0)
                         break;
 
-                    list = OffsetList.Create(this.Data, dataOffset);
+                    list = OffsetList.Create(this.Data!, dataOffset);
                     var component = Component.Create(this, list.DescriptorOffset);
                     if (component == null)
                         break;
@@ -187,7 +187,7 @@ namespace UnshieldSharp.Cabinet
         private void GetFileGroups()
         {
             var tempFileGroups = new List<FileGroup>();
-            for (int i = 0; i < this.Descriptor.FileGroupOffsets.Length; i++)
+            for (int i = 0; i < this.Descriptor!.FileGroupOffsets.Length; i++)
             {
                 if (this.Descriptor.FileGroupOffsets[i] <= 0)
                     continue;
@@ -199,7 +199,7 @@ namespace UnshieldSharp.Cabinet
                     if (dataOffset <= 0)
                         break;
 
-                    list = OffsetList.Create(this.Data, dataOffset);
+                    list = OffsetList.Create(this.Data!, dataOffset);
                     var fileGroup = FileGroup.Create(this, list.DescriptorOffset);
                     if (fileGroup == null)
                         break;
@@ -216,11 +216,11 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private void GetFileOffsetTable()
         {
-            int fileTableOffset = GetDataOffset(this.Descriptor.FileTableOffset);
+            int fileTableOffset = GetDataOffset(this.Descriptor!.FileTableOffset);
             int count = (int)(this.Descriptor.DirectoryCount + this.Descriptor.FileCount);
 
             this.FileOffsetTable = new uint[count];
-            this.Data.Seek(fileTableOffset, SeekOrigin.Begin);
+            this.Data!.Seek(fileTableOffset, SeekOrigin.Begin);
             for (int i = 0; i < count; i++)
             {
                 this.FileOffsetTable[i] = this.Data.ReadUInt32();

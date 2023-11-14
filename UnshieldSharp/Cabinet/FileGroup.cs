@@ -5,7 +5,7 @@ namespace UnshieldSharp.Cabinet
     public class FileGroup
     {
         public uint NameOffset { get; private set; }
-        public string Name { get; private set; }
+        public string? Name { get; private set; }
         public uint ExpandedSize { get; private set; }
         public uint Reserved0 { get; private set; }
         public uint CompressedSize { get; private set; }
@@ -32,10 +32,10 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Create a new FileGroup from a header and offset
         /// </summary>
-        public static FileGroup Create(Header header, uint offset)
+        public static FileGroup? Create(Header header, uint offset)
         {
             int dataOffset = header.GetDataOffset(offset);
-            if (dataOffset < 0 || dataOffset >= header.Data.Length)
+            if (dataOffset < 0 || dataOffset >= header.Data!.Length)
                 return null;
 
             header.Data.Seek(dataOffset, SeekOrigin.Begin);

@@ -36,7 +36,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Populate a CommonHeader from a stream
         /// </summary>
-        public static CommonHeader Create(Stream stream)
+        public static CommonHeader? Create(Stream stream)
         {
             if (stream.Length - stream.Position < COMMON_HEADER_SIZE)
                 return null;

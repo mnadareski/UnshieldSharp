@@ -55,7 +55,7 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// Populate a header from an input Stream
         /// </summary>
-        public static Header Create(Stream stream)
+        public static Header? Create(Stream stream)
         {
             if (!stream.CanRead || stream.Length - stream.Position < 51)
                 return null;

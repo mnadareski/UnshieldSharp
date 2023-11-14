@@ -8,7 +8,7 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// Internal directory name
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Total number of files in the directory

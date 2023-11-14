@@ -12,7 +12,7 @@ namespace UnshieldSharp.Cabinet
     public class InstallShieldCabinet
     {
         // Linked CAB headers
-        public Header HeaderList { get; set; }
+        public Header? HeaderList { get; set; }
 
         // Internal CAB Counts
         public int ComponentCount { get { return this.HeaderList?.ComponentCount ?? 0; } }
@@ -24,14 +24,14 @@ namespace UnshieldSharp.Cabinet
         public bool IsUnicode { get { return this.HeaderList?.MajorVersion >= 17; } }
 
         // Base filename path for related CAB files
-        private string filenamePattern;
+        private string? filenamePattern;
 
         #region Open Cabinet
 
         /// <summary>
         /// Open a file as an InstallShield CAB
         /// </summary>
-        public static InstallShieldCabinet Open(string filename)
+        public static InstallShieldCabinet? Open(string filename)
         {
             return OpenForceVersion(filename, -1);
         }
@@ -39,7 +39,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Open a file as an InstallShield CAB, forcing a version
         /// </summary>
-        public static InstallShieldCabinet OpenForceVersion(string filename, int version)
+        public static InstallShieldCabinet? OpenForceVersion(string filename, int version)
         {
             var cabinet = new InstallShieldCabinet();
             if (!cabinet.CreateFilenamePattern(filename))
@@ -64,10 +64,10 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Get the component name at an index
         /// </summary>
-        public string ComponentName(int index)
+        public string? ComponentName(int index)
         {
-            if (index >= 0 && index < this.HeaderList.ComponentCount)
-                return this.HeaderList.Components[index].Identifier.Replace('\\', '/');
+            if (index >= 0 && index < this.HeaderList!.ComponentCount)
+                return this.HeaderList.Components![index]!.Identifier!.Replace('\\', '/');
             else
                 return null;
         }
@@ -75,20 +75,20 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Get the directory name at an index
         /// </summary>
-        public string DirectoryName(int index)
+        public string? DirectoryName(int index)
         {
-            if (index < 0 || index >= (int)this.HeaderList.Descriptor.DirectoryCount)
+            if (index < 0 || index >= (int)this.HeaderList!.Descriptor!.DirectoryCount)
             {
                 Console.Error.WriteLine($"Failed to get directory name {index}");
                 return null;
             }
 
             // TODO: multi-volume support...
-            int location = (int)(this.HeaderList.CommonHeader.DescriptorOffset
+            int location = (int)(this.HeaderList!.CommonHeader!.DescriptorOffset
                 + this.HeaderList.Descriptor.FileTableOffset
-                + this.HeaderList.FileOffsetTable[index]);
+                + this.HeaderList.FileOffsetTable![index]);
 
-            if (location < 0 || location >= this.HeaderList.Data.Length)
+            if (location < 0 || location >= this.HeaderList.Data!.Length)
             {
                 Console.Error.WriteLine($"Failed to get file descriptor {index}");
                 return null;
@@ -101,27 +101,33 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Get the file name at an index
         /// </summary>
-        public string FileName(int index)
+        public string? FileName(int index)
         {
-            if (index < 0 || index >= (int)this.HeaderList.Descriptor.FileCount)
+            if (index < 0 || index >= (int)this.HeaderList!.Descriptor!.FileCount)
             {
                 Console.Error.WriteLine($"Failed to get file descriptor {index}");
                 return null;
             }
 
             // TODO: multi-volume support...
-            FileDescriptor fd = this.GetFileDescriptor(index);
+            FileDescriptor? fd = this.GetFileDescriptor(index);
+            if (fd == null)
+            {
+                Console.Error.WriteLine($"Failed to get file descriptor {index}");
+                return null;
+            }
+
             if (fd.Flags.HasFlag(FileDescriptorFlag.FILE_INVALID))
             {
                 Console.Error.WriteLine($"Failed to get file descriptor {index}");
                 return null;
             }
 
-            int location = (int)(this.HeaderList.CommonHeader.DescriptorOffset
+            int location = (int)(this.HeaderList!.CommonHeader!.DescriptorOffset
                 + this.HeaderList.Descriptor.FileTableOffset
                 + fd.NameOffset);
 
-            if (location < 0 || location >= this.HeaderList.Data.Length)
+            if (location < 0 || location >= this.HeaderList.Data!.Length)
             {
                 Console.Error.WriteLine($"Failed to get file descriptor {index}");
                 return null;
@@ -134,10 +140,10 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Get the file group name at an index
         /// </summary>
-        public string FileGroupName(int index)
+        public string? FileGroupName(int index)
         {
-            if (index >= 0 && index < this.HeaderList.FileGroupCount)
-                return this.HeaderList.FileGroups[index].Name;
+            if (index >= 0 && index < this.HeaderList!.FileGroupCount)
+                return this.HeaderList.FileGroups![index].Name;
             else
                 return null;
         }
@@ -154,7 +160,7 @@ namespace UnshieldSharp.Cabinet
             if (index < 0 || index > this.FileCount)
                 return false;
 
-            FileDescriptor fd = this.GetFileDescriptor(index);
+            FileDescriptor? fd = this.GetFileDescriptor(index);
             if (fd == null)
                 return false;
 
@@ -214,7 +220,7 @@ namespace UnshieldSharp.Cabinet
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToRead.Length} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
-                        output.Close();
+                        output?.Close();
                         return false;
                     }
 
@@ -224,7 +230,7 @@ namespace UnshieldSharp.Cabinet
                     {
                         Console.Error.WriteLine("bytesToRead can't be zero");
                         reader.Dispose();
-                        output.Close();
+                        output?.Close();
                         return false;
                     }
 
@@ -234,7 +240,7 @@ namespace UnshieldSharp.Cabinet
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToRead.Length} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
-                        output.Close();
+                        output?.Close();
                         return false;
                     }
 
@@ -250,7 +256,7 @@ namespace UnshieldSharp.Cabinet
                     {
                         Console.Error.WriteLine($"Decompression failed with code {result.ToZlibConstName()}. bytes_to_read={bytesToReadValue}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
                         reader.Dispose();
-                        output.Close();
+                        output?.Close();
                         return false;
                     }
 
@@ -264,7 +270,7 @@ namespace UnshieldSharp.Cabinet
                     {
                         Console.Error.WriteLine($"Failed to write {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
-                        output.Close();
+                        output?.Close();
                         return false;
                     }
 
@@ -283,26 +289,26 @@ namespace UnshieldSharp.Cabinet
             {
                 Console.Error.WriteLine($"Expanded size expected to be {fileDescriptor.ExpandedSize}, but was {totalWritten}");
                 reader.Dispose();
-                output.Close();
+                output?.Close();
                 return false;
             }
 
-            if (this.HeaderList.MajorVersion >= 6)
+            if (this.HeaderList!.MajorVersion >= 6)
             {
                 md5.TransformFinalBlock(outputBuffer, 0, 0);
-                byte[] md5result = md5.Hash;
+                byte[]? md5result = md5.Hash;
 
-                if (!md5result.SequenceEqual(fileDescriptor.Md5))
+                if (md5result == null || !md5result.SequenceEqual(fileDescriptor.Md5))
                 {
                     Console.Error.WriteLine($"MD5 checksum failure for file {index} ({FileName(index)})");
                     reader.Dispose();
-                    output.Close();
+                    output?.Close();
                     return false;
                 }
             }
 
             reader?.Dispose();
-            output.Close();
+            output?.Close();
             return true;
         }
 
@@ -343,7 +349,7 @@ namespace UnshieldSharp.Cabinet
                 {
                     Console.Error.WriteLine($"Failed to open volume {reader.Volume + 1} to read {bytesLeft} more bytes");
                     reader.Dispose();
-                    output.Close();
+                    output?.Close();
                     return false;
                 }
 
@@ -363,7 +369,7 @@ namespace UnshieldSharp.Cabinet
                     {
                         Console.Error.WriteLine($"Failed to read {inputSize} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
-                        output.Close();
+                        output?.Close();
                         return false;
                     }
 
@@ -375,7 +381,7 @@ namespace UnshieldSharp.Cabinet
                         {
                             Console.Error.WriteLine($"Could not find end of chunk for file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                             reader.Dispose();
-                            output.Close();
+                            output?.Close();
                             return false;
                         }
 
@@ -403,7 +409,7 @@ namespace UnshieldSharp.Cabinet
                             {
                                 Console.Error.WriteLine($"Could not find end of chunk for file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                                 reader.Dispose();
-                                output.Close();
+                                output?.Close();
                                 return false;
                             }
 
@@ -421,7 +427,7 @@ namespace UnshieldSharp.Cabinet
                         {
                             Console.Error.WriteLine($"Decompression failed with code {result.ToZlibConstName()}. input_size={inputSize}, volume_bytes_left={reader.VolumeBytesLeft}, volume={fileDescriptor.Volume}, read_bytes={readBytes}");
                             reader.Dispose();
-                            output.Close();
+                            output?.Close();
                             return false;
                         }
 
@@ -444,7 +450,7 @@ namespace UnshieldSharp.Cabinet
                     {
                         Console.Error.WriteLine($"Failed to read {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
-                        output.Close();
+                        output?.Close();
                         return false;
                     }
 
@@ -461,12 +467,12 @@ namespace UnshieldSharp.Cabinet
             {
                 Console.Error.WriteLine($"Expanded size expected to be {fileDescriptor.ExpandedSize}, but was {totalWritten}");
                 reader.Dispose();
-                output.Close();
+                output?.Close();
                 return false;
             }
 
             reader.Dispose();
-            output.Close();
+            output?.Close();
             return true;
         }
 
@@ -502,7 +508,7 @@ namespace UnshieldSharp.Cabinet
                 {
                     Console.Error.WriteLine($"Failed to read {bytesToWrite} bytes from input cabinet file {fileDescriptor.Volume}");
                     reader.Dispose();
-                    output.Close();
+                    output?.Close();
                     return false;
                 }
 
@@ -511,7 +517,7 @@ namespace UnshieldSharp.Cabinet
             }
 
             reader.Dispose();
-            output.Close();
+            output?.Close();
             return true;
         }
 
@@ -520,7 +526,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public int FileDirectory(int index)
         {
-            FileDescriptor fd = this.GetFileDescriptor(index);
+            FileDescriptor? fd = this.GetFileDescriptor(index);
             if (fd != null)
                 return (int)fd.DirectoryIndex;
             else
@@ -532,7 +538,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public int FileSize(int index)
         {
-            FileDescriptor fd = this.GetFileDescriptor(index);
+            FileDescriptor? fd = this.GetFileDescriptor(index);
             if (fd != null)
                 return (int)fd.ExpandedSize;
             else
@@ -553,7 +559,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Common code for getting the file descriptor
         /// </summary>
-        private FileDescriptor GetFileDescriptor(string filename, int index)
+        private FileDescriptor? GetFileDescriptor(string filename, int index)
         {
             if (string.IsNullOrWhiteSpace(filename))
             {
@@ -580,7 +586,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Common code for getting the reader
         /// </summary>
-        private Reader GetReader(int index, FileDescriptor fd)
+        private Reader? GetReader(int index, FileDescriptor fd)
         {
             var reader = Reader.Create(this, index, fd);
             if (reader == null)
@@ -589,7 +595,7 @@ namespace UnshieldSharp.Cabinet
                 return null;
             }
 
-            if (reader.VolumeFile.Length == (long)fd.DataOffset)
+            if (reader.VolumeFile!.Length == (long)fd.DataOffset)
             {
                 Console.Error.WriteLine($"File {index} is not inside the cabinet.");
                 reader.Dispose();
@@ -606,10 +612,10 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Retrieve a file group based on index
         /// </summary>
-        public FileGroup FileGroupGet(int index)
+        public FileGroup? FileGroupGet(int index)
         {
-            if (index >= 0 && index < this.HeaderList.FileGroupCount)
-                return this.HeaderList.FileGroups[index];
+            if (index >= 0 && index < this.HeaderList!.FileGroupCount)
+                return this.HeaderList.FileGroups![index];
             else
                 return null;
         }
@@ -617,11 +623,11 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Retrieve a file group based on name
         /// </summary>
-        public FileGroup FileGroupFind(string name)
+        public FileGroup? FileGroupFind(string name)
         {
-            for (int i = 0; i < this.HeaderList.FileGroupCount; i++)
+            for (int i = 0; i < this.HeaderList!.FileGroupCount; i++)
             {
-                if (this.HeaderList.FileGroups[i].Name == name)
+                if (this.HeaderList.FileGroups![i].Name == name)
                     return this.HeaderList.FileGroups[i];
             }
 
@@ -704,7 +710,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Open a cabinet file for reading
         /// </summary>
-        public Stream OpenFileForReading(int index, string suffix)
+        public Stream? OpenFileForReading(int index, string suffix)
         {
             if (string.IsNullOrWhiteSpace(this.filenamePattern))
                return null;
@@ -745,7 +751,7 @@ namespace UnshieldSharp.Cabinet
             if (string.IsNullOrWhiteSpace(filename))
                 return false;
 
-            this.filenamePattern = Path.Combine(Path.GetDirectoryName(filename), Path.GetFileNameWithoutExtension(filename));
+            this.filenamePattern = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(filename))!, Path.GetFileNameWithoutExtension(filename));
             this.filenamePattern = new Regex(@"\d+$").Replace(this.filenamePattern, string.Empty);
 
             return true;
@@ -754,10 +760,10 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Get the file descriptor at an index
         /// </summary>
-        private FileDescriptor GetFileDescriptor(int index)
+        private FileDescriptor? GetFileDescriptor(int index)
         {
             // TODO: multi-volume support...
-            if (index < 0 || index >= (int)this.HeaderList.Descriptor.FileCount)
+            if (index < 0 || index >= (int)this.HeaderList!.Descriptor!.FileCount)
             {
                 Console.Error.WriteLine("Invalid index");
                 return null;
@@ -778,7 +784,7 @@ namespace UnshieldSharp.Cabinet
         private FileDescriptor ReadFileDescriptor(int index)
         {
             // TODO: multi-volume support...
-            FileDescriptor fd = FileDescriptor.Create(this.HeaderList, index);
+            FileDescriptor fd = FileDescriptor.Create(this.HeaderList!, index);
             if (!fd.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED) && fd.CompressedSize != fd.ExpandedSize)
                 Console.Error.WriteLine($"File is not compressed but compressed size is {fd.CompressedSize} and expanded size is {fd.ExpandedSize}");
 
@@ -797,7 +803,7 @@ namespace UnshieldSharp.Cabinet
             }
 
             bool iterate = true;
-            Header previous = null;
+            Header? previous = null;
             for (int i = 1; iterate; i++)
             {
                 var file = OpenFileForReading(i, HEADER_SUFFIX);

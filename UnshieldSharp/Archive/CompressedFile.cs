@@ -8,12 +8,12 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// Filename of the compressed file
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Full internal path of the compressed file
         /// </summary>
-        public string FullPath { get; set; }
+        public string? FullPath { get; set; }
 
         /// <summary>
         /// Size of the compressed file in bytes
