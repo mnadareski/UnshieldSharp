@@ -15,18 +15,6 @@ namespace UnshieldSharp.Cabinet
 
         #endregion
 
-        #region libunshield.h
-
-        public const int UNSHIELD_LOG_LEVEL_LOWEST = 0;
-
-        public const int UNSHIELD_LOG_LEVEL_ERROR = 1;
-        public const int UNSHIELD_LOG_LEVEL_WARNING = 2;
-        public const int UNSHIELD_LOG_LEVEL_TRACE = 3;
-
-        public const int UNSHIELD_LOG_LEVEL_HIGHEST = 4;
-
-        #endregion
-
         #region zconf.h
 
         public const int MAX_WBITS = 15;
