@@ -13,7 +13,7 @@ namespace UnshieldSharp.Cabinet
     public class InstallShieldCabinet
     {
         // Linked CAB headers
-        public Header? HeaderList { get; set; }
+        public Header? HeaderList { get; private set; }
 
         // Internal CAB Counts
         public int ComponentCount => HeaderList?.ComponentCount ?? 0;
@@ -83,7 +83,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public bool FileIsValid(int index)
         {
-            if (index < 0 || index > this.FileCount)
+            if (index < 0 || index > FileCount)
                 return false;
 
             FileDescriptor? fd = HeaderList?.GetFileDescriptor(index);
@@ -112,7 +112,7 @@ namespace UnshieldSharp.Cabinet
                 return false;
 
             if (fileDescriptor.LinkFlags == LinkFlags.LINK_PREV)
-                return this.FileSave((int)fileDescriptor.LinkPrevious, filename);
+                return FileSave((int)fileDescriptor.LinkPrevious, filename);
 
             var reader = GetReader(index, fileDescriptor);
             if (reader == null)
@@ -128,7 +128,7 @@ namespace UnshieldSharp.Cabinet
             MD5 md5 = MD5.Create();
             md5.Initialize();
             ulong bytesLeft = GetBytesToRead(fileDescriptor);
-            byte[] inputBuffer = new byte[BUFFER_SIZE + 1];
+            byte[] inputBuffer;
             byte[] outputBuffer = new byte[BUFFER_SIZE];
             ulong totalWritten = 0;
             while (bytesLeft > 0)
@@ -205,8 +205,7 @@ namespace UnshieldSharp.Cabinet
 
                 md5.TransformBlock(outputBuffer, 0, (int)bytesToWrite, outputBuffer, 0);
 
-                if (output != null)
-                    output.Write(outputBuffer, 0, (int)bytesToWrite);
+                output?.Write(outputBuffer, 0, (int)bytesToWrite);
 
                 totalWritten += bytesToWrite;
             }
@@ -219,7 +218,7 @@ namespace UnshieldSharp.Cabinet
                 return false;
             }
 
-            if (this.HeaderList!.MajorVersion >= 6)
+            if (HeaderList!.MajorVersion >= 6)
             {
                 md5.TransformFinalBlock(outputBuffer, 0, 0);
                 byte[]? md5result = md5.Hash;
@@ -261,7 +260,7 @@ namespace UnshieldSharp.Cabinet
                 return false;
             }
 
-            ulong bytesLeft = GetBytesToRead(fileDescriptor);
+            ulong bytesLeft = InstallShieldCabinet.GetBytesToRead(fileDescriptor);
             long inputBufferSize = BUFFER_SIZE;
             byte[] inputBuffer = new byte[BUFFER_SIZE];
             byte[] outputBuffer = new byte[BUFFER_SIZE];
@@ -281,7 +280,7 @@ namespace UnshieldSharp.Cabinet
 
                 if (fileDescriptor.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
                 {
-                    byte[] END_OF_CHUNK = { 0x00, 0x00, 0xff, 0xff };
+                    byte[] END_OF_CHUNK = [0x00, 0x00, 0xff, 0xff];
                     ulong readBytes;
                     long inputSize = (long)reader.VolumeBytesLeft;
 
@@ -302,7 +301,7 @@ namespace UnshieldSharp.Cabinet
                     bytesLeft -= (uint)inputSize;
                     for (int p = 0; inputSize > 0;)
                     {
-                        int match = FindBytes(inputBuffer, p, inputSize, END_OF_CHUNK);
+                        int match = InstallShieldCabinet.FindBytes(inputBuffer, p, inputSize, END_OF_CHUNK);
                         if (match == -1)
                         {
                             Console.Error.WriteLine($"Could not find end of chunk for file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
@@ -330,7 +329,7 @@ namespace UnshieldSharp.Cabinet
                         {
                             Console.Error.WriteLine("It seems like we have an end of chunk marker inside of a chunk.");
                             chunkSize += END_OF_CHUNK.Length;
-                            match = FindBytes(inputBuffer, (int)(p + chunkSize), inputSize - chunkSize, END_OF_CHUNK);
+                            match = InstallShieldCabinet.FindBytes(inputBuffer, (int)(p + chunkSize), inputSize - chunkSize, END_OF_CHUNK);
                             if (match == -1)
                             {
                                 Console.Error.WriteLine($"Could not find end of chunk for file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
@@ -363,8 +362,7 @@ namespace UnshieldSharp.Cabinet
                         inputSize -= chunkSize;
                         inputSize -= END_OF_CHUNK.Length;
 
-                        if (output != null)
-                            output.Write(outputBuffer, 0, (int)bytesToWrite);
+                        output?.Write(outputBuffer, 0, (int)bytesToWrite);
 
                         totalWritten += bytesToWrite;
                     }
@@ -382,8 +380,7 @@ namespace UnshieldSharp.Cabinet
 
                     bytesLeft -= (uint)bytesToWrite;
 
-                    if (output != null)
-                        output.Write(outputBuffer, 0, (int)bytesToWrite);
+                    output?.Write(outputBuffer, 0, (int)bytesToWrite);
 
                     totalWritten += bytesToWrite;
                 }
@@ -425,7 +422,7 @@ namespace UnshieldSharp.Cabinet
                 return false;
             }
 
-            ulong bytesLeft = GetBytesToRead(fileDescriptor);
+            ulong bytesLeft = InstallShieldCabinet.GetBytesToRead(fileDescriptor);
             byte[] outputBuffer = new byte[BUFFER_SIZE];
             while (bytesLeft > 0)
             {
@@ -474,7 +471,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Common code for getting the bytes to read
         /// </summary>
-        private ulong GetBytesToRead(FileDescriptor fd)
+        private static ulong GetBytesToRead(FileDescriptor fd)
         {
             if (fd.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
                 return fd.CompressedSize;
@@ -623,10 +620,10 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public Stream? OpenFileForReading(int index, string suffix)
         {
-            if (string.IsNullOrWhiteSpace(this.filenamePattern))
+            if (string.IsNullOrWhiteSpace(filenamePattern))
                 return null;
 
-            string filename = $"{this.filenamePattern}{index}.{suffix}";
+            string filename = $"{filenamePattern}{index}.{suffix}";
             if (File.Exists(filename))
                 return File.OpenRead(filename);
 
@@ -636,7 +633,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Get the start index of a pattern in a byte array
         /// </summary>
-        private int FindBytes(byte[] buffer, int offset, long bufferLeft, byte[] pattern)
+        private static int FindBytes(byte[] buffer, int offset, long bufferLeft, byte[] pattern)
         {
             while ((offset = Array.IndexOf(buffer, pattern[0], offset, (int)bufferLeft)) != -1)
             {
@@ -669,8 +666,8 @@ namespace UnshieldSharp.Cabinet
             if (string.IsNullOrWhiteSpace(filename))
                 return false;
 
-            this.filenamePattern = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(filename))!, Path.GetFileNameWithoutExtension(filename));
-            this.filenamePattern = new Regex(@"\d+$").Replace(this.filenamePattern, string.Empty);
+            filenamePattern = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(filename))!, Path.GetFileNameWithoutExtension(filename));
+            filenamePattern = new Regex(@"\d+$").Replace(filenamePattern, string.Empty);
 
             return true;
         }
@@ -680,7 +677,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private bool ReadHeaders()
         {
-            if (this.HeaderList != null)
+            if (HeaderList != null)
             {
                 Console.Error.WriteLine("Already have a header list");
                 return true;
@@ -706,10 +703,10 @@ namespace UnshieldSharp.Cabinet
                 if (previous != null)
                     previous.Next = header;
                 else
-                    previous = this.HeaderList = header;
+                    previous = HeaderList = header;
             }
 
-            return this.HeaderList != null;
+            return HeaderList != null;
         }
 
         #endregion
