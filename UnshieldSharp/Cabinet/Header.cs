@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
+using System.Linq;
+using SabreTools.Models.InstallShieldCabinet;
 
 namespace UnshieldSharp.Cabinet
 {
@@ -13,220 +13,141 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public Header? Next { get; set; }
 
-        /// <summary>
-        /// Current cabinet header index
-        /// </summary>
-        public int Index { get; private set; }
+        #endregion
 
-        /// <summary>
-        /// Stream representing the cabinet set
-        /// </summary>
-        public Stream? Data { get; private set; }
-
-        /// <summary>
-        /// Internal major version of the cabinet set
-        /// </summary>
-        public int MajorVersion { get; private set; }
-
-        /// <summary>
-        /// Common file header information
-        /// </summary>
-        public CommonHeader? CommonHeader { get; private set; }
-
-        /// <summary>
-        /// Cabinet file descriptor
-        /// </summary>
-        public Descriptor? Descriptor { get; private set; } = new Descriptor();
-
-        /// <summary>
-        /// File offset table
-        /// </summary>
-        public uint[]? FileOffsetTable { get; private set; }
-
-        /// <summary>
-        /// File descriptors table
-        /// </summary>
-        public FileDescriptor[]? FileDescriptors { get; set; }
-
-        /// <summary>
-        /// Set of components inside of the cabinet set
-        /// </summary>
-        public Component[]? Components { get; private set; }
+        #region Passthrough Properties
 
         /// <summary>
         /// Number of components in the cabinet set
         /// </summary>
-        public int ComponentCount => this.Components?.Length ?? 0;
+        public int ComponentCount => _cabinet.Model.Components!.Length;
 
         /// <summary>
-        /// Set of file groups inside of the cabinet set
+        /// Number of directories in the cabinet set
         /// </summary>
-        public FileGroup[]? FileGroups { get; private set; }
+        public ushort DirectoryCount => _cabinet.Model.Descriptor!.DirectoryCount;
+
+        /// <summary>
+        /// Number of files in the cabinet set
+        /// </summary>
+        public uint FileCount => _cabinet.Model.Descriptor!.FileCount;
 
         /// <summary>
         /// Number of file groups in the cabinet set
         /// </summary>
-        public int FileGroupCount => this.FileGroups?.Length ?? 0;
+        public int FileGroupCount => _cabinet.Model.FileGroups!.Length;
+
+        /// <summary>
+        /// Internal major version of the cabinet set
+        /// </summary>
+        public int MajorVersion => _cabinet.MajorVersion;
 
         #endregion
 
         /// <summary>
-        /// Create a new Header from a stream, a version, and an index
+        /// Private cabinet backing the rest of the fields
         /// </summary>
-        public static Header? Create(Stream stream, int version, int index)
+        private readonly SabreTools.Serialization.Wrappers.InstallShieldCabinet _cabinet;
+
+        private Header(SabreTools.Serialization.Wrappers.InstallShieldCabinet cabinet)
         {
-            var header = new Header { Index = index };
-            if (stream.Length < 4)
-            {
-                Console.Error.WriteLine($"Header file {index} is too small");
+            _cabinet = cabinet;
+        }
+
+        /// <summary>
+        /// Create a new Header from a stream and an index
+        /// </summary>
+        public static Header? Create(Stream stream, int index)
+        {
+            stream.Seek(index, SeekOrigin.Begin);
+            var cabinet = SabreTools.Serialization.Wrappers.InstallShieldCabinet.Create(stream);
+            if (cabinet == null)
                 return null;
-            }
 
-            header.Data = stream;
-            if (!header.GetCommmonHeader())
-            {
-                Console.Error.WriteLine($"Failed to read common header from header file {index}");
+            return new Header(cabinet);
+        }
+
+        /// <summary>
+        /// Get the component name at a given index, if possible
+        /// </summary>
+        public string? GetComponentName(int index)
+        {
+            if (index < 0 || index >= _cabinet.Model.Components!.Length)
                 return null;
-            }
 
-            header.MajorVersion = version != -1 ? version : header.CommonHeader?.MajorVersion ?? 0;
-
-            if (!header.GetDescriptor())
-            {
-                Console.Error.WriteLine($"Failed to read CAB descriptor from header file {index}");
+            var component = _cabinet.Model.Components![index];
+            if (component?.Identifier == null)
                 return null;
-            }
 
-            header.GetFileOffsetTable();
-            header.GetComponents();
-            header.GetFileGroups();
-
-            return header;
-        }
-
-        #region Helpers
-
-        /// <summary>
-        /// Get the real data offset
-        /// </summary>
-        public int GetDataOffset(uint offset)
-        {
-            if (offset > 0)
-                return (int)(this.CommonHeader!.DescriptorOffset + offset);
-            else
-                return -1;
+            return component.Identifier.Replace('\\', '/');
         }
 
         /// <summary>
-        /// Get the UInt32 at the given offset in the header data as a string
+        /// Get the directory name at a given index, if possible
         /// </summary>
-        public string GetString(uint offset)
+        public string? GetDirectoryName(int index)
         {
-            int dataOffset = GetDataOffset(offset);
-            if (dataOffset <= 0)
-                return string.Empty;
+            if (index < 0 || index >= _cabinet.Model.DirectoryNames!.Length)
+                return null;
 
-            long originalPosition = this.Data!.Position;
-            this.Data.Seek(dataOffset, SeekOrigin.Begin);
-            string str = this.Data.ReadNullTerminatedString();
-            this.Data.Seek(originalPosition, SeekOrigin.Begin);
-            return str;
+            return _cabinet.Model.DirectoryNames[index];
         }
 
         /// <summary>
-        /// Populate the CommonHeader from header data
+        /// Get the file descriptor at a given index, if possible
         /// </summary>
-        private bool GetCommmonHeader()
+        public FileDescriptor? GetFileDescriptor(int index)
         {
-            this.CommonHeader = CommonHeader.Create(this.Data!);
-            return this.CommonHeader != default;
+            if (index < 0 || index >= _cabinet.Model.FileDescriptors!.Length)
+                return null;
+
+            return _cabinet.Model.FileDescriptors[index];
         }
 
         /// <summary>
-        /// Populate the Descriptor from header data
+        /// Get the file group at a given index, if possible
         /// </summary>
-        private bool GetDescriptor()
+        public FileGroup? GetFileGroup(int index)
         {
-            this.Descriptor = Descriptor.Create(this.Data!, this.CommonHeader!);
-            return this.Descriptor != default;
+            if (index < 0 || index >= _cabinet.Model.FileGroups!.Length)
+                return null;
+
+            return _cabinet.Model.FileGroups[index];
         }
 
         /// <summary>
-        /// Populate the component list from header data
+        /// Get the file group at a given name, if possible
         /// </summary>
-        private void GetComponents()
+        public FileGroup? GetFileGroup(string name)
         {
-            var tempComponents = new List<Component>();
-            for (int i = 0; i < this.Descriptor!.ComponentOffsets.Length; i++)
-            {
-                if (this.Descriptor.ComponentOffsets[i] <= 0)
-                    continue;
-
-                var list = new OffsetList(this.Descriptor.ComponentOffsets[i]);
-                while (list.NextOffset > 0)
-                {
-                    int dataOffset = GetDataOffset(list.NextOffset);
-                    if (dataOffset <= 0)
-                        break;
-
-                    list = OffsetList.Create(this.Data!, dataOffset);
-                    var component = Component.Create(this, list.DescriptorOffset);
-                    if (component == null)
-                        break;
-
-                    tempComponents.Add(component);
-                }
-            }
-
-            this.Components = tempComponents.ToArray();
+            return _cabinet.Model.FileGroups!.FirstOrDefault(fg => fg != null && string.Equals(fg.Name, name));
         }
 
         /// <summary>
-        /// Populate the file group list from header data
+        /// Get the file name at a given index, if possible
         /// </summary>
-        private void GetFileGroups()
+        public string? GetFileName(int index)
         {
-            var tempFileGroups = new List<FileGroup>();
-            for (int i = 0; i < this.Descriptor!.FileGroupOffsets.Length; i++)
-            {
-                if (this.Descriptor.FileGroupOffsets[i] <= 0)
-                    continue;
+            var descriptor = GetFileDescriptor(index);
+            if (descriptor == null || descriptor.Flags.HasFlag(FileFlags.FILE_INVALID))
+                return null;
 
-                var list = new OffsetList(this.Descriptor.FileGroupOffsets[i]);
-                while (list.NextOffset > 0)
-                {
-                    int dataOffset = GetDataOffset(list.NextOffset);
-                    if (dataOffset <= 0)
-                        break;
-
-                    list = OffsetList.Create(this.Data!, dataOffset);
-                    var fileGroup = FileGroup.Create(this, list.DescriptorOffset);
-                    if (fileGroup == null)
-                        break;
-
-                    tempFileGroups.Add(fileGroup);
-                }
-            }
-
-            this.FileGroups = tempFileGroups.ToArray();
+            return descriptor.Name;
         }
 
         /// <summary>
-        /// Populate the file offset table from header data
+        /// Get the file group name at a given index, if possible
         /// </summary>
-        private void GetFileOffsetTable()
+        public string? GetFileGroupName(int index)
         {
-            int fileTableOffset = GetDataOffset(this.Descriptor!.FileTableOffset);
-            int count = (int)(this.Descriptor.DirectoryCount + this.Descriptor.FileCount);
+            if (index < 0 || index >= _cabinet.Model.FileGroups!.Length)
+                return null;
 
-            this.FileOffsetTable = new uint[count];
-            this.Data!.Seek(fileTableOffset, SeekOrigin.Begin);
-            for (int i = 0; i < count; i++)
-            {
-                this.FileOffsetTable[i] = this.Data.ReadUInt32();
-            }
+            var fileGroup = _cabinet.Model.FileGroups[index];
+            if (fileGroup == null)
+                return null;
+
+            return fileGroup.Name;
         }
-
-        #endregion
     }
 }

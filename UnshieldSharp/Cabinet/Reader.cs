@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using SabreTools.Models.InstallShieldCabinet;
 using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
@@ -15,6 +16,11 @@ namespace UnshieldSharp.Cabinet
         /// Currently selected index
         /// </summary>
         public uint Index { get; private set; }
+
+        /// <summary>
+        /// Private header backing the rest of the fields
+        /// </summary>
+        private Header _header;
 
         /// <summary>
         /// File descriptor defining the currently selected index
@@ -45,6 +51,11 @@ namespace UnshieldSharp.Cabinet
         /// Offset for obfuscation seed
         /// </summary>
         public uint ObfuscationOffset { get; private set; }
+
+        private Reader(Header header)
+        {
+            _header = header;
+        }
 
         /// <summary>
         /// Create a new UnshieldReader from an existing cabinet, index, and file descriptor
@@ -115,18 +126,18 @@ namespace UnshieldSharp.Cabinet
                     && this.Index == this.VolumeHeader.LastFileIndex
                     && this.VolumeHeader.LastFileSizeCompressed != this.FileDescriptor!.CompressedSize)
                 {
-                    this.FileDescriptor.Flags |= FileDescriptorFlag.FILE_SPLIT;
+                    this.FileDescriptor.Flags |= FileFlags.FILE_SPLIT;
                 }
                 else if (this.Index > 0
                     && this.Index == this.VolumeHeader.FirstFileIndex
                     && this.VolumeHeader.FirstFileSizeCompressed != this.FileDescriptor!.CompressedSize)
                 {
-                    this.FileDescriptor.Flags |= FileDescriptorFlag.FILE_SPLIT;
+                    this.FileDescriptor.Flags |= FileFlags.FILE_SPLIT;
                 }
             }
 
             ulong dataOffset, volumeBytesLeftCompressed, volumeBytesLeftExpanded;
-            if (this.FileDescriptor!.Flags.HasFlag(FileDescriptorFlag.FILE_SPLIT))
+            if (this.FileDescriptor!.Flags.HasFlag(FileFlags.FILE_SPLIT))
             {
                 if (this.Index == this.VolumeHeader.LastFileIndex && this.VolumeHeader.LastFileOffset != 0x7FFFFFFF)
                 {
@@ -153,7 +164,7 @@ namespace UnshieldSharp.Cabinet
                 volumeBytesLeftCompressed = this.FileDescriptor.CompressedSize;
             }
 
-            if (this.FileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED))
+            if (this.FileDescriptor.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
                 this.VolumeBytesLeft = volumeBytesLeftCompressed;
             else
                 this.VolumeBytesLeft = volumeBytesLeftExpanded;
@@ -208,7 +219,7 @@ namespace UnshieldSharp.Cabinet
                 }
             }
 
-            if (this.FileDescriptor!.Flags.HasFlag(FileDescriptorFlag.FILE_OBFUSCATED))
+            if (this.FileDescriptor!.Flags.HasFlag(FileFlags.FILE_OBFUSCATED))
                 this.Deobfuscate(buffer, size);
 
             return true;

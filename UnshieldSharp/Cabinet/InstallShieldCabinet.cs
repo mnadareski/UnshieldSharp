@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using ComponentAce.Compression.Libs.zlib;
+using SabreTools.Models.InstallShieldCabinet;
 using static UnshieldSharp.Cabinet.Constants;
 
 namespace UnshieldSharp.Cabinet
@@ -15,13 +16,13 @@ namespace UnshieldSharp.Cabinet
         public Header? HeaderList { get; set; }
 
         // Internal CAB Counts
-        public int ComponentCount { get { return this.HeaderList?.ComponentCount ?? 0; } }
-        public int DirectoryCount { get { return (int)(this.HeaderList?.Descriptor?.DirectoryCount ?? 0); } } // TODO: multi-volume support...
-        public int FileCount { get { return (int)(this.HeaderList?.Descriptor?.FileCount ?? 0); } } // TODO: multi-volume support...
-        public int FileGroupCount { get { return this.HeaderList?.FileGroupCount ?? 0; } }
+        public int ComponentCount => HeaderList?.ComponentCount ?? 0;
+        public int DirectoryCount => (int)(HeaderList?.DirectoryCount ?? 0); // TODO: multi-volume support...
+        public int FileCount => (int)(HeaderList?.FileCount ?? 0); // TODO: multi-volume support...
+        public int FileGroupCount => HeaderList?.FileGroupCount ?? 0;
 
         // Unicode compatibility
-        public bool IsUnicode { get { return this.HeaderList?.MajorVersion >= 17; } }
+        public bool IsUnicode => HeaderList?.MajorVersion >= 17;
 
         // Base filename path for related CAB files
         private string? filenamePattern;
@@ -33,14 +34,6 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public static InstallShieldCabinet? Open(string filename)
         {
-            return OpenForceVersion(filename, -1);
-        }
-
-        /// <summary>
-        /// Open a file as an InstallShield CAB, forcing a version
-        /// </summary>
-        public static InstallShieldCabinet? OpenForceVersion(string filename, int version)
-        {
             var cabinet = new InstallShieldCabinet();
             if (!cabinet.CreateFilenamePattern(filename))
             {
@@ -48,7 +41,7 @@ namespace UnshieldSharp.Cabinet
                 return null;
             }
 
-            if (!cabinet.ReadHeaders(version))
+            if (!cabinet.ReadHeaders())
             {
                 Console.Error.WriteLine("Failed to read header files");
                 return null;
@@ -64,89 +57,22 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Get the component name at an index
         /// </summary>
-        public string? ComponentName(int index)
-        {
-            if (index >= 0 && index < this.HeaderList!.ComponentCount)
-                return this.HeaderList.Components![index]!.Identifier!.Replace('\\', '/');
-            else
-                return null;
-        }
+        public string? ComponentName(int index) => HeaderList?.GetComponentName(index);
 
         /// <summary>
         /// Get the directory name at an index
         /// </summary>
-        public string? DirectoryName(int index)
-        {
-            if (index < 0 || index >= (int)this.HeaderList!.Descriptor!.DirectoryCount)
-            {
-                Console.Error.WriteLine($"Failed to get directory name {index}");
-                return null;
-            }
-
-            // TODO: multi-volume support...
-            int location = (int)(this.HeaderList!.CommonHeader!.DescriptorOffset
-                + this.HeaderList.Descriptor.FileTableOffset
-                + this.HeaderList.FileOffsetTable![index]);
-
-            if (location < 0 || location >= this.HeaderList.Data!.Length)
-            {
-                Console.Error.WriteLine($"Failed to get file descriptor {index}");
-                return null;
-            }
-
-            this.HeaderList.Data.Seek(location, SeekOrigin.Begin);
-            return this.HeaderList.Data.ReadNullTerminatedString().Replace('\\', '/');
-        }
+        public string? DirectoryName(int index) => HeaderList?.GetDirectoryName(index);
 
         /// <summary>
         /// Get the file name at an index
         /// </summary>
-        public string? FileName(int index)
-        {
-            if (index < 0 || index >= (int)this.HeaderList!.Descriptor!.FileCount)
-            {
-                Console.Error.WriteLine($"Failed to get file descriptor {index}");
-                return null;
-            }
-
-            // TODO: multi-volume support...
-            FileDescriptor? fd = this.GetFileDescriptor(index);
-            if (fd == null)
-            {
-                Console.Error.WriteLine($"Failed to get file descriptor {index}");
-                return null;
-            }
-
-            if (fd.Flags.HasFlag(FileDescriptorFlag.FILE_INVALID))
-            {
-                Console.Error.WriteLine($"Failed to get file descriptor {index}");
-                return null;
-            }
-
-            int location = (int)(this.HeaderList!.CommonHeader!.DescriptorOffset
-                + this.HeaderList.Descriptor.FileTableOffset
-                + fd.NameOffset);
-
-            if (location < 0 || location >= this.HeaderList.Data!.Length)
-            {
-                Console.Error.WriteLine($"Failed to get file descriptor {index}");
-                return null;
-            }
-
-            this.HeaderList.Data.Seek(location, SeekOrigin.Begin);
-            return this.HeaderList.Data.ReadNullTerminatedString();
-        }
+        public string? FileName(int index) => HeaderList?.GetFileName(index);
 
         /// <summary>
         /// Get the file group name at an index
         /// </summary>
-        public string? FileGroupName(int index)
-        {
-            if (index >= 0 && index < this.HeaderList!.FileGroupCount)
-                return this.HeaderList.FileGroups![index].Name;
-            else
-                return null;
-        }
+        public string? FileGroupName(int index) => HeaderList?.GetFileGroupName(index);
 
         #endregion
 
@@ -160,11 +86,11 @@ namespace UnshieldSharp.Cabinet
             if (index < 0 || index > this.FileCount)
                 return false;
 
-            FileDescriptor? fd = this.GetFileDescriptor(index);
+            FileDescriptor? fd = HeaderList?.GetFileDescriptor(index);
             if (fd == null)
                 return false;
 
-            if (fd.Flags.HasFlag(FileDescriptorFlag.FILE_INVALID))
+            if (fd.Flags.HasFlag(FileFlags.FILE_INVALID))
                 return false;
 
             if (fd.NameOffset == default)
@@ -185,7 +111,7 @@ namespace UnshieldSharp.Cabinet
             if (fileDescriptor == null)
                 return false;
 
-            if (fileDescriptor.LinkFlags == FileDescriptorLinkFlag.LINK_PREV)
+            if (fileDescriptor.LinkFlags == LinkFlags.LINK_PREV)
                 return this.FileSave((int)fileDescriptor.LinkPrevious, filename);
 
             var reader = GetReader(index, fileDescriptor);
@@ -210,7 +136,7 @@ namespace UnshieldSharp.Cabinet
                 ulong bytesToWrite = BUFFER_SIZE;
                 int result;
 
-                if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED))
+                if (fileDescriptor.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
                 {
                     ulong readBytes;
                     byte[] bytesToRead = new byte[sizeof(ushort)];
@@ -298,7 +224,7 @@ namespace UnshieldSharp.Cabinet
                 md5.TransformFinalBlock(outputBuffer, 0, 0);
                 byte[]? md5result = md5.Hash;
 
-                if (md5result == null || !md5result.SequenceEqual(fileDescriptor.Md5))
+                if (md5result == null || !md5result.SequenceEqual(fileDescriptor.MD5!))
                 {
                     Console.Error.WriteLine($"MD5 checksum failure for file {index} ({FileName(index)})");
                     reader.Dispose();
@@ -321,7 +247,7 @@ namespace UnshieldSharp.Cabinet
             if (fileDescriptor == null)
                 return false;
 
-            if (fileDescriptor.LinkFlags == FileDescriptorLinkFlag.LINK_PREV)
+            if (fileDescriptor.LinkFlags == LinkFlags.LINK_PREV)
                 return FileSaveRaw((int)fileDescriptor.LinkPrevious, filename);
 
             var reader = GetReader(index, fileDescriptor);
@@ -353,7 +279,7 @@ namespace UnshieldSharp.Cabinet
                     return false;
                 }
 
-                if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED))
+                if (fileDescriptor.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
                 {
                     byte[] END_OF_CHUNK = { 0x00, 0x00, 0xff, 0xff };
                     ulong readBytes;
@@ -485,7 +411,7 @@ namespace UnshieldSharp.Cabinet
             if (fileDescriptor == null)
                 return false;
 
-            if (fileDescriptor.LinkFlags == FileDescriptorLinkFlag.LINK_PREV)
+            if (fileDescriptor.LinkFlags == LinkFlags.LINK_PREV)
                 return FileSaveRaw((int)fileDescriptor.LinkPrevious, filename);
 
             var reader = GetReader(index, fileDescriptor);
@@ -526,7 +452,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public int FileDirectory(int index)
         {
-            FileDescriptor? fd = this.GetFileDescriptor(index);
+            FileDescriptor? fd = HeaderList?.GetFileDescriptor(index);
             if (fd != null)
                 return (int)fd.DirectoryIndex;
             else
@@ -538,7 +464,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public int FileSize(int index)
         {
-            FileDescriptor? fd = this.GetFileDescriptor(index);
+            FileDescriptor? fd = HeaderList?.GetFileDescriptor(index);
             if (fd != null)
                 return (int)fd.ExpandedSize;
             else
@@ -550,7 +476,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private ulong GetBytesToRead(FileDescriptor fd)
         {
-            if (fd.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED))
+            if (fd.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
                 return fd.CompressedSize;
             else
                 return fd.ExpandedSize;
@@ -567,14 +493,14 @@ namespace UnshieldSharp.Cabinet
                 return null;
             }
 
-            var fileDescriptor = this.GetFileDescriptor(index);
+            var fileDescriptor = HeaderList?.GetFileDescriptor(index);
             if (fileDescriptor == null)
             {
                 Console.Error.WriteLine($"Failed to get file descriptor for file {index}");
                 return null;
             }
 
-            if (fileDescriptor.Flags.HasFlag(FileDescriptorFlag.FILE_INVALID) || fileDescriptor.DataOffset == 0)
+            if (fileDescriptor.Flags.HasFlag(FileFlags.FILE_INVALID) || fileDescriptor.DataOffset == 0)
             {
                 Console.Error.WriteLine($"File at {index} is marked as invalid");
                 return null;
@@ -612,27 +538,12 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Retrieve a file group based on index
         /// </summary>
-        public FileGroup? FileGroupGet(int index)
-        {
-            if (index >= 0 && index < this.HeaderList!.FileGroupCount)
-                return this.HeaderList.FileGroups![index];
-            else
-                return null;
-        }
+        public FileGroup? GetFileGroup(int index) => HeaderList?.GetFileGroup(index);
 
         /// <summary>
         /// Retrieve a file group based on name
         /// </summary>
-        public FileGroup? FileGroupFind(string name)
-        {
-            for (int i = 0; i < this.HeaderList!.FileGroupCount; i++)
-            {
-                if (this.HeaderList.FileGroups![i].Name == name)
-                    return this.HeaderList.FileGroups[i];
-            }
-
-            return null;
-        }
+        public FileGroup? GetFileGroup(string name) => HeaderList?.GetFileGroup(name);
 
         #endregion
 
@@ -765,43 +676,9 @@ namespace UnshieldSharp.Cabinet
         }
 
         /// <summary>
-        /// Get the file descriptor at an index
+        /// Read headers from the current file
         /// </summary>
-        private FileDescriptor? GetFileDescriptor(int index)
-        {
-            // TODO: multi-volume support...
-            if (index < 0 || index >= (int)this.HeaderList!.Descriptor!.FileCount)
-            {
-                Console.Error.WriteLine("Invalid index");
-                return null;
-            }
-
-            if (this.HeaderList.FileDescriptors == null)
-                this.HeaderList.FileDescriptors = new FileDescriptor[this.HeaderList.Descriptor.FileCount];
-
-            if (this.HeaderList.FileDescriptors[index] == null)
-                this.HeaderList.FileDescriptors[index] = this.ReadFileDescriptor(index);
-
-            return this.HeaderList.FileDescriptors[index];
-        }
-
-        /// <summary>
-        /// Read the file descriptor from the header data based on an index
-        /// </summary>
-        private FileDescriptor ReadFileDescriptor(int index)
-        {
-            // TODO: multi-volume support...
-            FileDescriptor fd = FileDescriptor.Create(this.HeaderList!, index);
-            if (!fd.Flags.HasFlag(FileDescriptorFlag.FILE_COMPRESSED) && fd.CompressedSize != fd.ExpandedSize)
-                Console.Error.WriteLine($"File is not compressed but compressed size is {fd.CompressedSize} and expanded size is {fd.ExpandedSize}");
-
-            return fd;
-        }
-
-        /// <summary>
-        /// Read headers from the current file, optionally with a given version
-        /// </summary>
-        private bool ReadHeaders(int version)
+        private bool ReadHeaders()
         {
             if (this.HeaderList != null)
             {
@@ -822,7 +699,7 @@ namespace UnshieldSharp.Cabinet
                 if (file == null)
                     break;
 
-                var header = Header.Create(file, version, i);
+                var header = Header.Create(file, i);
                 if (header == null)
                     break;
 

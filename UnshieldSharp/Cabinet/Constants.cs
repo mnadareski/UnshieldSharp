@@ -2,22 +2,6 @@ namespace UnshieldSharp.Cabinet
 {
     internal static class Constants
     {
-        #region cabfile.h
-
-        public const int CAB_SIGNATURE = 0x28635349;
-
-        public const int MSCF_SIGNATURE = 0x4643534d;
-
-        public const int COMMON_HEADER_SIZE = 20;
-        public const int VOLUME_HEADER_SIZE_V5 = 40;
-        public const int VOLUME_HEADER_SIZE_V6 = 64;
-
-        public const int OFFSET_COUNT = 0x47;
-        public const int MAX_FILE_GROUP_COUNT = 0x47;
-        public const int MAX_COMPONENT_COUNT = 0x47;
-
-        #endregion
-
         #region file.c
 
         public const int BUFFER_SIZE = 64 * 1024;
