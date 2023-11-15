@@ -42,33 +42,33 @@ namespace UnshieldSharp.Blast
         /// <summary>
         /// Literal code
         /// </summary>
-        private static readonly Huffman litcode = new Huffman(MAXBITS + 1, 256);
+        private static readonly Huffman litcode = new(MAXBITS + 1, 256);
 
         /// <summary>
         /// Length code
         /// </summary>
-        private static readonly Huffman lencode = new Huffman(MAXBITS + 1, 16);
+        private static readonly Huffman lencode = new(MAXBITS + 1, 16);
 
         /// <summary>
         /// Distance code
         /// </summary>
-        private static readonly Huffman distcode = new Huffman(MAXBITS + 1, 64);
+        private static readonly Huffman distcode = new(MAXBITS + 1, 64);
 
         /// <summary>
         /// Base for length codes
         /// </summary>
-        private static readonly short[] baseLength = new short[16]
-        {
+        private static readonly short[] baseLength =
+        [
             3, 2, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24, 40, 72, 136, 264
-        };
+        ];
 
         /// <summary>
         /// Extra bits for length codes
         /// </summary>
-        private static readonly byte[] extra = new byte[16]
-        {
+        private static readonly byte[] extra =
+        [
             0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8
-        };
+        ];
 
         #endregion
 
@@ -78,29 +78,29 @@ namespace UnshieldSharp.Blast
         static BlastDecoder()
         {
             // Repeated code lengths of literal codes
-            byte[] litlen = new byte[]
-            {
+            byte[] litlen =
+            [
                 11, 124, 8, 7, 28, 7, 188, 13, 76, 4, 10, 8, 12, 10, 12, 10, 8, 23, 8,
                 9, 7, 6, 7, 8, 7, 6, 55, 8, 23, 24, 12, 11, 7, 9, 11, 12, 6, 7, 22, 5,
                 7, 24, 6, 11, 9, 6, 7, 22, 7, 11, 38, 7, 9, 8, 25, 11, 8, 11, 9, 12,
                 8, 12, 5, 38, 5, 38, 5, 11, 7, 5, 6, 21, 6, 10, 53, 8, 7, 24, 10, 27,
                 44, 253, 253, 253, 252, 252, 252, 13, 12, 45, 12, 45, 12, 61, 12, 45,
                 44, 173
-            };
+            ];
             litcode.Initialize(litlen);
 
             // Repeated code lengths of length codes 0..15
-            byte[] lenlen = new byte[]
-            {
+            byte[] lenlen =
+            [
                 2, 35, 36, 53, 38, 23
-            };
+            ];
             lencode.Initialize(lenlen);
 
             // Repeated code lengths of distance codes 0..63
-            byte[] distlen = new byte[]
-            {
+            byte[] distlen =
+            [
                 2, 20, 53, 230, 247, 151, 248
-            };
+            ];
             distcode.Initialize(distlen);
         }
 
@@ -118,7 +118,7 @@ namespace UnshieldSharp.Blast
         public static int Blast(byte[] inhow, List<byte> outhow)
         {
             // Input/output state
-            State state = new State(inhow, outhow);
+            var state = new State(inhow, outhow);
 
             // Attempt to decompress using the above state
             int err;

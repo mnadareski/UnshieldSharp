@@ -4,6 +4,8 @@ using System.Text;
 using SabreTools.Models.InstallShieldCabinet;
 using static UnshieldSharp.Cabinet.Constants;
 
+#pragma warning disable IDE0051 // Private member is unused
+
 namespace UnshieldSharp.Cabinet
 {
     public class Reader : IDisposable
@@ -166,6 +168,40 @@ namespace UnshieldSharp.Cabinet
             return true;
         }
 
+        /// <summary>
+        /// Read a certain number of bytes from the current volume
+        /// </summary>
+        public bool Read(byte[] buffer, int start, long size)
+        {
+            long bytesLeft = size;
+            while (bytesLeft > 0)
+            {
+                // Read as much as possible from this volume
+                int bytesToRead = (int)Math.Min(bytesLeft, (long)VolumeBytesLeft);
+
+                if (bytesToRead == 0)
+                    return false;
+
+                if (bytesToRead != VolumeFile!.Read(buffer, start, bytesToRead))
+                    return false;
+
+                bytesLeft -= bytesToRead;
+                VolumeBytesLeft -= (uint)bytesToRead;
+
+                if (bytesLeft > 0)
+                {
+                    // Open next volume
+                    if (!OpenVolume(Volume + 1))
+                        return false;
+                }
+            }
+
+            if (_fileDescriptor!.Flags.HasFlag(FileFlags.FILE_OBFUSCATED))
+                Deobfuscate(buffer, size);
+
+            return true;
+        }
+
         // TODO: Expose the methods used here in the library instead
         #region Copied from Serialization Library
 
@@ -244,51 +280,9 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Deobfuscate a buffer
         /// </summary>
-        public void Deobfuscate(byte[] buffer, long size)
+        private void Deobfuscate(byte[] buffer, long size)
         {
-            _obfuscationOffset = Reader.Deobfuscate(buffer, size, _obfuscationOffset);
-        }
-
-        /// <summary>
-        /// Deobfuscate a buffer
-        /// </summary>
-        public void Obfuscate(byte[] buffer, long size)
-        {
-            _obfuscationOffset = Reader.Obfuscate(buffer, size, _obfuscationOffset);
-        }
-
-        /// <summary>
-        /// Read a certain number of bytes from the current volume
-        /// </summary>
-        public bool Read(byte[] buffer, int start, long size)
-        {
-            long bytesLeft = size;
-            while (bytesLeft > 0)
-            {
-                // Read as much as possible from this volume
-                int bytesToRead = (int)Math.Min(bytesLeft, (long)VolumeBytesLeft);
-
-                if (bytesToRead == 0)
-                    return false;
-
-                if (bytesToRead != VolumeFile!.Read(buffer, start, bytesToRead))
-                    return false;
-
-                bytesLeft -= bytesToRead;
-                VolumeBytesLeft -= (uint)bytesToRead;
-
-                if (bytesLeft > 0)
-                {
-                    // Open next volume
-                    if (!OpenVolume(Volume + 1))
-                        return false;
-                }
-            }
-
-            if (_fileDescriptor!.Flags.HasFlag(FileFlags.FILE_OBFUSCATED))
-                Deobfuscate(buffer, size);
-
-            return true;
+            _obfuscationOffset = Deobfuscate(buffer, size, _obfuscationOffset);
         }
 
         /// <summary>
@@ -303,6 +297,14 @@ namespace UnshieldSharp.Cabinet
             }
 
             return seed;
+        }
+
+        /// <summary>
+        /// Deobfuscate a buffer
+        /// </summary>
+        private void Obfuscate(byte[] buffer, long size)
+        {
+            _obfuscationOffset = Obfuscate(buffer, size, _obfuscationOffset);
         }
 
         /// <summary>

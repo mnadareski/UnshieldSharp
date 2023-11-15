@@ -42,12 +42,12 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// List of directories found in the archive
         /// </summary>
-        public List<ArchiveDirectory> Directories { get; private set; } = new List<ArchiveDirectory>();
+        public List<ArchiveDirectory> Directories { get; private set; } = [];
 
         /// <summary>
         /// List of files found in the archive
         /// </summary>
-        public Dictionary<string, CompressedFile> Files { get; private set; } = new Dictionary<string, CompressedFile>();
+        public Dictionary<string, CompressedFile> Files { get; private set; } = [];
 
         /// <summary>
         /// Stream representing the input archive
@@ -98,13 +98,13 @@ namespace UnshieldSharp.Archive
                 return (null, "Could not read all required data");
 
             // Decompress the data
-            List<byte> output = new List<byte>();
+            var output = new List<byte>();
             int ret = BlastDecoder.Blast(compressedData, output);
             if (ret != 0)
                 return (null, $"Blast error: {ret}");
 
             // Return the decompressed data
-            return (output.ToArray(), null);
+            return ([.. output], null);
         }
 
         /// <summary>
