@@ -120,7 +120,7 @@ namespace UnshieldSharp.Archive
             // Attempt to open the file for reading
             try
             {
-                inputStream = File.OpenRead(FilePath);
+                inputStream = File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             }
             catch
             {
