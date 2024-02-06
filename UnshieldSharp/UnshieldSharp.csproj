@@ -8,12 +8,12 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <Version>1.7.1</Version>
+    <Version>1.7.2</Version>
 
     <!-- Package Properties -->
     <Authors>Matt Nadareski;David Eriksson</Authors>
     <Description>Port of Unshield and unshieldv3 to C#</Description>
-    <Copyright>Copyright (c)2018-2023 Matt Nadareski</Copyright>
+    <Copyright>Copyright (c)2018-2024 Matt Nadareski</Copyright>
     <PackageProjectUrl>https://github.com/SabreTools/</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/mnadareski/UnshieldSharp</RepositoryUrl>
