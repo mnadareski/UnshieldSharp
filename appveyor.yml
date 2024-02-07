@@ -1,5 +1,5 @@
 # version format
-version: 1.6.9-{build}
+version: 1.7.2-{build}
 
 # pull request template
 pull_requests:
@@ -20,10 +20,10 @@ install:
 # build step
 build_script:
   - cmd: dotnet restore
-  - cmd: dotnet publish Test\Test.csproj --framework net8.0 --runtime win-x86 --self-contained true -p:PublishSingleFile=true
-  - cmd: dotnet publish Test\Test.csproj --framework net8.0 --runtime win-x64 --self-contained true -p:PublishSingleFile=true
-  - cmd: dotnet publish Test\Test.csproj --framework net8.0 --runtime linux-x64 --self-contained true -p:PublishSingleFile=true
-  - cmd: dotnet publish Test\Test.csproj --framework net8.0 --runtime osx-x64 --self-contained true -p:PublishSingleFile=true
+  - cmd: dotnet publish Test\Test.csproj -c Debug --framework net8.0 --runtime win-x86 --self-contained true -p:PublishSingleFile=true
+  - cmd: dotnet publish Test\Test.csproj -c Debug--framework net8.0 --runtime win-x64 --self-contained true -p:PublishSingleFile=true
+  - cmd: dotnet publish Test\Test.csproj -c Debug--framework net8.0 --runtime linux-x64 --self-contained true -p:PublishSingleFile=true
+  - cmd: dotnet publish Test\Test.csproj -c Debug--framework net8.0 --runtime osx-x64 --self-contained true -p:PublishSingleFile=true
   - cmd: dotnet pack UnshieldSharp\UnshieldSharp.csproj --output %APPVEYOR_BUILD_FOLDER%
 
 # post-build script
