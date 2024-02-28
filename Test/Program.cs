@@ -30,7 +30,7 @@ namespace Test
             for (; firstFileIndex < args.Length; firstFileIndex++)
             {
                 string arg = args[firstFileIndex];
-                if (string.IsNullOrWhiteSpace(arg))
+                if (string.IsNullOrEmpty(arg))
                     continue;
 
                 if (arg == "-?" || arg == "-h" || arg == "--help")
@@ -76,7 +76,7 @@ namespace Test
             if (!outputInfo && !extract)
             {
                 Console.WriteLine("Neither info nor extraction were selected, skipping all files...");
-                    
+
                 // Only prompt to close when not in script mode
                 if (!script)
                 {
@@ -96,7 +96,7 @@ namespace Test
                     ProcessArchivePath(arg, outputInfo, extract, outputDirectory);
                 else
                     Console.WriteLine($"{arg} is not a recognized file by extension");
-            }    
+            }
 
             // Only prompt to close when not in script mode
             if (!script)
@@ -145,7 +145,7 @@ namespace Test
                 return;
 
             var archive = new InstallShieldArchiveV3(file);
-            if (archive == null)
+            if (archive?.Header == null)
             {
                 Console.WriteLine($"{file} could not be opened as an InstallShield V3 Archive!");
                 return;
@@ -168,21 +168,22 @@ namespace Test
 
             if (extract)
             {
-                if (string.IsNullOrWhiteSpace(outputDirectory))
-                    outputDirectory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(file)), Path.GetFileNameWithoutExtension(file));
+                if (string.IsNullOrEmpty(outputDirectory))
+                    outputDirectory = CreateOutdir(file) ?? string.Empty;
 
                 if (!Directory.Exists(outputDirectory))
                     Directory.CreateDirectory(outputDirectory);
 
                 foreach (CompressedFile internalFile in archive.Files.Select(kvp => kvp.Value))
                 {
-                    string newfile = Path.Combine(outputDirectory, internalFile.FullPath.Replace('\\', '/'));
+                    string newfile = Path.Combine(outputDirectory, internalFile.FullPath!.Replace('\\', '/'));
 
-                    if (!Directory.Exists(Path.GetDirectoryName(newfile)))
-                        Directory.CreateDirectory(Path.GetDirectoryName(newfile));
+                    string? directoryName = Path.GetDirectoryName(newfile);
+                    if (!string.IsNullOrEmpty(directoryName) && !Directory.Exists(directoryName))
+                        Directory.CreateDirectory(directoryName);
 
-                    (byte[] fileContents, string error) = archive.Extract(internalFile.FullPath);
-                    if (!string.IsNullOrWhiteSpace(error))
+                    (byte[]? fileContents, string? error) = archive.Extract(internalFile.FullPath);
+                    if (fileContents == null || !string.IsNullOrEmpty(error))
                     {
                         Console.WriteLine($"Error detected while reading '{internalFile.FullPath}': {error}");
                         continue;
@@ -237,28 +238,64 @@ namespace Test
                 for (int i = 0; i < cab.FileGroupCount; i++)
                     Console.WriteLine($"\tFile Group {i}: {cab.FileGroupName(i)}");
             }
-            
+
             if (extract)
             {
-                if (string.IsNullOrWhiteSpace(outputDirectory))
-                    outputDirectory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(file)), Path.GetFileNameWithoutExtension(file));
+                if (string.IsNullOrEmpty(outputDirectory))
+                    outputDirectory = CreateOutdir(file) ?? string.Empty;
 
                 if (!Directory.Exists(outputDirectory))
                     Directory.CreateDirectory(outputDirectory);
 
-                for(int i = 0; i < cab.FileCount; i++)
+                for (int i = 0; i < cab.FileCount; i++)
                 {
-                    string filename = new string(cab.FileName(i).Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c).ToArray());
-                    string directory = new string(cab.DirectoryName(cab.FileDirectory(i)).Select(c => Path.GetInvalidPathChars().Contains(c) ? '_' : c).ToArray());
+                    char[]? filenameChars = cab.FileName(i)?.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)?.ToArray();
+                    string filename = filenameChars != null ? new(filenameChars) : string.Empty;
+                    char[]? directoryChars = cab.DirectoryName(cab.FileDirectory(i))?.Select(c => Path.GetInvalidPathChars().Contains(c) ? '_' : c)?.ToArray();
+                    string directory = directoryChars != null ? new(directoryChars) : string.Empty;
+#if NET20 || NET35
+                    string newfile = Path.Combine(Path.Combine(outputDirectory, directory), filename);
+#else
                     string newfile = Path.Combine(outputDirectory, directory, filename);
+#endif
 
-                    if (!Directory.Exists(Path.GetDirectoryName(newfile)))
-                        Directory.CreateDirectory(Path.GetDirectoryName(newfile));
+                    string? directoryName = Path.GetDirectoryName(newfile);
+                    if (!string.IsNullOrEmpty(directoryName) && !Directory.Exists(directoryName))
+                        Directory.CreateDirectory(directoryName);
 
                     Console.WriteLine($"Outputting file at index {i} to {newfile}...");
                     cab.FileSave(i, newfile);
                 }
             }
+        }
+
+        /// <summary>
+        /// Generate the output directory path, if possible
+        /// </summary>
+        /// <param name="input">Input path to generate from</param>
+        /// <returns>Output directory path on success, null on error</returns>
+        private static string? CreateOutdir(string input)
+        {
+            // If the file path is not valid
+            if (string.IsNullOrEmpty(input) || !File.Exists(input))
+                return null;
+
+            // Get the full path for the input, if possible
+            input = Path.GetFullPath(input);
+
+            // Get the directory name and filename without extension for processing
+            string? directoryName = Path.GetDirectoryName(input);
+            string? fileNameWithoutExtension = Path.GetFileNameWithoutExtension(input);
+
+            // Return an output path based on the two parts
+            if (string.IsNullOrEmpty(directoryName) && string.IsNullOrEmpty(fileNameWithoutExtension))
+                return null;
+            else if (string.IsNullOrEmpty(directoryName) && !string.IsNullOrEmpty(fileNameWithoutExtension))
+                return fileNameWithoutExtension;
+            else if (!string.IsNullOrEmpty(directoryName) && string.IsNullOrEmpty(fileNameWithoutExtension))
+                return directoryName;
+            else
+                return Path.Combine(directoryName!, fileNameWithoutExtension!);
         }
     }
 }

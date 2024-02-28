@@ -129,7 +129,11 @@ namespace UnshieldSharp.Cabinet
         public string? GetFileName(int index)
         {
             var descriptor = GetFileDescriptor(index);
+#if NET20 || NET35
+            if (descriptor == null || (descriptor.Flags & FileFlags.FILE_INVALID) != 0)
+#else
             if (descriptor == null || descriptor.Flags.HasFlag(FileFlags.FILE_INVALID))
+#endif
                 return null;
 
             return descriptor.Name;

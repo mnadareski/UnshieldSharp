@@ -130,7 +130,11 @@ namespace UnshieldSharp.Cabinet
             }
 
             ulong dataOffset, volumeBytesLeftCompressed, volumeBytesLeftExpanded;
+#if NET20 || NET35
+            if ((_fileDescriptor!.Flags & FileFlags.FILE_SPLIT) != 0)
+#else
             if (_fileDescriptor!.Flags.HasFlag(FileFlags.FILE_SPLIT))
+#endif
             {
                 if (_index == _volumeHeader.LastFileIndex && _volumeHeader.LastFileOffset != 0x7FFFFFFF)
                 {
@@ -157,7 +161,11 @@ namespace UnshieldSharp.Cabinet
                 volumeBytesLeftCompressed = _fileDescriptor.CompressedSize;
             }
 
+#if NET20 || NET35
+            if ((_fileDescriptor.Flags & FileFlags.FILE_COMPRESSED) != 0)
+#else
             if (_fileDescriptor.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
+#endif
                 VolumeBytesLeft = volumeBytesLeftCompressed;
             else
                 VolumeBytesLeft = volumeBytesLeftExpanded;
@@ -196,7 +204,11 @@ namespace UnshieldSharp.Cabinet
                 }
             }
 
+#if NET20 || NET35
+            if ((_fileDescriptor!.Flags & FileFlags.FILE_OBFUSCATED) != 0)
+#else
             if (_fileDescriptor!.Flags.HasFlag(FileFlags.FILE_OBFUSCATED))
+#endif
                 Deobfuscate(buffer, size);
 
             return true;
@@ -325,7 +337,7 @@ namespace UnshieldSharp.Cabinet
         /// Rotate Right 8
         /// </summary>
         private static int ROR8(int x, int n) { return ((x) >> ((int)(n))) | ((x) << (8 - (int)(n))); }
-        
+
         /// <summary>
         /// Rotate Left 8
         /// </summary>

@@ -3,7 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+#if NET40_OR_GREATER || NETCOREAPP
 using ComponentAce.Compression.Libs.zlib;
+#endif
 using SabreTools.Models.InstallShieldCabinet;
 using static UnshieldSharp.Cabinet.Constants;
 
@@ -90,7 +92,11 @@ namespace UnshieldSharp.Cabinet
             if (fd == null)
                 return false;
 
+#if NET20 || NET35
+            if ((fd.Flags & FileFlags.FILE_INVALID) != 0)
+#else
             if (fd.Flags.HasFlag(FileFlags.FILE_INVALID))
+#endif
                 return false;
 
             if (fd.NameOffset == default)
@@ -136,7 +142,11 @@ namespace UnshieldSharp.Cabinet
                 ulong bytesToWrite = BUFFER_SIZE;
                 int result;
 
+#if NET20 || NET35
+                if ((fileDescriptor.Flags & FileFlags.FILE_COMPRESSED) != 0)
+#else
                 if (fileDescriptor.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
+#endif
                 {
                     ulong readBytes;
                     byte[] bytesToRead = new byte[sizeof(ushort)];
@@ -278,7 +288,11 @@ namespace UnshieldSharp.Cabinet
                     return false;
                 }
 
+#if NET20 || NET35
+                if ((fileDescriptor.Flags & FileFlags.FILE_COMPRESSED) != 0)
+#else
                 if (fileDescriptor.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
+#endif
                 {
                     byte[] END_OF_CHUNK = [0x00, 0x00, 0xff, 0xff];
                     ulong readBytes;
@@ -316,7 +330,7 @@ namespace UnshieldSharp.Cabinet
                         Detect when the chunk actually contains the end of chunk marker.
 
                         Needed by Qtime.smk from "The Feeble Files - spanish version".
-           
+
                         The first bit of a compressed block is always zero, so we apply this
                         workaround if it's a one.
 
@@ -473,7 +487,11 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private static ulong GetBytesToRead(FileDescriptor fd)
         {
+#if NET20 || NET35
+            if ((fd.Flags & FileFlags.FILE_COMPRESSED) != 0)
+#else
             if (fd.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
+#endif
                 return fd.CompressedSize;
             else
                 return fd.ExpandedSize;
@@ -484,7 +502,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private FileDescriptor? GetFileDescriptor(string filename, int index)
         {
-            if (string.IsNullOrWhiteSpace(filename))
+            if (string.IsNullOrEmpty(filename))
             {
                 Console.Error.WriteLine("Provided filename is invalid");
                 return null;
@@ -497,7 +515,11 @@ namespace UnshieldSharp.Cabinet
                 return null;
             }
 
+#if NET20 || NET35
+            if ((fileDescriptor.Flags & FileFlags.FILE_INVALID) != 0 || fileDescriptor.DataOffset == 0)
+#else
             if (fileDescriptor.Flags.HasFlag(FileFlags.FILE_INVALID) || fileDescriptor.DataOffset == 0)
+#endif
             {
                 Console.Error.WriteLine($"File at {index} is marked as invalid");
                 return null;
@@ -551,6 +573,10 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public static int Uncompress(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
+#if NET20 || NET35
+            // zlib not supported for these .NET versions yet
+            return zlibConst.Z_VERSION_ERROR;
+#else
             var stream = new ZStream
             {
                 next_in = source,
@@ -573,6 +599,7 @@ namespace UnshieldSharp.Cabinet
             destLen = (ulong)stream.total_out;
             sourceLen = (ulong)stream.total_in;
             return stream.inflateEnd();
+#endif
         }
 
         /// <summary>
@@ -580,6 +607,10 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public static int UncompressOld(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
+#if NET20 || NET35
+            // zlib not supported for these .NET versions yet
+            return zlibConst.Z_VERSION_ERROR;
+#else
             var stream = new ZStream
             {
                 next_in = source,
@@ -609,6 +640,7 @@ namespace UnshieldSharp.Cabinet
             destLen = (ulong)stream.total_out;
             sourceLen = (ulong)stream.total_in;
             return stream.inflateEnd();
+#endif
         }
 
         #endregion
@@ -620,7 +652,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public Stream? OpenFileForReading(int index, string suffix)
         {
-            if (string.IsNullOrWhiteSpace(filenamePattern))
+            if (string.IsNullOrEmpty(filenamePattern))
                 return null;
 
             string filename = $"{filenamePattern}{index}.{suffix}";
@@ -640,7 +672,7 @@ namespace UnshieldSharp.Cabinet
                 if (pattern.Length > bufferLeft)
                     break;
 
-#if NET40
+#if NET20 || NET35 || NET40
                 byte[] temp = new byte[pattern.Length];
                 Array.Copy(buffer, offset, temp, 0, pattern.Length);
                 if (temp.SequenceEqual(pattern))
@@ -663,7 +695,7 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private bool CreateFilenamePattern(string filename)
         {
-            if (string.IsNullOrWhiteSpace(filename))
+            if (string.IsNullOrEmpty(filename))
                 return false;
 
             filenamePattern = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(filename))!, Path.GetFileNameWithoutExtension(filename));

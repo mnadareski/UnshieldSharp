@@ -172,7 +172,7 @@ namespace UnshieldSharp.Archive
 
                     // Determine the full path of the internal file
                     string fullpath;
-                    if (!string.IsNullOrWhiteSpace(directory.Name) && directory.Name!.Length > 0)
+                    if (!string.IsNullOrEmpty(directory.Name) && directory.Name!.Length > 0)
                         fullpath = Path.Combine(directory.Name, filename);
                     else
                         fullpath = filename;
