@@ -1,8 +1,7 @@
 # UnshieldSharp
 
-[![Build status](https://ci.appveyor.com/api/projects/status/lk7iopwecojr5ejm?svg=true)](https://ci.appveyor.com/project/mnadareski/unshieldsharp)
-
 This library is a C# port of the following projects:
+
 - [Unshield](https://github.com/twogood/unshield/) - InstallShield CAB information and extractor 
 - [unshieldv3](https://github.com/wfr/unshieldv3) - InstallShield v3 (Z) extractor
 
