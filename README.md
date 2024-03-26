@@ -15,9 +15,3 @@ This code can currently list and extract the contents of all supported files tha
 ## Contributions
 
 Contributions to the project are welcome. Please follow the current coding styles and do not add any proprietary or legally dubious things to the code. Thank you to all of the testers, particularly from the MPF project who helped get this rolling.
-
-## External Libraries
-
-UnshieldSharp uses the following libraries:
-
-- **zlib.net** - [GitHub](https://github.com/cinderblocks/zlib.net)
