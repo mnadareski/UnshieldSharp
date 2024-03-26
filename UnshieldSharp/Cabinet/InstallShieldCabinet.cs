@@ -3,9 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-#if NET40_OR_GREATER || NETCOREAPP
-using ComponentAce.Compression.Libs.zlib;
-#endif
+using SabreTools.Compression.zlib;
 using SabreTools.Models.InstallShieldCabinet;
 using static UnshieldSharp.Cabinet.Constants;
 
@@ -573,33 +571,35 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public static int Uncompress(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
-#if NET20 || NET35
-            // zlib not supported for these .NET versions yet
-            return zlibConst.Z_VERSION_ERROR;
-#else
-            var stream = new ZStream
+            unsafe
             {
-                next_in = source,
-                avail_in = (int)sourceLen,
-                next_out = dest,
-                avail_out = (int)destLen,
-            };
+                fixed (byte* sourcePtr = source)
+                fixed (byte* destPtr = dest)
+                {
+                    var stream = new ZLib.z_stream_s
+                    {
+                        next_in = sourcePtr,
+                        avail_in = (uint)sourceLen,
+                        next_out = destPtr,
+                        avail_out = (uint)destLen,
+                    };
 
-            // make second parameter negative to disable checksum verification
-            int err = stream.inflateInit(-MAX_WBITS);
-            if (err != zlibConst.Z_OK) return err;
+                    // make second parameter negative to disable checksum verification
+                    int err = ZLib.inflateInit_(stream, ZLib.zlibVersion(), source.Length);
+                    if (err != zlibConst.Z_OK) return err;
 
-            err = stream.inflate(zlibConst.Z_FINISH);
-            if (err != zlibConst.Z_STREAM_END)
-            {
-                stream.inflateEnd();
-                return err;
+                    err = ZLib.inflate(stream, 1);
+                    if (err != zlibConst.Z_STREAM_END)
+                    {
+                        ZLib.inflateEnd(stream);
+                        return err;
+                    }
+
+                    destLen = (ulong)stream.total_out;
+                    sourceLen = (ulong)stream.total_in;
+                    return ZLib.inflateEnd(stream);
+                }
             }
-
-            destLen = (ulong)stream.total_out;
-            sourceLen = (ulong)stream.total_in;
-            return stream.inflateEnd();
-#endif
         }
 
         /// <summary>
@@ -607,40 +607,42 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public static int UncompressOld(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
-#if NET20 || NET35
-            // zlib not supported for these .NET versions yet
-            return zlibConst.Z_VERSION_ERROR;
-#else
-            var stream = new ZStream
+            unsafe
             {
-                next_in = source,
-                avail_in = (int)sourceLen,
-                next_out = dest,
-                avail_out = (int)destLen,
-            };
-
-            destLen = 0;
-            sourceLen = 0;
-
-            // make second parameter negative to disable checksum verification
-            int err = stream.inflateInit(-MAX_WBITS);
-            if (err != zlibConst.Z_OK)
-                return err;
-
-            while (stream.avail_in > 1)
-            {
-                err = stream.inflate(Z_BLOCK);
-                if (err != zlibConst.Z_OK)
+                fixed (byte* sourcePtr = source)
+                fixed (byte* destPtr = dest)
                 {
-                    stream.inflateEnd();
-                    return err;
+                    var stream = new ZLib.z_stream_s
+                    {
+                        next_in = sourcePtr,
+                        avail_in = (uint)sourceLen,
+                        next_out = destPtr,
+                        avail_out = (uint)destLen,
+                    };
+
+                    destLen = 0;
+                    sourceLen = 0;
+
+                    // make second parameter negative to disable checksum verification
+                    int err = ZLib.inflateInit_(stream, ZLib.zlibVersion(), source.Length);
+                    if (err != zlibConst.Z_OK)
+                        return err;
+
+                    while (stream.avail_in > 1)
+                    {
+                        err = ZLib.inflate(stream, 1);
+                        if (err != zlibConst.Z_OK)
+                        {
+                            ZLib.inflateEnd(stream);
+                            return err;
+                        }
+                    }
+
+                    destLen = (ulong)stream.total_out;
+                    sourceLen = (ulong)stream.total_in;
+                    return ZLib.inflateEnd(stream);
                 }
             }
-
-            destLen = (ulong)stream.total_out;
-            sourceLen = (ulong)stream.total_in;
-            return stream.inflateEnd();
-#endif
         }
 
         #endregion
