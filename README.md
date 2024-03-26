@@ -2,7 +2,7 @@
 
 This library is a C# port of the following projects:
 
-- [Unshield](https://github.com/twogood/unshield/) - InstallShield CAB information and extractor 
+- [Unshield](https://github.com/twogood/unshield/) - InstallShield CAB information and extractor
 - [unshieldv3](https://github.com/wfr/unshieldv3) - InstallShield v3 (Z) extractor
 
 Both of the above library code has had changes to structure to make them more object-oriented.
