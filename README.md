@@ -6,7 +6,7 @@ This library is a C# port of the following projects:
 - [unshieldv3](https://github.com/wfr/unshieldv3) - InstallShield v3 (Z) extractor
 
 Both of the above library code has had changes to structure to make them more object-oriented.
-For an example of usage, please see [BurnOutSharp](https://github.com/mnadareski/BurnOutSharp).
+For an example of usage, please see [Binary Object Scanner](https://github.com/SabreTools/BinaryObjectScanner).
 
 ## Abilities
 
