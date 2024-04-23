@@ -1,6 +1,5 @@
 using System.IO;
 using SabreTools.IO.Extensions;
-using SabreTools.Models.InstallShieldArchiveV3;
 
 namespace UnshieldSharp.Archive
 {
@@ -52,21 +51,9 @@ namespace UnshieldSharp.Archive
             if (!stream.CanRead || stream.Length - stream.Position < 51)
                 return null;
 
-            var file = new SabreTools.Models.InstallShieldArchiveV3.File();
-
-            file.VolumeEnd          = stream.ReadByteValue();              // 00
-            file.Index              = stream.ReadUInt16();                 // 01-02
-            file.UncompressedSize   = stream.ReadUInt32();                 // 03-06
-            file.CompressedSize     = stream.ReadUInt32();                 // 07-0A
-            file.Offset             = stream.ReadUInt32();                 // 0B-0E
-            file.DateTime           = stream.ReadUInt32();                 // 0F-12
-            file.Reserved0          = stream.ReadUInt32();                 // 13-16
-            file.ChunkSize          = stream.ReadUInt16();                 // 17-18
-            file.Attrib             = (Attributes)stream.ReadByteValue();  // 19
-            file.IsSplit            = stream.ReadByteValue();              // 1A
-            file.Reserved1          = stream.ReadByteValue();              // 1B
-            file.VolumeStart        = stream.ReadByteValue();              // 1C
-            file.Name               = stream.ReadPrefixedAnsiString()!;    // 1D-XX
+            var file = stream.ReadType<SabreTools.Models.InstallShieldArchiveV3.File>();
+            if (file == null)
+                return null;
 
             return new CompressedFile(file);
         }

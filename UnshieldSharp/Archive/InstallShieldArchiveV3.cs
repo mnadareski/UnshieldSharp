@@ -163,7 +163,10 @@ namespace UnshieldSharp.Archive
                 for (int i = 0; i < directory.FileCount; i++)
                 {
                     // Read in the file information
-                    var file = CompressedFile.Create(inputStream)!;
+                    var file = CompressedFile.Create(inputStream);
+                    if (file == null)
+                        break;
+
                     inputStream.Seek(file.ChunkSize - file.Name!.Length - 30, SeekOrigin.Current);
 
                     // Determine the full path of the internal file
