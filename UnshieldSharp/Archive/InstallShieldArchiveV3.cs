@@ -127,7 +127,7 @@ namespace UnshieldSharp.Archive
             {
                 return (false, "Cannot open file");
             }
-            
+
             // Create the header from the input file
             Header = Header.Create(inputStream);
             if (Header == null)
@@ -150,7 +150,7 @@ namespace UnshieldSharp.Archive
             {
                 ushort fileCount = inputStream.ReadUInt16();
                 ushort chunkSize = inputStream.ReadUInt16();
-                string name      = inputStream.ReadUInt16HeaderedString();
+                string name = inputStream.ReadPrefixedUnicodeString()!;
 
                 inputStream.Seek(chunkSize - name.Length - 6, SeekOrigin.Current);
                 Directories.Add(new ArchiveDirectory { Name = name, FileCount = fileCount });
@@ -163,32 +163,20 @@ namespace UnshieldSharp.Archive
                 for (int i = 0; i < directory.FileCount; i++)
                 {
                     // Read in the file information
-                    inputStream.Seek(7, SeekOrigin.Current);                    // 00-06
-                    uint compressedSize = inputStream.ReadUInt32();             // 07-10
-                    inputStream.Seek(12, SeekOrigin.Current);                   // 11-22
-                    ushort chunkSize = inputStream.ReadUInt16();                // 23-24
-                    inputStream.Seek(4, SeekOrigin.Current);                    // 25-28
-                    string filename = inputStream.ReadUInt8HeaderedString();    // 29-XX
-                    inputStream.Seek(chunkSize - filename.Length - 30, SeekOrigin.Current);
+                    var file = CompressedFile.Create(inputStream)!;
+                    inputStream.Seek(file.ChunkSize - file.Name!.Length - 30, SeekOrigin.Current);
 
                     // Determine the full path of the internal file
-                    string fullpath;
                     if (!string.IsNullOrEmpty(directory.Name) && directory.Name!.Length > 0)
-                        fullpath = Path.Combine(directory.Name, filename);
+                        file.FullPath = Path.Combine(directory.Name, file.Name);
                     else
-                        fullpath = filename;
+                        file.FullPath = file.Name;
 
                     // Add the file to the list
-                    Files[fullpath] = new CompressedFile
-                    {
-                        Name = filename,
-                        FullPath = fullpath,
-                        CompressedSize = compressedSize,
-                        Offset = accumOffset,
-                    };
+                    Files[file.FullPath] = file;
 
                     // Accumulate the new offset
-                    accumOffset += compressedSize;
+                    accumOffset += file.CompressedSize;
                 }
             }
 

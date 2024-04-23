@@ -7,17 +7,6 @@ namespace UnshieldSharp
     internal static class Extensions
     {
         /// <summary>
-        /// Read a string whose length is determined by a 1-byte header from the stream
-        /// </summary>
-        /// <param name="stream">Stream to read from</param>
-        public static string ReadUInt8HeaderedString(this Stream stream)
-        {
-            byte len = stream.ReadByteValue();
-            byte[] buf = stream.ReadBytes(len);
-            return Encoding.ASCII.GetString(buf, 0, len);
-        }
-
-        /// <summary>
         /// Read a string whose length is determined by a 2-byte header from the stream
         /// </summary>
         /// <param name="stream">Stream to read from</param>
