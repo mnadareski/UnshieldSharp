@@ -1,7 +1,3 @@
-using System.IO;
-using System.Text;
-using SabreTools.IO.Extensions;
-
 namespace UnshieldSharp
 {
     internal static class Extensions
