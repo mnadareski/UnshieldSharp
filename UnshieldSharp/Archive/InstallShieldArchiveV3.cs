@@ -14,6 +14,7 @@ limitations under the License.
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using SabreTools.IO.Extensions;
 using UnshieldSharp.Blast;
 
 namespace UnshieldSharp.Archive

@@ -1,4 +1,5 @@
 using System.IO;
+using SabreTools.IO.Extensions;
 
 namespace UnshieldSharp.Archive
 {
