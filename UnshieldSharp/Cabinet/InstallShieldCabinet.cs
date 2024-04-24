@@ -54,7 +54,10 @@ namespace UnshieldSharp.Cabinet
         public bool FileSave(int index, string filename)
         {
             if (HeaderList == null)
+            {
+                Console.Error.WriteLine("Header list is not built");
                 return false;
+            }
 
             var fileDescriptor = GetFileDescriptor(filename, index);
             if (fileDescriptor == null)
@@ -196,7 +199,10 @@ namespace UnshieldSharp.Cabinet
         public bool FileSaveOld(int index, string filename)
         {
             if (HeaderList == null)
+            {
+                Console.Error.WriteLine("Header list is not built");
                 return false;
+            }
 
             var fileDescriptor = GetFileDescriptor(filename, index);
             if (fileDescriptor == null)
@@ -364,6 +370,12 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public bool FileSaveRaw(int index, string filename)
         {
+            if (HeaderList == null)
+            {
+                Console.Error.WriteLine("Header list is not built");
+                return false;
+            }
+
             var fileDescriptor = GetFileDescriptor(filename, index);
             if (fileDescriptor == null)
                 return false;
@@ -382,7 +394,7 @@ namespace UnshieldSharp.Cabinet
                 return false;
             }
 
-            ulong bytesLeft = InstallShieldCabinet.GetBytesToRead(fileDescriptor);
+            ulong bytesLeft = GetBytesToRead(fileDescriptor);
             byte[] outputBuffer = new byte[BUFFER_SIZE];
             while (bytesLeft > 0)
             {
@@ -424,13 +436,19 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private FileDescriptor? GetFileDescriptor(string filename, int index)
         {
+            if (HeaderList == null)
+            {
+                Console.Error.WriteLine("Header list is not built");
+                return null;
+            }
+
             if (string.IsNullOrEmpty(filename))
             {
                 Console.Error.WriteLine("Provided filename is invalid");
                 return null;
             }
 
-            var fileDescriptor = HeaderList?.GetFileDescriptor(index);
+            var fileDescriptor = HeaderList.GetFileDescriptor(index);
             if (fileDescriptor == null)
             {
                 Console.Error.WriteLine($"Failed to get file descriptor for file {index}");
