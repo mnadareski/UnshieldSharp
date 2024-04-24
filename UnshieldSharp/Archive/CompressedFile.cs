@@ -1,5 +1,6 @@
 using System.IO;
 using SabreTools.IO.Extensions;
+using IA3 = SabreTools.Models.InstallShieldArchiveV3;
 
 namespace UnshieldSharp.Archive
 {
@@ -36,9 +37,9 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// Internal representation of the compressed file
         /// </summary>
-        private readonly SabreTools.Models.InstallShieldArchiveV3.File _file;
+        private readonly IA3.File _file;
 
-        private CompressedFile(SabreTools.Models.InstallShieldArchiveV3.File file)
+        private CompressedFile(IA3.File file)
         {
             _file = file;
         }
@@ -51,7 +52,7 @@ namespace UnshieldSharp.Archive
             if (!stream.CanRead || stream.Length - stream.Position < 51)
                 return null;
 
-            var file = stream.ReadType<SabreTools.Models.InstallShieldArchiveV3.File>();
+            var file = stream.ReadType<IA3.File>();
             if (file == null)
                 return null;
 

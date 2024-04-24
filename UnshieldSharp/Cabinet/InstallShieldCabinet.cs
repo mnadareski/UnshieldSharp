@@ -81,30 +81,7 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Returns if the file at a given index is marked as valid
         /// </summary>
-        public bool FileIsValid(int index)
-        {
-            if (index < 0 || index > FileCount)
-                return false;
-
-            FileDescriptor? fd = HeaderList?.GetFileDescriptor(index);
-            if (fd == null)
-                return false;
-
-#if NET20 || NET35
-            if ((fd.Flags & FileFlags.FILE_INVALID) != 0)
-#else
-            if (fd.Flags.HasFlag(FileFlags.FILE_INVALID))
-#endif
-                return false;
-
-            if (fd.NameOffset == default)
-                return false;
-
-            if (fd.DataOffset == default)
-                return false;
-
-            return true;
-        }
+        public bool FileIsValid(int index) => HeaderList?.FileIsValid(index) ?? false;
 
         /// <summary>
         /// Save the file at the given index to the filename specified
@@ -459,26 +436,12 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Get the directory index for the given file index
         /// </summary>
-        public int FileDirectory(int index)
-        {
-            FileDescriptor? fd = HeaderList?.GetFileDescriptor(index);
-            if (fd != null)
-                return (int)fd.DirectoryIndex;
-            else
-                return -1;
-        }
+        public uint FileDirectory(int index) => HeaderList?.GetFileDirectoryIndex(index) ?? uint.MaxValue;
 
         /// <summary>
         /// Get the reported expanded file size for a given index
         /// </summary>
-        public int FileSize(int index)
-        {
-            FileDescriptor? fd = HeaderList?.GetFileDescriptor(index);
-            if (fd != null)
-                return (int)fd.ExpandedSize;
-            else
-                return 0;
-        }
+        public ulong FileSize(int index) => HeaderList?.GetExpandedFileSize(index) ?? 0;
 
         /// <summary>
         /// Common code for getting the bytes to read

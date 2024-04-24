@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Linq;
 using SabreTools.Models.InstallShieldCabinet;
 
 namespace UnshieldSharp.Cabinet
@@ -68,90 +67,53 @@ namespace UnshieldSharp.Cabinet
         }
 
         /// <summary>
+        /// Returns if the file at a given index is marked as valid
+        /// </summary>
+        public bool FileIsValid(int index) => _cabinet.FileIsValid(index);
+
+        /// <summary>
         /// Get the component name at a given index, if possible
         /// </summary>
-        public string? GetComponentName(int index)
-        {
-            if (index < 0 || index >= _cabinet.Model.Components!.Length)
-                return null;
-
-            var component = _cabinet.Model.Components![index];
-            if (component?.Identifier == null)
-                return null;
-
-            return component.Identifier.Replace('\\', '/');
-        }
+        public string? GetComponentName(int index) => _cabinet.GetComponentName(index);
 
         /// <summary>
         /// Get the directory name at a given index, if possible
         /// </summary>
-        public string? GetDirectoryName(int index)
-        {
-            if (index < 0 || index >= _cabinet.Model.DirectoryNames!.Length)
-                return null;
+        public string? GetDirectoryName(int index) => _cabinet.GetDirectoryName(index);
 
-            return _cabinet.Model.DirectoryNames[index];
-        }
+        /// <summary>
+        /// Get the reported expanded file size for a given index
+        /// </summary>
+        public ulong GetExpandedFileSize(int index) => _cabinet.GetExpandedFileSize(index);
 
         /// <summary>
         /// Get the file descriptor at a given index, if possible
         /// </summary>
-        public FileDescriptor? GetFileDescriptor(int index)
-        {
-            if (index < 0 || index >= _cabinet.Model.FileDescriptors!.Length)
-                return null;
+        public FileDescriptor? GetFileDescriptor(int index) => _cabinet.GetFileDescriptor(index);
 
-            return _cabinet.Model.FileDescriptors[index];
-        }
+        /// <summary>
+        /// Get the directory index for the given file index
+        /// </summary>
+        public uint GetFileDirectoryIndex(int index) => _cabinet.GetFileDirectoryIndex(index);
 
         /// <summary>
         /// Get the file group at a given index, if possible
         /// </summary>
-        public FileGroup? GetFileGroup(int index)
-        {
-            if (index < 0 || index >= _cabinet.Model.FileGroups!.Length)
-                return null;
-
-            return _cabinet.Model.FileGroups[index];
-        }
+        public FileGroup? GetFileGroup(int index) => _cabinet.GetFileGroup(index);
 
         /// <summary>
         /// Get the file group at a given name, if possible
         /// </summary>
-        public FileGroup? GetFileGroup(string name)
-        {
-            return _cabinet.Model.FileGroups!.FirstOrDefault(fg => fg != null && string.Equals(fg.Name, name));
-        }
+        public FileGroup? GetFileGroup(string name) => _cabinet.GetFileGroup(name);
 
         /// <summary>
         /// Get the file name at a given index, if possible
         /// </summary>
-        public string? GetFileName(int index)
-        {
-            var descriptor = GetFileDescriptor(index);
-#if NET20 || NET35
-            if (descriptor == null || (descriptor.Flags & FileFlags.FILE_INVALID) != 0)
-#else
-            if (descriptor == null || descriptor.Flags.HasFlag(FileFlags.FILE_INVALID))
-#endif
-                return null;
-
-            return descriptor.Name;
-        }
+        public string? GetFileName(int index) => _cabinet.GetFileName(index);
 
         /// <summary>
         /// Get the file group name at a given index, if possible
         /// </summary>
-        public string? GetFileGroupName(int index)
-        {
-            if (index < 0 || index >= _cabinet.Model.FileGroups!.Length)
-                return null;
-
-            var fileGroup = _cabinet.Model.FileGroups[index];
-            if (fileGroup == null)
-                return null;
-
-            return fileGroup.Name;
-        }
+        public string? GetFileGroupName(int index) => _cabinet.GetFileGroupName(index);
     }
 }

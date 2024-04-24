@@ -14,7 +14,6 @@ limitations under the License.
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using SabreTools.IO.Extensions;
 using UnshieldSharp.Blast;
 
 namespace UnshieldSharp.Archive
@@ -148,12 +147,12 @@ namespace UnshieldSharp.Archive
             // Read all directory info
             for (int i = 0; i < Header.DirCount; i++)
             {
-                ushort fileCount = inputStream.ReadUInt16();
-                ushort chunkSize = inputStream.ReadUInt16();
-                string name = inputStream.ReadPrefixedUnicodeString()!;
+                var dir = ArchiveDirectory.Create(inputStream);
+                if (dir == null)
+                    break;
 
-                inputStream.Seek(chunkSize - name.Length - 6, SeekOrigin.Current);
-                Directories.Add(new ArchiveDirectory { Name = name, FileCount = fileCount });
+                inputStream.Seek(dir.ChunkSize - dir.Name!.Length - 6, SeekOrigin.Current);
+                Directories.Add(dir);
             }
 
             // For each directory, read all file info

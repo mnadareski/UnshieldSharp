@@ -1,5 +1,6 @@
 using System.IO;
 using SabreTools.IO.Extensions;
+using IA3 = SabreTools.Models.InstallShieldArchiveV3;
 
 namespace UnshieldSharp.Archive
 {
@@ -36,9 +37,9 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// Internal representation of the header
         /// </summary>
-        private readonly SabreTools.Models.InstallShieldArchiveV3.Header _header;
+        private readonly IA3.Header _header;
 
-        private Header(SabreTools.Models.InstallShieldArchiveV3.Header header)
+        private Header(IA3.Header header)
         {
             _header = header;
         }
@@ -51,7 +52,7 @@ namespace UnshieldSharp.Archive
             if (!stream.CanRead || stream.Length - stream.Position < 51)
                 return null;
 
-            var header = stream.ReadType<SabreTools.Models.InstallShieldArchiveV3.Header>();
+            var header = stream.ReadType<IA3.Header>();
             if (header == null)
                 return null;
 
