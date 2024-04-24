@@ -155,7 +155,7 @@ namespace Test
             if (outputInfo)
             {
                 Console.WriteLine($"File count: {archive.Header.FileCount}");
-                Console.WriteLine($"Archive size: {archive.Header.ArchiveSize}");
+                Console.WriteLine($"Archive size: {archive.Header.CompressedSize}");
                 Console.WriteLine($"Directory count: {archive.Header.DirCount}");
 
                 Console.WriteLine("Directory List:");

@@ -33,7 +33,7 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// Archive header information
         /// </summary>
-        public Header? Header { get; private set; }
+        public IA3.Header? Header { get; private set; }
 
         /// <summary>
         /// Currently loaded file path
@@ -129,18 +129,9 @@ namespace UnshieldSharp.Archive
             }
 
             // Create the header from the input file
-            Header = Header.Create(inputStream);
+            Header = SabreTools.Serialization.Deserializers.InstallShieldArchiveV3.ParseHeader(inputStream);
             if (Header == null)
-                return (false, "Header could not be read");
-
-            // Validate the file signature
-            if (Header.Signature != 0x8C655D13)
-                return (false, "Invalid signature");
-
-            // Validate the TOC
-            long fileSize = inputStream.Length;
-            if (Header.TocAddress >= fileSize)
-                return (false, $"Invalid TOC address: {Header.TocAddress}");
+                return (false, "Header could not be read or was invalid");
 
             // Move to the TOC
             inputStream.Seek(Header.TocAddress, SeekOrigin.Begin);
