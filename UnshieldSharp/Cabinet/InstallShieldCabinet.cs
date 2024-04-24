@@ -550,7 +550,8 @@ namespace UnshieldSharp.Cabinet
 
                 // make second parameter negative to disable checksum verification
                 int err = ZLib.inflateInit_(stream, ZLib.zlibVersion(), source.Length);
-                if (err != zlibConst.Z_OK) return err;
+                if (err != zlibConst.Z_OK)
+                    return err;
 
                 err = ZLib.inflate(stream, 1);
                 if (err != zlibConst.Z_STREAM_END)
