@@ -535,79 +535,73 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Uncompress a source byte array to a destination
         /// </summary>
-        public static int Uncompress(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
+        public unsafe static int Uncompress(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
-            unsafe
+            fixed (byte* sourcePtr = source)
+            fixed (byte* destPtr = dest)
             {
-                fixed (byte* sourcePtr = source)
-                fixed (byte* destPtr = dest)
+                var stream = new ZLib.z_stream_s
                 {
-                    var stream = new ZLib.z_stream_s
-                    {
-                        next_in = sourcePtr,
-                        avail_in = (uint)sourceLen,
-                        next_out = destPtr,
-                        avail_out = (uint)destLen,
-                    };
+                    next_in = sourcePtr,
+                    avail_in = (uint)sourceLen,
+                    next_out = destPtr,
+                    avail_out = (uint)destLen,
+                };
 
-                    // make second parameter negative to disable checksum verification
-                    int err = ZLib.inflateInit_(stream, ZLib.zlibVersion(), source.Length);
-                    if (err != zlibConst.Z_OK) return err;
+                // make second parameter negative to disable checksum verification
+                int err = ZLib.inflateInit_(stream, ZLib.zlibVersion(), source.Length);
+                if (err != zlibConst.Z_OK) return err;
 
-                    err = ZLib.inflate(stream, 1);
-                    if (err != zlibConst.Z_STREAM_END)
-                    {
-                        ZLib.inflateEnd(stream);
-                        return err;
-                    }
-
-                    destLen = (ulong)stream.total_out;
-                    sourceLen = (ulong)stream.total_in;
-                    return ZLib.inflateEnd(stream);
+                err = ZLib.inflate(stream, 1);
+                if (err != zlibConst.Z_STREAM_END)
+                {
+                    ZLib.inflateEnd(stream);
+                    return err;
                 }
+
+                destLen = (ulong)stream.total_out;
+                sourceLen = (ulong)stream.total_in;
+                return ZLib.inflateEnd(stream);
             }
         }
 
         /// <summary>
         /// Uncompress a source byte array to a destination (old version)
         /// </summary>
-        public static int UncompressOld(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
+        public unsafe static int UncompressOld(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
-            unsafe
+            fixed (byte* sourcePtr = source)
+            fixed (byte* destPtr = dest)
             {
-                fixed (byte* sourcePtr = source)
-                fixed (byte* destPtr = dest)
+                var stream = new ZLib.z_stream_s
                 {
-                    var stream = new ZLib.z_stream_s
-                    {
-                        next_in = sourcePtr,
-                        avail_in = (uint)sourceLen,
-                        next_out = destPtr,
-                        avail_out = (uint)destLen,
-                    };
+                    next_in = sourcePtr,
+                    avail_in = (uint)sourceLen,
+                    next_out = destPtr,
+                    avail_out = (uint)destLen,
+                };
 
-                    destLen = 0;
-                    sourceLen = 0;
+                destLen = 0;
+                sourceLen = 0;
 
-                    // make second parameter negative to disable checksum verification
-                    int err = ZLib.inflateInit_(stream, ZLib.zlibVersion(), source.Length);
+                // make second parameter negative to disable checksum verification
+                int err = ZLib.inflateInit_(stream, ZLib.zlibVersion(), source.Length);
+                if (err != zlibConst.Z_OK)
+                    return err;
+
+                while (stream.avail_in > 1)
+                {
+                    err = ZLib.inflate(stream, 1);
                     if (err != zlibConst.Z_OK)
-                        return err;
-
-                    while (stream.avail_in > 1)
                     {
-                        err = ZLib.inflate(stream, 1);
-                        if (err != zlibConst.Z_OK)
-                        {
-                            ZLib.inflateEnd(stream);
-                            return err;
-                        }
+                        ZLib.inflateEnd(stream);
+                        return err;
                     }
-
-                    destLen = (ulong)stream.total_out;
-                    sourceLen = (ulong)stream.total_in;
-                    return ZLib.inflateEnd(stream);
                 }
+
+                destLen = (ulong)stream.total_out;
+                sourceLen = (ulong)stream.total_in;
+                return ZLib.inflateEnd(stream);
             }
         }
 
