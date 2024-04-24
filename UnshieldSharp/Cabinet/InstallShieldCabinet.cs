@@ -623,7 +623,12 @@ namespace UnshieldSharp.Cabinet
             if (string.IsNullOrEmpty(filename))
                 return false;
 
-            filenamePattern = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(filename))!, Path.GetFileNameWithoutExtension(filename));
+            string? directory = Path.GetDirectoryName(Path.GetFullPath(filename));
+            if (directory != null)
+                filenamePattern = Path.Combine(directory, Path.GetFileNameWithoutExtension(filename));
+            else
+                filenamePattern = Path.GetFileNameWithoutExtension(filename);
+
             filenamePattern = new Regex(@"\d+$").Replace(filenamePattern, string.Empty);
 
             return true;
