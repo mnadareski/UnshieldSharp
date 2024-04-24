@@ -226,22 +226,30 @@ namespace Test
                 // Component
                 Console.WriteLine($"Component Count: {cab.ComponentCount}");
                 for (int i = 0; i < cab.ComponentCount; i++)
+                {
                     Console.WriteLine($"\tComponent {i}: {cab.ComponentName(i)}");
+                }
 
                 // Directory
                 Console.WriteLine($"Directory Count: {cab.DirectoryCount}");
                 for (int i = 0; i < cab.DirectoryCount; i++)
+                {
                     Console.WriteLine($"\tDirectory {i}: {cab.DirectoryName(i)}");
+                }
 
                 // File
                 Console.WriteLine($"File Count: {cab.FileCount}");
                 for (int i = 0; i < cab.FileCount; i++)
+                {
                     Console.WriteLine($"\tFile {i}: {cab.FileName(i)}");
+                }
 
                 // File Group
                 Console.WriteLine($"File Group Count: {cab.FileGroupCount}");
                 for (int i = 0; i < cab.FileGroupCount; i++)
+                {
                     Console.WriteLine($"\tFile Group {i}: {cab.FileGroupName(i)}");
+                }
             }
 
             if (extract)
