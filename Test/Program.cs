@@ -215,7 +215,7 @@ namespace Test
                 return;
 
             var cab = InstallShieldCabinet.Open(file);
-            if (cab == null)
+            if (cab?.HeaderList == null)
             {
                 Console.WriteLine($"{file} could not be opened as an InstallShield Cabinet!");
                 return;
@@ -224,31 +224,31 @@ namespace Test
             if (outputInfo)
             {
                 // Component
-                Console.WriteLine($"Component Count: {cab.ComponentCount}");
-                for (int i = 0; i < cab.ComponentCount; i++)
+                Console.WriteLine($"Component Count: {cab.HeaderList.ComponentCount}");
+                for (int i = 0; i < cab.HeaderList.ComponentCount; i++)
                 {
-                    Console.WriteLine($"\tComponent {i}: {cab.ComponentName(i)}");
+                    Console.WriteLine($"\tComponent {i}: {cab.HeaderList.GetComponentName(i)}");
                 }
 
-                // Directory
-                Console.WriteLine($"Directory Count: {cab.DirectoryCount}");
-                for (int i = 0; i < cab.DirectoryCount; i++)
+                // Directory -- TODO: multi-volume support...
+                Console.WriteLine($"Directory Count: {cab.HeaderList.DirectoryCount}");
+                for (int i = 0; i < cab.HeaderList.DirectoryCount; i++)
                 {
-                    Console.WriteLine($"\tDirectory {i}: {cab.DirectoryName(i)}");
+                    Console.WriteLine($"\tDirectory {i}: {cab.HeaderList.GetDirectoryName(i)}");
                 }
 
-                // File
-                Console.WriteLine($"File Count: {cab.FileCount}");
-                for (int i = 0; i < cab.FileCount; i++)
+                // File -- TODO: multi-volume support...
+                Console.WriteLine($"File Count: {cab.HeaderList.FileCount}");
+                for (int i = 0; i < cab.HeaderList.FileCount; i++)
                 {
-                    Console.WriteLine($"\tFile {i}: {cab.FileName(i)}");
+                    Console.WriteLine($"\tFile {i}: {cab.HeaderList.GetFileName(i)}");
                 }
 
                 // File Group
-                Console.WriteLine($"File Group Count: {cab.FileGroupCount}");
-                for (int i = 0; i < cab.FileGroupCount; i++)
+                Console.WriteLine($"File Group Count: {cab.HeaderList.FileGroupCount}");
+                for (int i = 0; i < cab.HeaderList.FileGroupCount; i++)
                 {
-                    Console.WriteLine($"\tFile Group {i}: {cab.FileGroupName(i)}");
+                    Console.WriteLine($"\tFile Group {i}: {cab.HeaderList.GetFileGroupName(i)}");
                 }
             }
 
@@ -260,11 +260,11 @@ namespace Test
                 if (!Directory.Exists(outputDirectory))
                     Directory.CreateDirectory(outputDirectory);
 
-                for (int i = 0; i < cab.FileCount; i++)
+                for (int i = 0; i < cab.HeaderList.FileCount; i++)
                 {
-                    char[]? filenameChars = cab.FileName(i)?.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)?.ToArray();
+                    char[]? filenameChars = cab.HeaderList.GetFileName(i)?.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)?.ToArray();
                     string filename = filenameChars != null ? new(filenameChars) : string.Empty;
-                    char[]? directoryChars = cab.DirectoryName((int)cab.FileDirectory(i))?.Select(c => Path.GetInvalidPathChars().Contains(c) ? '_' : c)?.ToArray();
+                    char[]? directoryChars = cab.HeaderList.GetDirectoryName((int)cab.HeaderList.GetFileDirectoryIndex(i))?.Select(c => Path.GetInvalidPathChars().Contains(c) ? '_' : c)?.ToArray();
                     string directory = directoryChars != null ? new(directoryChars) : string.Empty;
 #if NET20 || NET35
                     string newfile = Path.Combine(Path.Combine(outputDirectory, directory), filename);

@@ -15,15 +15,6 @@ namespace UnshieldSharp.Cabinet
         // Linked CAB headers
         public Header? HeaderList { get; private set; }
 
-        // Internal CAB Counts
-        public int ComponentCount => HeaderList?.ComponentCount ?? 0;
-        public int DirectoryCount => (int)(HeaderList?.DirectoryCount ?? 0); // TODO: multi-volume support...
-        public int FileCount => (int)(HeaderList?.FileCount ?? 0); // TODO: multi-volume support...
-        public int FileGroupCount => HeaderList?.FileGroupCount ?? 0;
-
-        // Unicode compatibility
-        public bool IsUnicode => HeaderList?.MajorVersion >= 17;
-
         // Base filename path for related CAB files
         private string? filenamePattern;
 
@@ -55,42 +46,16 @@ namespace UnshieldSharp.Cabinet
 
         #endregion
 
-        #region Name From Index
-
-        /// <summary>
-        /// Get the component name at an index
-        /// </summary>
-        public string? ComponentName(int index) => HeaderList?.GetComponentName(index);
-
-        /// <summary>
-        /// Get the directory name at an index
-        /// </summary>
-        public string? DirectoryName(int index) => HeaderList?.GetDirectoryName(index);
-
-        /// <summary>
-        /// Get the file name at an index
-        /// </summary>
-        public string? FileName(int index) => HeaderList?.GetFileName(index);
-
-        /// <summary>
-        /// Get the file group name at an index
-        /// </summary>
-        public string? FileGroupName(int index) => HeaderList?.GetFileGroupName(index);
-
-        #endregion
-
         #region File
-
-        /// <summary>
-        /// Returns if the file at a given index is marked as valid
-        /// </summary>
-        public bool FileIsValid(int index) => HeaderList?.FileIsValid(index) ?? false;
 
         /// <summary>
         /// Save the file at the given index to the filename specified
         /// </summary>
         public bool FileSave(int index, string filename)
         {
+            if (HeaderList == null)
+                return false;
+
             var fileDescriptor = GetFileDescriptor(filename, index);
             if (fileDescriptor == null)
                 return false;
@@ -132,7 +97,7 @@ namespace UnshieldSharp.Cabinet
                     // Attempt to read the length value
                     if (!reader.Read(bytesToRead, 0, bytesToRead.Length))
                     {
-                        Console.Error.WriteLine($"Failed to read {bytesToRead.Length} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
+                        Console.Error.WriteLine($"Failed to read {bytesToRead.Length} bytes of file {index} ({HeaderList.GetFileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
                         output?.Close();
                         return false;
@@ -152,7 +117,7 @@ namespace UnshieldSharp.Cabinet
                     inputBuffer = new byte[BUFFER_SIZE + 1];
                     if (!reader.Read(inputBuffer, 0, bytesToReadValue))
                     {
-                        Console.Error.WriteLine($"Failed to read {bytesToRead.Length} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
+                        Console.Error.WriteLine($"Failed to read {bytesToRead.Length} bytes of file {index} ({HeaderList.GetFileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
                         output?.Close();
                         return false;
@@ -213,7 +178,7 @@ namespace UnshieldSharp.Cabinet
 
                 if (md5result == null || !md5result.SequenceEqual(fileDescriptor.MD5!))
                 {
-                    Console.Error.WriteLine($"MD5 checksum failure for file {index} ({FileName(index)})");
+                    Console.Error.WriteLine($"MD5 checksum failure for file {index} ({HeaderList.GetFileName(index)})");
                     reader.Dispose();
                     output?.Close();
                     return false;
@@ -230,6 +195,9 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public bool FileSaveOld(int index, string filename)
         {
+            if (HeaderList == null)
+                return false;
+
             var fileDescriptor = GetFileDescriptor(filename, index);
             if (fileDescriptor == null)
                 return false;
@@ -248,7 +216,7 @@ namespace UnshieldSharp.Cabinet
                 return false;
             }
 
-            ulong bytesLeft = InstallShieldCabinet.GetBytesToRead(fileDescriptor);
+            ulong bytesLeft = GetBytesToRead(fileDescriptor);
             long inputBufferSize = BUFFER_SIZE;
             byte[] inputBuffer = new byte[BUFFER_SIZE];
             byte[] outputBuffer = new byte[BUFFER_SIZE];
@@ -284,7 +252,7 @@ namespace UnshieldSharp.Cabinet
 
                     if (!reader.Read(inputBuffer, 0, (int)inputSize))
                     {
-                        Console.Error.WriteLine($"Failed to read {inputSize} bytes of file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
+                        Console.Error.WriteLine($"Failed to read {inputSize} bytes of file {index} ({HeaderList.GetFileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                         reader.Dispose();
                         output?.Close();
                         return false;
@@ -293,10 +261,10 @@ namespace UnshieldSharp.Cabinet
                     bytesLeft -= (uint)inputSize;
                     for (int p = 0; inputSize > 0;)
                     {
-                        int match = InstallShieldCabinet.FindBytes(inputBuffer, p, inputSize, END_OF_CHUNK);
+                        int match = FindBytes(inputBuffer, p, inputSize, END_OF_CHUNK);
                         if (match == -1)
                         {
-                            Console.Error.WriteLine($"Could not find end of chunk for file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
+                            Console.Error.WriteLine($"Could not find end of chunk for file {index} ({HeaderList.GetFileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                             reader.Dispose();
                             output?.Close();
                             return false;
@@ -321,10 +289,10 @@ namespace UnshieldSharp.Cabinet
                         {
                             Console.Error.WriteLine("It seems like we have an end of chunk marker inside of a chunk.");
                             chunkSize += END_OF_CHUNK.Length;
-                            match = InstallShieldCabinet.FindBytes(inputBuffer, (int)(p + chunkSize), inputSize - chunkSize, END_OF_CHUNK);
+                            match = FindBytes(inputBuffer, (int)(p + chunkSize), inputSize - chunkSize, END_OF_CHUNK);
                             if (match == -1)
                             {
-                                Console.Error.WriteLine($"Could not find end of chunk for file {index} ({FileName(index)}) from input cabinet file {fileDescriptor.Volume}");
+                                Console.Error.WriteLine($"Could not find end of chunk for file {index} ({HeaderList.GetFileName(index)}) from input cabinet file {fileDescriptor.Volume}");
                                 reader.Dispose();
                                 output?.Close();
                                 return false;
@@ -437,16 +405,6 @@ namespace UnshieldSharp.Cabinet
         }
 
         /// <summary>
-        /// Get the directory index for the given file index
-        /// </summary>
-        public uint FileDirectory(int index) => HeaderList?.GetFileDirectoryIndex(index) ?? uint.MaxValue;
-
-        /// <summary>
-        /// Get the reported expanded file size for a given index
-        /// </summary>
-        public ulong FileSize(int index) => HeaderList?.GetExpandedFileSize(index) ?? 0;
-
-        /// <summary>
         /// Common code for getting the bytes to read
         /// </summary>
         private static ulong GetBytesToRead(FileDescriptor fd)
@@ -513,20 +471,6 @@ namespace UnshieldSharp.Cabinet
 
             return reader;
         }
-
-        #endregion
-
-        #region File Group
-
-        /// <summary>
-        /// Retrieve a file group based on index
-        /// </summary>
-        public FileGroup? GetFileGroup(int index) => HeaderList?.GetFileGroup(index);
-
-        /// <summary>
-        /// Retrieve a file group based on name
-        /// </summary>
-        public FileGroup? GetFileGroup(string name) => HeaderList?.GetFileGroup(name);
 
         #endregion
 
