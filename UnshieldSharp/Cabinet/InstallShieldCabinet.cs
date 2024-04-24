@@ -559,8 +559,8 @@ namespace UnshieldSharp.Cabinet
                     return err;
                 }
 
-                destLen = (ulong)stream.total_out;
-                sourceLen = (ulong)stream.total_in;
+                destLen = stream.total_out;
+                sourceLen = stream.total_in;
                 return ZLib.inflateEnd(stream);
             }
         }
@@ -599,8 +599,8 @@ namespace UnshieldSharp.Cabinet
                     }
                 }
 
-                destLen = (ulong)stream.total_out;
-                sourceLen = (ulong)stream.total_in;
+                destLen = stream.total_out;
+                sourceLen = stream.total_in;
                 return ZLib.inflateEnd(stream);
             }
         }
