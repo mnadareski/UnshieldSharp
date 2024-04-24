@@ -13,13 +13,19 @@ namespace UnshieldSharp.Cabinet
     // TODO: Figure out if individual parts of a split cab can be extracted separately
     public class InstallShieldCabinet
     {
-        // Linked CAB headers
+        /// <summary>
+        /// Linked CAB headers
+        /// </summary>
         public Header? HeaderList { get; private set; }
 
-        // Base filename path for related CAB files
+        /// <summary>
+        /// Base filename path for related CAB files
+        /// </summary>
         private string? filenamePattern;
 
-        // Default buffer size
+        /// <summary>
+        /// Default buffer size
+        /// </summary>
         private const int BUFFER_SIZE = 64 * 1024;
 
         #region Open Cabinet
