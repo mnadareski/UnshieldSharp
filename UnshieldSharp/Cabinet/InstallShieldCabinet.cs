@@ -474,13 +474,13 @@ namespace UnshieldSharp.Cabinet
         private Reader? GetReader(int index, FileDescriptor fd)
         {
             var reader = Reader.Create(this, index, fd);
-            if (reader == null)
+            if (reader?.VolumeFile == null)
             {
                 Console.Error.WriteLine($"Failed to create data reader for file {index}");
                 return null;
             }
 
-            if (reader.VolumeFile!.Length == (long)fd.DataOffset)
+            if (reader.VolumeFile.Length == (long)fd.DataOffset)
             {
                 Console.Error.WriteLine($"File {index} is not inside the cabinet.");
                 reader.Dispose();
