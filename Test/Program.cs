@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using UnshieldSharp.Archive;
 using UnshieldSharp.Cabinet;
+using IA3 = SabreTools.Models.InstallShieldArchiveV3;
 
 namespace Test
 {
@@ -158,12 +159,16 @@ namespace Test
                 Console.WriteLine($"Directory count: {archive.Header.DirCount}");
 
                 Console.WriteLine("Directory List:");
-                foreach (ArchiveDirectory directory in archive.Directories)
+                foreach (IA3.Directory directory in archive.Directories)
+                {
                     Console.WriteLine($"Directory: {directory.Name ?? string.Empty}, File Count: {directory.FileCount}");
+                }
 
                 Console.WriteLine("File list:");
                 foreach (CompressedFile cfile in archive.Files.Select(kvp => kvp.Value))
+                {
                     Console.WriteLine($"File: {cfile.FullPath ?? string.Empty}, Compressed Size: {cfile.CompressedSize}, Offset: {cfile.Offset}");
+                }
             }
 
             if (extract)

@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnshieldSharp.Blast;
+using IA3 = SabreTools.Models.InstallShieldArchiveV3;
 
 namespace UnshieldSharp.Archive
 {
@@ -42,7 +43,7 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// List of directories found in the archive
         /// </summary>
-        public List<ArchiveDirectory> Directories { get; private set; } = [];
+        public List<IA3.Directory> Directories { get; private set; } = [];
 
         /// <summary>
         /// List of files found in the archive
@@ -147,17 +148,18 @@ namespace UnshieldSharp.Archive
             // Read all directory info
             for (int i = 0; i < Header.DirCount; i++)
             {
-                var dir = ArchiveDirectory.Create(inputStream);
+                var dir = SabreTools.Serialization.Deserializers.InstallShieldArchiveV3.ParseDirectory(inputStream, out uint chunkSize);
                 if (dir == null)
                     break;
 
+                dir.ChunkSize = (ushort)chunkSize;
                 inputStream.Seek(dir.ChunkSize - dir.Name!.Length - 6, SeekOrigin.Current);
                 Directories.Add(dir);
             }
 
             // For each directory, read all file info
             uint accumOffset = 0;
-            foreach (ArchiveDirectory directory in Directories)
+            foreach (IA3.Directory directory in Directories)
             {
                 for (int i = 0; i < directory.FileCount; i++)
                 {
