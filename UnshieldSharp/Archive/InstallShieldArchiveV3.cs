@@ -14,7 +14,7 @@ limitations under the License.
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnshieldSharp.Blast;
+using SabreTools.Compression.Blast;
 using IA3 = SabreTools.Models.InstallShieldArchiveV3;
 
 namespace UnshieldSharp.Archive
@@ -139,11 +139,10 @@ namespace UnshieldSharp.Archive
             // Read all directory info
             for (int i = 0; i < Header.DirCount; i++)
             {
-                var dir = SabreTools.Serialization.Deserializers.InstallShieldArchiveV3.ParseDirectory(inputStream, out uint chunkSize);
+                var dir = SabreTools.Serialization.Deserializers.InstallShieldArchiveV3.ParseDirectory(inputStream);
                 if (dir == null)
                     break;
 
-                dir.ChunkSize = (ushort)chunkSize;
                 inputStream.Seek(dir.ChunkSize - dir.Name!.Length - 6, SeekOrigin.Current);
                 Directories.Add(dir);
             }

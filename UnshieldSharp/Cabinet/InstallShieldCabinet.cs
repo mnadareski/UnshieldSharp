@@ -5,7 +5,8 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using SabreTools.Compression.zlib;
 using SabreTools.Models.InstallShieldCabinet;
-using static UnshieldSharp.Cabinet.Constants;
+using static SabreTools.Models.InstallShieldCabinet.Constants;
+using Header = SabreTools.Serialization.Wrappers.InstallShieldCabinet;
 
 namespace UnshieldSharp.Cabinet
 {
@@ -658,7 +659,7 @@ namespace UnshieldSharp.Cabinet
                 if (file == null)
                     break;
 
-                var header = Header.Create(file, i);
+                var header = Header.Create(file);
                 if (header == null)
                     break;
 

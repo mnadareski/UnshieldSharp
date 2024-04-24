@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using SabreTools.Models.InstallShieldCabinet;
-using static UnshieldSharp.Cabinet.Constants;
+using static SabreTools.Models.InstallShieldCabinet.Constants;
 
 #pragma warning disable IDE0051 // Private member is unused
 
