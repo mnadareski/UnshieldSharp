@@ -49,7 +49,7 @@ namespace UnshieldSharp.Archive
         /// </summary>
         public static Header? Create(Stream stream)
         {
-            if (!stream.CanRead || stream.Length - stream.Position < 51)
+            if (!stream.CanRead || stream.Position >= stream.Length)
                 return null;
 
             var header = stream.ReadType<IA3.Header>();

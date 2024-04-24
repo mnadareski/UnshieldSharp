@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.InteropServices;
 using SabreTools.IO.Extensions;
 using IA3 = SabreTools.Models.InstallShieldArchiveV3;
 
@@ -39,7 +40,7 @@ namespace UnshieldSharp.Archive
         /// </summary>
         public static ArchiveDirectory? Create(Stream stream)
         {
-            if (!stream.CanRead || stream.Length - stream.Position < 51)
+            if (!stream.CanRead || stream.Position >= stream.Length)
                 return null;
 
             var directory = stream.ReadType<IA3.Directory>();

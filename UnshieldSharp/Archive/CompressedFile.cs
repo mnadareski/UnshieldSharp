@@ -49,7 +49,7 @@ namespace UnshieldSharp.Archive
         /// </summary>
         public static CompressedFile? Create(Stream stream)
         {
-            if (!stream.CanRead || stream.Length - stream.Position < 51)
+            if (!stream.CanRead || stream.Position >= stream.Length)
                 return null;
 
             var file = stream.ReadType<IA3.File>();
