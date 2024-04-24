@@ -165,9 +165,9 @@ namespace Test
                 }
 
                 Console.WriteLine("File list:");
-                foreach (CompressedFile cfile in archive.Files.Select(kvp => kvp.Value))
+                foreach (var cfile in archive.Files)
                 {
-                    Console.WriteLine($"File: {cfile.FullPath ?? string.Empty}, Compressed Size: {cfile.CompressedSize}, Offset: {cfile.Offset}");
+                    Console.WriteLine($"File: {cfile.Key ?? string.Empty}, Compressed Size: {cfile.Value.CompressedSize}, Offset: {cfile.Value.Offset}");
                 }
             }
 
@@ -179,22 +179,22 @@ namespace Test
                 if (!Directory.Exists(outputDirectory))
                     Directory.CreateDirectory(outputDirectory);
 
-                foreach (CompressedFile internalFile in archive.Files.Select(kvp => kvp.Value))
+                foreach (var cfile in archive.Files)
                 {
-                    string newfile = Path.Combine(outputDirectory, internalFile.FullPath!.Replace('\\', '/'));
+                    string newfile = Path.Combine(outputDirectory, cfile.Key!.Replace('\\', '/'));
 
                     string? directoryName = Path.GetDirectoryName(newfile);
                     if (!string.IsNullOrEmpty(directoryName) && !Directory.Exists(directoryName))
                         Directory.CreateDirectory(directoryName);
 
-                    (byte[]? fileContents, string? error) = archive.Extract(internalFile.FullPath);
+                    (byte[]? fileContents, string? error) = archive.Extract(cfile.Key);
                     if (fileContents == null || !string.IsNullOrEmpty(error))
                     {
-                        Console.WriteLine($"Error detected while reading '{internalFile.FullPath}': {error}");
+                        Console.WriteLine($"Error detected while reading '{cfile.Key}': {error}");
                         continue;
                     }
 
-                    Console.WriteLine($"Outputting file {internalFile.FullPath} to {newfile}...");
+                    Console.WriteLine($"Outputting file {cfile.Key} to {newfile}...");
                     using (FileStream fs = File.OpenWrite(newfile))
                     {
                         fs.Write(fileContents, 0, fileContents.Length);

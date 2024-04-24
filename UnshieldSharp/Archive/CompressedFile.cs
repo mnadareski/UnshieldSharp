@@ -15,11 +15,6 @@ namespace UnshieldSharp.Archive
         public string? Name => _file.Name;
 
         /// <summary>
-        /// Full internal path of the compressed file
-        /// </summary>
-        public string? FullPath { get; set; }
-
-        /// <summary>
         /// Size of the compressed file in bytes
         /// </summary>
         public uint CompressedSize => _file.CompressedSize;

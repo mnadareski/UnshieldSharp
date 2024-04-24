@@ -171,13 +171,14 @@ namespace UnshieldSharp.Archive
                     inputStream.Seek(file.ChunkSize - file.Name!.Length - 30, SeekOrigin.Current);
 
                     // Determine the full path of the internal file
+                    string fullPath;
                     if (!string.IsNullOrEmpty(directory.Name) && directory.Name!.Length > 0)
-                        file.FullPath = Path.Combine(directory.Name, file.Name);
+                        fullPath = Path.Combine(directory.Name, file.Name);
                     else
-                        file.FullPath = file.Name;
+                        fullPath = file.Name;
 
                     // Add the file to the list
-                    Files[file.FullPath] = file;
+                    Files[fullPath] = file;
 
                     // Accumulate the new offset
                     accumOffset += file.CompressedSize;
