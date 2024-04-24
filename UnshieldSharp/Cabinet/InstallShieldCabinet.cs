@@ -27,6 +27,9 @@ namespace UnshieldSharp.Cabinet
         // Base filename path for related CAB files
         private string? filenamePattern;
 
+        // Default buffer size
+        private const int BUFFER_SIZE = 64 * 1024;
+
         #region Open Cabinet
 
         /// <summary>
