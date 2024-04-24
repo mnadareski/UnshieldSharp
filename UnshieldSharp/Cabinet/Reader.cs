@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Text;
-using SabreTools.IO.Extensions;
 using SabreTools.Models.InstallShieldCabinet;
 using static UnshieldSharp.Cabinet.Constants;
 
@@ -105,11 +103,11 @@ namespace UnshieldSharp.Cabinet
                 return false;
             }
 
-            var commonHeader = CreateCommonHeader(VolumeFile);
+            var commonHeader = SabreTools.Serialization.Deserializers.InstallShieldCabinet.ParseCommonHeader(VolumeFile);
             if (commonHeader == default)
                 return false;
 
-            _volumeHeader = CreateVolumeHeader(VolumeFile, Cabinet.HeaderList!.MajorVersion);
+            _volumeHeader = SabreTools.Serialization.Deserializers.InstallShieldCabinet.ParseVolumeHeader(VolumeFile, Cabinet.HeaderList!.MajorVersion);
             if (_volumeHeader == null)
                 return false;
 
@@ -215,81 +213,6 @@ namespace UnshieldSharp.Cabinet
             return true;
         }
 
-        // TODO: Expose the methods used here in the library instead
-        #region Copied from Serialization Library
-
-        /// <summary>
-        /// Create a common header object, if possible
-        /// </summary>
-        private static CommonHeader? CreateCommonHeader(Stream? data)
-        {
-            if (data == null)
-                return null;
-
-            var commonHeader = new CommonHeader();
-            byte[] array = data.ReadBytes(4);
-            if (array == null)
-                return null;
-
-            commonHeader.Signature = Encoding.ASCII.GetString(array);
-            if (commonHeader.Signature != "ISc(")
-                return null;
-
-            commonHeader.Version = data.ReadUInt32();
-            commonHeader.VolumeInfo = data.ReadUInt32();
-            commonHeader.DescriptorOffset = data.ReadUInt32();
-            commonHeader.DescriptorSize = data.ReadUInt32();
-
-            return commonHeader;
-        }
-
-        /// <summary>
-        /// Create a volume header object, if possible
-        /// </summary>
-        private static VolumeHeader? CreateVolumeHeader(Stream? data, int majorVersion)
-        {
-            if (data == null)
-                return null;
-
-            var volumeHeader = new VolumeHeader();
-            if (majorVersion <= 5)
-            {
-                volumeHeader.DataOffset = data.ReadUInt32();
-                data.ReadBytes(4);
-                volumeHeader.FirstFileIndex = data.ReadUInt32();
-                volumeHeader.LastFileIndex = data.ReadUInt32();
-                volumeHeader.FirstFileOffset = data.ReadUInt32();
-                volumeHeader.FirstFileSizeExpanded = data.ReadUInt32();
-                volumeHeader.FirstFileSizeCompressed = data.ReadUInt32();
-                volumeHeader.LastFileOffset = data.ReadUInt32();
-                volumeHeader.LastFileSizeExpanded = data.ReadUInt32();
-                volumeHeader.LastFileSizeCompressed = data.ReadUInt32();
-            }
-            else
-            {
-                volumeHeader.DataOffset = data.ReadUInt32();
-                volumeHeader.DataOffsetHigh = data.ReadUInt32();
-                volumeHeader.FirstFileIndex = data.ReadUInt32();
-                volumeHeader.LastFileIndex = data.ReadUInt32();
-                volumeHeader.FirstFileOffset = data.ReadUInt32();
-                volumeHeader.FirstFileOffsetHigh = data.ReadUInt32();
-                volumeHeader.FirstFileSizeExpanded = data.ReadUInt32();
-                volumeHeader.FirstFileSizeExpandedHigh = data.ReadUInt32();
-                volumeHeader.FirstFileSizeCompressed = data.ReadUInt32();
-                volumeHeader.FirstFileSizeCompressedHigh = data.ReadUInt32();
-                volumeHeader.LastFileOffset = data.ReadUInt32();
-                volumeHeader.LastFileOffsetHigh = data.ReadUInt32();
-                volumeHeader.LastFileSizeExpanded = data.ReadUInt32();
-                volumeHeader.LastFileSizeExpandedHigh = data.ReadUInt32();
-                volumeHeader.LastFileSizeCompressed = data.ReadUInt32();
-                volumeHeader.LastFileSizeCompressedHigh = data.ReadUInt32();
-            }
-
-            return volumeHeader;
-        }
-
-        #endregion
-
         /// <summary>
         /// Deobfuscate a buffer
         /// </summary>
@@ -306,7 +229,7 @@ namespace UnshieldSharp.Cabinet
         {
             for (int i = 0; size > 0; size--, i++, seed++)
             {
-                buffer[i] = (byte)(Reader.ROR8(buffer[i] ^ 0xd5, 2) - (seed % 0x47));
+                buffer[i] = (byte)(ROR8(buffer[i] ^ 0xd5, 2) - (seed % 0x47));
             }
 
             return seed;
@@ -328,7 +251,7 @@ namespace UnshieldSharp.Cabinet
         {
             for (int i = 0; size > 0; size--, i++, seed++)
             {
-                buffer[i] = (byte)(Reader.ROL8(buffer[i] ^ 0xd5, 2) + (seed % 0x47));
+                buffer[i] = (byte)(ROL8(buffer[i] ^ 0xd5, 2) + (seed % 0x47));
             }
 
             return seed;
