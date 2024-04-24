@@ -1,5 +1,6 @@
 namespace UnshieldSharp.Cabinet
 {
+    // TODO: This should live in SabreTools.Models
     internal static class Constants
     {
         #region internal.h
