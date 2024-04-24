@@ -251,7 +251,7 @@ namespace Test
                 {
                     char[]? filenameChars = cab.FileName(i)?.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)?.ToArray();
                     string filename = filenameChars != null ? new(filenameChars) : string.Empty;
-                    char[]? directoryChars = cab.DirectoryName(cab.FileDirectory(i))?.Select(c => Path.GetInvalidPathChars().Contains(c) ? '_' : c)?.ToArray();
+                    char[]? directoryChars = cab.DirectoryName((int)cab.FileDirectory(i))?.Select(c => Path.GetInvalidPathChars().Contains(c) ? '_' : c)?.ToArray();
                     string directory = directoryChars != null ? new(directoryChars) : string.Empty;
 #if NET20 || NET35
                     string newfile = Path.Combine(Path.Combine(outputDirectory, directory), filename);
