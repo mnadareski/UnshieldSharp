@@ -48,7 +48,7 @@ namespace UnshieldSharp.Archive
         /// <summary>
         /// List of files found in the archive
         /// </summary>
-        public Dictionary<string, CompressedFile> Files { get; private set; } = [];
+        public Dictionary<string, IA3.File> Files { get; private set; } = [];
 
         /// <summary>
         /// Stream representing the input archive
@@ -89,7 +89,7 @@ namespace UnshieldSharp.Archive
                 return (null, $"Path '{fullPath}' does not exist in the archive");
 
             // Get a local reference to the file we care about
-            CompressedFile file = Files[fullPath];
+            IA3.File file = Files[fullPath];
 
             // Attempt to read the compressed data
             inputStream!.Seek(DataStart + file.Offset, SeekOrigin.Begin);
@@ -164,7 +164,7 @@ namespace UnshieldSharp.Archive
                 for (int i = 0; i < directory.FileCount; i++)
                 {
                     // Read in the file information
-                    var file = CompressedFile.Create(inputStream);
+                    var file = SabreTools.Serialization.Deserializers.InstallShieldArchiveV3.ParseFile(inputStream);
                     if (file == null)
                         break;
 
