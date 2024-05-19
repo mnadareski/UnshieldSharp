@@ -28,6 +28,11 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         private const int BUFFER_SIZE = 64 * 1024;
 
+        /// <summary>
+        /// Maximum size of the window in bits
+        /// </summary>
+        private const int MAX_WBITS = 15;
+
         #region Open Cabinet
 
         /// <summary>
@@ -518,7 +523,7 @@ namespace UnshieldSharp.Cabinet
                 };
 
                 // make second parameter negative to disable checksum verification
-                int err = ZLib.inflateInit_(stream, ZLib.zlibVersion(), source.Length);
+                int err = ZLib.inflateInit2_(stream, -MAX_WBITS, ZLib.zlibVersion(), source.Length);
                 if (err != zlibConst.Z_OK)
                     return err;
 
@@ -555,7 +560,7 @@ namespace UnshieldSharp.Cabinet
                 sourceLen = 0;
 
                 // make second parameter negative to disable checksum verification
-                int err = ZLib.inflateInit_(stream, ZLib.zlibVersion(), source.Length);
+                int err = ZLib.inflateInit2_(stream, -MAX_WBITS, ZLib.zlibVersion(), source.Length);
                 if (err != zlibConst.Z_OK)
                     return err;
 
