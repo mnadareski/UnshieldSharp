@@ -28,14 +28,6 @@
     <None Include="../README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
-  <!-- Support for old .NET versions -->
-  <ItemGroup Condition="$(TargetFramework.StartsWith(`net2`)) OR $(TargetFramework.StartsWith(`net3`))">
-    <PackageReference Include="MinValueTupleBridge" Version="0.2.1" />
-  </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework.StartsWith(`net4`))">
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-  </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="SabreTools.Compression" Version="0.5.1" />
     <PackageReference Include="SabreTools.IO" Version="1.4.11" />
