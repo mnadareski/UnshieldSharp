@@ -187,7 +187,7 @@ namespace Test
                     if (!string.IsNullOrEmpty(directoryName) && !Directory.Exists(directoryName))
                         Directory.CreateDirectory(directoryName);
 
-                    (byte[]? fileContents, string? error) = archive.Extract(cfile.Key);
+                    byte[]? fileContents = archive.Extract(cfile.Key, out string? error);
                     if (fileContents == null || !string.IsNullOrEmpty(error))
                     {
                         Console.WriteLine($"Error detected while reading '{cfile.Key}': {error}");

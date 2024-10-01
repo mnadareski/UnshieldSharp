@@ -67,7 +67,7 @@ namespace UnshieldSharp.Archive
         public InstallShieldArchiveV3(string path)
         {
             FilePath = path;
-            LoadFile();
+            LoadFile(out _);
         }
 
         /// <summary>
@@ -81,12 +81,15 @@ namespace UnshieldSharp.Archive
         /// Extract a file to byte array using the path
         /// </summary>
         /// <param name="fullPath">Internal full path for the file to extract</param>
-        /// <returns>Uncompressed data and no error string on success, null data and an error string otherwise</returns>
-        public (byte[]? data, string? err) Extract(string fullPath)
+        /// <returns>Uncompressed data on success, null otherwise</returns>
+        public byte[]? Extract(string fullPath, out string? err)
         {
             // If the file isn't in the archive, we can't extract it
             if (!Exists(fullPath))
-                return (null, $"Path '{fullPath}' does not exist in the archive");
+            {
+                err = $"Path '{fullPath}' does not exist in the archive";
+                return null;
+            }
 
             // Get a local reference to the file we care about
             IA3.File file = Files[fullPath];
@@ -96,27 +99,37 @@ namespace UnshieldSharp.Archive
             byte[] compressedData = new byte[file.CompressedSize];
             int read = inputStream.Read(compressedData, 0, (int)file.CompressedSize);
             if (read != (int)file.CompressedSize)
-                return (null, "Could not read all required data");
+            {
+                err = "Could not read all required data";
+                return null;
+            }
 
             // Decompress the data
             var output = new List<byte>();
             int ret = BlastDecoder.Blast(compressedData, output);
             if (ret != 0)
-                return (null, $"Blast error: {ret}");
+            {
+                err = $"Blast error: {ret}";
+                return null;
+            }
 
             // Return the decompressed data
-            return ([.. output], null);
+            err = null;
+            return [.. output];
         }
 
         /// <summary>
         /// Load the file set as the current path
         /// </summary>
-        /// <returns>Success and error strings, if applicable</returns>
-        private (bool success, string? err) LoadFile()
+        /// <returns>Status of loaded file</returns>
+        private bool LoadFile(out string? err)
         {
             // If the file doesn't exist, we can't do anything
             if (!File.Exists(FilePath))
-                return (false, $"File '{FilePath}' does not exist");
+            {
+                err = $"File '{FilePath}' does not exist";
+                return false;
+            }
 
             // Attempt to open the file for reading
             try
@@ -125,13 +138,17 @@ namespace UnshieldSharp.Archive
             }
             catch
             {
-                return (false, "Cannot open file");
+                err = "Cannot open file";
+                return false;
             }
 
             // Create the header from the input file
             Header = SabreTools.Serialization.Deserializers.InstallShieldArchiveV3.ParseHeader(inputStream);
             if (Header == null)
-                return (false, "Header could not be read or was invalid");
+            {
+                err = "Header could not be read or was invalid";
+                return false;
+            }
 
             // Move to the TOC
             inputStream.Seek(Header.TocAddress, SeekOrigin.Begin);
@@ -175,7 +192,8 @@ namespace UnshieldSharp.Archive
                 }
             }
 
-            return (true, null);
+            err = null;
+            return true;
         }
     }
 }
