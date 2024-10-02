@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using UnshieldSharp.Archive;
 using UnshieldSharp.Cabinet;
 using IA3 = SabreTools.Models.InstallShieldArchiveV3;
@@ -268,20 +267,19 @@ namespace Test
 
                 for (int i = 0; i < cab.HeaderList.FileCount; i++)
                 {
-                    char[]? filenameChars = cab.HeaderList.GetFileName(i)?.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)?.ToArray();
-                    string filename = filenameChars != null ? new(filenameChars) : string.Empty;
+                    // Get and clean each path segment
+                    string filename = CleanPathSegment(cab.HeaderList.GetFileName(i));
+                    string directory = CleanPathSegment(cab.HeaderList.GetDirectoryName((int)cab.HeaderList.GetFileDirectoryIndex(i)));
+                    string fileGroup = CleanPathSegment(FindFileGroup(cab, i));
 
-                    char[]? directoryChars = cab.HeaderList.GetDirectoryName((int)cab.HeaderList.GetFileDirectoryIndex(i))?.Select(c => Path.GetInvalidPathChars().Contains(c) ? '_' : c)?.ToArray();
-                    string directory = directoryChars != null ? new(directoryChars) : string.Empty;
-
-                    string fileGroup = FindFileGroup(cab, i);
-
+                    // Assemble the complete output path
 #if NET20 || NET35
                     string newfile = Path.Combine(Path.Combine(Path.Combine(outputDirectory, fileGroup), directory), filename);
 #else
                     string newfile = Path.Combine(outputDirectory, fileGroup, directory, filename);
 #endif
 
+                    // Ensure the output directory exists
                     string? directoryName = Path.GetDirectoryName(newfile);
                     if (!string.IsNullOrEmpty(directoryName) && !Directory.Exists(directoryName))
                         Directory.CreateDirectory(directoryName);
@@ -290,6 +288,32 @@ namespace Test
                     cab.FileSave(i, newfile);
                 }
             }
+        }
+
+        /// <summary>
+        /// Clean a path segment by normalizing as much as possible
+        /// </summary>
+        /// <param name="segment">Path segment as provided by the cabinet</param>
+        /// <returns>Cleaned path segment, if possible</returns>
+        private static string CleanPathSegment(string? segment)
+        {
+            // Invalid pieces are returned as empty strings
+            if (segment == null)
+                return string.Empty;
+
+            // Replace directory separators
+            if (Path.DirectorySeparatorChar == '\\')
+                segment = segment.Replace('/', '\\');
+            else if (Path.DirectorySeparatorChar == '/')
+                segment = segment.Replace('\\', '/');
+
+            // Replace invalid path characters
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                segment = segment.Replace(c, '_');
+            }
+
+            return segment;
         }
 
         /// <summary>
