@@ -270,8 +270,10 @@ namespace Test
                 {
                     char[]? filenameChars = cab.HeaderList.GetFileName(i)?.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)?.ToArray();
                     string filename = filenameChars != null ? new(filenameChars) : string.Empty;
+
                     char[]? directoryChars = cab.HeaderList.GetDirectoryName((int)cab.HeaderList.GetFileDirectoryIndex(i))?.Select(c => Path.GetInvalidPathChars().Contains(c) ? '_' : c)?.ToArray();
                     string directory = directoryChars != null ? new(directoryChars) : string.Empty;
+
 #if NET20 || NET35
                     string newfile = Path.Combine(Path.Combine(outputDirectory, directory), filename);
 #else
