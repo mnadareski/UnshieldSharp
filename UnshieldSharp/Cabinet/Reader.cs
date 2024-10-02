@@ -72,6 +72,10 @@ namespace UnshieldSharp.Cabinet
                 // Start with the correct volume for IS5 cabinets
                 if (reader.Cabinet!.HeaderList!.MajorVersion <= 5 && index > (int)reader._volumeHeader!.LastFileIndex)
                 {
+                    // Normalize the volume ID for odd cases
+                    if (fileDescriptor.Volume == ushort.MinValue || fileDescriptor.Volume == ushort.MaxValue)
+                        fileDescriptor.Volume = 1;
+
                     fileDescriptor.Volume++;
                     continue;
                 }
@@ -95,6 +99,10 @@ namespace UnshieldSharp.Cabinet
         /// </summary>
         public bool OpenVolume(int volume)
         {
+            // Normalize the volume ID for odd cases
+            if (volume == ushort.MinValue || volume == ushort.MaxValue)
+                volume = 1;
+
             VolumeFile?.Close();
             VolumeFile = Cabinet!.OpenFileForReading(volume, CABINET_SUFFIX);
             if (VolumeFile == null)
