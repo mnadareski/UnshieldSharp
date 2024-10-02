@@ -183,7 +183,8 @@ namespace Test
 
                 foreach (var cfile in archive.Files)
                 {
-                    string newfile = Path.Combine(outputDirectory, cfile.Key!.Replace('\\', '/'));
+                    string filename = CleanPathSegment(cfile.Key);
+                    string newfile = Path.Combine(outputDirectory, filename);
 
                     string? directoryName = Path.GetDirectoryName(newfile);
                     if (!string.IsNullOrEmpty(directoryName) && !Directory.Exists(directoryName))
