@@ -143,7 +143,10 @@ namespace Test
         private static void ProcessArchivePath(string file, bool outputInfo, bool extract, string outputDirectory)
         {
             if (!File.Exists(file))
+            {
+                Console.WriteLine($"{file} does not exist!");
                 return;
+            }
 
             var archive = new InstallShieldArchiveV3(file);
             if (archive?.Header == null)
@@ -212,7 +215,10 @@ namespace Test
         private static void ProcessCabinetPath(string file, bool outputInfo, bool extract, string outputDirectory)
         {
             if (!File.Exists(file))
+            {
+                Console.WriteLine($"{file} does not exist!");
                 return;
+            }
 
             var cab = InstallShieldCabinet.Open(file);
             if (cab?.HeaderList == null)
