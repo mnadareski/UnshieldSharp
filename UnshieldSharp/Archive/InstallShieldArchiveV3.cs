@@ -13,7 +13,9 @@ limitations under the License.
 
 using System.Collections.Generic;
 using System.IO;
+#if NET40_OR_GREATER || NETCOREAPP
 using System.Linq;
+#endif
 using SabreTools.Compression.Blast;
 using IA3 = SabreTools.Models.InstallShieldArchiveV3;
 
@@ -75,7 +77,20 @@ namespace UnshieldSharp.Archive
         /// </summary>
         /// <param name="fullPath">Internal full path for the file to check</param>
         /// <returns>True if the full path exists, false otherwise</returns>
+#if NET20 || NET35
+        public bool Exists(string fullPath)
+        {
+            foreach (var f in Files)
+            {
+                if (f.Key.Contains(fullPath))
+                    return true;
+            }
+
+            return false;
+        }
+#else
         public bool Exists(string fullPath) => Files.Any(f => f.Key.Contains(fullPath));
+#endif
 
         /// <summary>
         /// Extract a file to byte array using the path

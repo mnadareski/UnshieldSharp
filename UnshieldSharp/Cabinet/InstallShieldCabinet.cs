@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+#if NET40_OR_GREATER || NETCOREAPP
 using System.Linq;
+#endif
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using SabreTools.Compression.zlib;
@@ -191,7 +193,11 @@ namespace UnshieldSharp.Cabinet
                 md5.TransformFinalBlock(outputBuffer, 0, 0);
                 byte[]? md5result = md5.Hash;
 
+#if NET20 || NET35
+                if (md5result == null || BitConverter.ToString(md5result) != BitConverter.ToString(fileDescriptor.MD5!))
+#else
                 if (md5result == null || !md5result.SequenceEqual(fileDescriptor.MD5!))
+#endif
                 {
                     Console.Error.WriteLine($"MD5 checksum failure for file {index} ({HeaderList.GetFileName(index)})");
                     reader.Dispose();
@@ -618,7 +624,7 @@ namespace UnshieldSharp.Cabinet
 #if NET20 || NET35 || NET40
                 byte[] temp = new byte[pattern.Length];
                 Array.Copy(buffer, offset, temp, 0, pattern.Length);
-                if (temp.SequenceEqual(pattern))
+                if (BitConverter.ToString(temp) == BitConverter.ToString(pattern))
                     return offset;
 #else
                 var temp = new ArraySegment<byte>(buffer, offset, pattern.Length);
