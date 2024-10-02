@@ -592,7 +592,13 @@ namespace UnshieldSharp.Cabinet
             if (string.IsNullOrEmpty(filenamePattern))
                 return null;
 
+            // Attempt lower-case extension
             string filename = $"{filenamePattern}{index}.{suffix}";
+            if (File.Exists(filename))
+                return File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+            // Attempt upper-case extension
+            filename = $"{filenamePattern}{index}.{suffix.ToUpperInvariant()}";
             if (File.Exists(filename))
                 return File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
