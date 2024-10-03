@@ -271,13 +271,14 @@ namespace Test
                     // Get and clean each path segment
                     string filename = CleanPathSegment(cab.HeaderList.GetFileName(i));
                     string directory = CleanPathSegment(cab.HeaderList.GetDirectoryName((int)cab.HeaderList.GetFileDirectoryIndex(i)));
-                    string fileGroup = CleanPathSegment(FindFileGroup(cab, i));
+                    //string directory = CleanPathSegment(cab.HeaderList.GetDirectoryName((int)cab.HeaderList.GetDirectoryIndexFromFile(i)));
+                    //string fileGroup = CleanPathSegment(cab.HeaderList.GetFileGroupNameFromFile(i));
 
                     // Assemble the complete output path
 #if NET20 || NET35
-                    string newfile = Path.Combine(Path.Combine(Path.Combine(outputDirectory, fileGroup), directory), filename);
+                    string newfile = Path.Combine(Path.Combine(outputDirectory, directory), filename);
 #else
-                    string newfile = Path.Combine(outputDirectory, fileGroup, directory, filename);
+                    string newfile = Path.Combine(outputDirectory, directory, filename);
 #endif
 
                     // Ensure the output directory exists
@@ -344,51 +345,6 @@ namespace Test
                 return directoryName;
             else
                 return Path.Combine(directoryName!, fileNameWithoutExtension!);
-        }
-    
-        /// <summary>
-        /// Find the file group for a given file index
-        /// </summary>
-        /// <param name="cab">Cabinet containing the file index</param>
-        /// <param name="fileIndex">Index of the file to check</param>
-        /// <returns>File group name on success, empty string on error</returns>
-        private static string FindFileGroup(InstallShieldCabinet? cab, int fileIndex)
-        {
-            // The following code has been disabled until file group parsing
-            // is fixed. See below for more details.
-            return string.Empty;
-
-            // // Handle an invalid cabinet
-            // if (cab?.HeaderList == null)
-            //     return string.Empty;
-
-            // // Handle an invalid file index
-            // if (fileIndex < 0 || fileIndex > cab.HeaderList.FileCount)
-            //     return string.Empty;
-
-            // // Search all file groups
-            // for (int i = 0; i < cab.HeaderList.FileGroupCount; i++)
-            // {
-            //     // Get the file group for the index
-            //     var fileGroup = cab.HeaderList.GetFileGroup(i);
-            //     if (fileGroup == null)
-            //         continue;
-
-            //     // Due to a bug in the processing code, FirstFile and LastFile
-            //     // are shifted by one Int32 value. This means that the current
-            //     // FirstFile is actually LastFile and LastFile is another value
-            //     // entirely.
-
-            //     // Check the range in the file group
-            //     if (fileGroup.FirstFile > fileIndex || fileGroup.LastFile < fileIndex)
-            //         continue;
-
-            //     // Get and return the file group name
-            //     return cab.HeaderList.GetFileGroupName(i) ?? string.Empty;
-            // }
-
-            // // If no group was found
-            // return string.Empty;
         }
     }
 }
