@@ -244,7 +244,7 @@ namespace UnshieldSharp.Cabinet
         }
 
         /// <summary>
-        /// Deobfuscate a buffer
+        /// Obfuscate a buffer
         /// </summary>
         private void Obfuscate(byte[] buffer, long size)
         {
@@ -268,11 +268,11 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Rotate Right 8
         /// </summary>
-        private static int ROR8(int x, int n) { return ((x) >> ((int)(n))) | ((x) << (8 - (int)(n))); }
+        private static int ROR8(int x, int n) => (x >> n) | (x << (8 - n));
 
         /// <summary>
         /// Rotate Left 8
         /// </summary>
-        private static int ROL8(int x, int n) { return ((x) << ((int)(n))) | ((x) >> (8 - (int)(n))); }
+        private static int ROL8(int x, int n) => (x << n) | (x >> (8 - n));
     }
 }
