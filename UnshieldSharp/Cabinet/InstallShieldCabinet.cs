@@ -73,7 +73,7 @@ namespace UnshieldSharp.Cabinet
                 return false;
             }
 
-            var fileDescriptor = GetFileDescriptor(filename, index);
+            var fileDescriptor = GetFileDescriptor(index);
             if (fileDescriptor == null)
                 return false;
 
@@ -222,7 +222,7 @@ namespace UnshieldSharp.Cabinet
                 return false;
             }
 
-            var fileDescriptor = GetFileDescriptor(filename, index);
+            var fileDescriptor = GetFileDescriptor(index);
             if (fileDescriptor == null)
                 return false;
 
@@ -394,7 +394,7 @@ namespace UnshieldSharp.Cabinet
                 return false;
             }
 
-            var fileDescriptor = GetFileDescriptor(filename, index);
+            var fileDescriptor = GetFileDescriptor(index);
             if (fileDescriptor == null)
                 return false;
 
@@ -452,17 +452,11 @@ namespace UnshieldSharp.Cabinet
         /// <summary>
         /// Common code for getting the file descriptor
         /// </summary>
-        private FileDescriptor? GetFileDescriptor(string filename, int index)
+        private FileDescriptor? GetFileDescriptor(int index)
         {
             if (HeaderList == null)
             {
                 Console.Error.WriteLine("Header list is not built");
-                return null;
-            }
-
-            if (string.IsNullOrEmpty(filename))
-            {
-                Console.Error.WriteLine("Provided filename is invalid");
                 return null;
             }
 
