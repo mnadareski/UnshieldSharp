@@ -270,9 +270,8 @@ namespace Test
                 {
                     // Get and clean each path segment
                     string filename = CleanPathSegment(cab.HeaderList.GetFileName(i));
-                    string directory = CleanPathSegment(cab.HeaderList.GetDirectoryName((int)cab.HeaderList.GetFileDirectoryIndex(i)));
-                    //string directory = CleanPathSegment(cab.HeaderList.GetDirectoryName((int)cab.HeaderList.GetDirectoryIndexFromFile(i)));
-                    //string fileGroup = CleanPathSegment(cab.HeaderList.GetFileGroupNameFromFile(i));
+                    string directory = CleanPathSegment(cab.HeaderList.GetDirectoryName((int)cab.HeaderList.GetDirectoryIndexFromFile(i)));
+                    string fileGroup = CleanPathSegment(cab.HeaderList.GetFileGroupNameFromFile(i));
 
                     // Assemble the complete output path
 #if NET20 || NET35
