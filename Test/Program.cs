@@ -13,15 +13,12 @@ namespace Test
             // Setup options
             bool extract = true;
             bool outputInfo = false;
-            bool script = false;
             string outputDirectory = string.Empty;
 
             // If we have no args, show the help and quit
             if (args == null || args.Length == 0)
             {
                 DisplayHelp();
-                Console.WriteLine("Press Enter to exit the program");
-                Console.ReadLine();
                 return;
             }
 
@@ -36,8 +33,6 @@ namespace Test
                 if (arg == "-?" || arg == "-h" || arg == "--help")
                 {
                     DisplayHelp();
-                    Console.WriteLine("Press Enter to exit the program");
-                    Console.ReadLine();
                     return;
                 }
                 else if (arg == "-i" || arg == "--info")
@@ -54,17 +49,11 @@ namespace Test
                     {
                         Console.WriteLine("ERROR: No output directory provided");
                         DisplayHelp();
-                        Console.WriteLine("Press Enter to exit the program");
-                        Console.ReadLine();
                         return;
                     }
 
                     firstFileIndex++;
                     outputDirectory = args[firstFileIndex].Trim('"');
-                }
-                else if (arg == "-s" || arg == "--script")
-                {
-                    script = true;
                 }
                 else
                 {
@@ -74,17 +63,7 @@ namespace Test
 
             // If we have a no-op situation, just cancel out
             if (!outputInfo && !extract)
-            {
                 Console.WriteLine("Neither info nor extraction were selected, skipping all files...");
-
-                // Only prompt to close when not in script mode
-                if (!script)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("Press Enter to exit the program");
-                    Console.ReadLine();
-                }
-            }
 
             // Loop through all of the input files
             for (int i = firstFileIndex; i < args.Length; i++)
@@ -96,14 +75,6 @@ namespace Test
                     ProcessArchivePath(arg, outputInfo, extract, outputDirectory);
                 else
                     Console.WriteLine($"{arg} is not a recognized file by extension");
-            }
-
-            // Only prompt to close when not in script mode
-            if (!script)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Press Enter to exit the program");
-                Console.ReadLine();
             }
         }
 
@@ -128,7 +99,6 @@ namespace Test
             Console.WriteLine("    -i, --info           Display archive/cabinet information");
             Console.WriteLine("    -n, --no-extract     Don't extract the archive");
             Console.WriteLine("    -o, --output <path>  Set the output directory for extraction");
-            Console.WriteLine("    -s, --script         Script mode (doesn't prompt to close)");
             Console.WriteLine();
         }
 
