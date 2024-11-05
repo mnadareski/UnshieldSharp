@@ -8,6 +8,12 @@ This library is a C# port of the following projects:
 Both of the above library code has had changes to structure to make them more object-oriented.
 For an example of usage, please see [Binary Object Scanner](https://github.com/SabreTools/BinaryObjectScanner).
 
+## Releases
+
+For the most recent stable build, download the latest release here: [Releases Page](https://github.com/mnadareski/UnshieldSharp/releases)
+
+For the latest WIP build here: [Rolling Release](https://github.com/mnadareski/UnshieldSharp/releases/tag/rolling)
+
 ## Abilities
 
 This code can currently list and extract the contents of all supported files that the base projects can. As more things are added to the source libraries, they will be ported to this as well so the code should be relatively up to date.
