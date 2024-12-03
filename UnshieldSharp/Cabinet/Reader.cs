@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using SabreTools.IO.Extensions;
 using SabreTools.Models.InstallShieldCabinet;
 using static SabreTools.Models.InstallShieldCabinet.Constants;
 
@@ -111,7 +112,7 @@ namespace UnshieldSharp.Cabinet
                 return false;
             }
 
-            var commonHeader = SabreTools.Serialization.Deserializers.InstallShieldCabinet.ParseCommonHeader(VolumeFile);
+            var commonHeader = VolumeFile.ReadType<CommonHeader>();
             if (commonHeader == default)
                 return false;
 

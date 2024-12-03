@@ -14,6 +14,7 @@ limitations under the License.
 using System.Collections.Generic;
 using System.IO;
 using SabreTools.Compression.Blast;
+using SabreTools.IO.Extensions;
 using IA3 = SabreTools.Models.InstallShieldArchiveV3;
 
 namespace UnshieldSharp.Archive
@@ -151,7 +152,7 @@ namespace UnshieldSharp.Archive
             }
 
             // Create the header from the input file
-            Header = SabreTools.Serialization.Deserializers.InstallShieldArchiveV3.ParseHeader(inputStream);
+            Header = inputStream.ReadType<IA3.Header>();
             if (Header == null)
             {
                 err = "Header could not be read or was invalid";
@@ -179,7 +180,7 @@ namespace UnshieldSharp.Archive
                 for (int i = 0; i < directory.FileCount; i++)
                 {
                     // Read in the file information
-                    var file = SabreTools.Serialization.Deserializers.InstallShieldArchiveV3.ParseFile(inputStream);
+                    var file = inputStream.ReadType<IA3.File>();
                     if (file == null)
                         break;
 
