@@ -6,7 +6,7 @@ using static SabreTools.Models.InstallShieldCabinet.Constants;
 
 #pragma warning disable IDE0051 // Private member is unused
 
-namespace UnshieldSharp.Cabinet
+namespace UnshieldSharp
 {
     public class Reader : IDisposable
     {

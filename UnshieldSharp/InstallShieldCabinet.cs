@@ -10,7 +10,7 @@ using SabreTools.Models.InstallShieldCabinet;
 using static SabreTools.Models.InstallShieldCabinet.Constants;
 using Header = SabreTools.Serialization.Wrappers.InstallShieldCabinet;
 
-namespace UnshieldSharp.Cabinet
+namespace UnshieldSharp
 {
     // TODO: Figure out if individual parts of a split cab can be extracted separately
     public class InstallShieldCabinet

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
-using UnshieldSharp.Archive;
-using UnshieldSharp.Cabinet;
-using IA3 = SabreTools.Models.InstallShieldArchiveV3;
+using UnshieldSharp;
 
 namespace Test
 {
@@ -69,10 +67,10 @@ namespace Test
             for (int i = firstFileIndex; i < args.Length; i++)
             {
                 string arg = args[i];
-                if (arg.EndsWith(".cab", StringComparison.OrdinalIgnoreCase) || arg.EndsWith(".hdr", StringComparison.OrdinalIgnoreCase))
+                if (arg.EndsWith(".cab", StringComparison.OrdinalIgnoreCase))
                     ProcessCabinetPath(arg, outputInfo, extract, outputDirectory);
-                else if (arg.EndsWith(".z", StringComparison.OrdinalIgnoreCase))
-                    ProcessArchivePath(arg, outputInfo, extract, outputDirectory);
+                else if (arg.EndsWith(".hdr", StringComparison.OrdinalIgnoreCase))
+                    ProcessCabinetPath(arg, outputInfo, extract, outputDirectory);
                 else
                     Console.WriteLine($"{arg} is not a recognized file by extension");
             }
@@ -100,80 +98,6 @@ namespace Test
             Console.WriteLine("    -n, --no-extract     Don't extract the archive");
             Console.WriteLine("    -o, --output <path>  Set the output directory for extraction");
             Console.WriteLine();
-        }
-
-        /// <summary>
-        /// Process a single file path as an InstallShield archive
-        /// </summary>
-        /// <param name="file">Name of the file to process</param>
-        /// <param name="outputInfo">True to display the cabinet information, false otherwise</param>
-        /// <param name="extract">True to extract the cabinet, false otherwise</param>
-        /// <param name="outputDirectory">Output directory for extraction</param>
-        private static void ProcessArchivePath(string file, bool outputInfo, bool extract, string outputDirectory)
-        {
-            if (!File.Exists(file))
-            {
-                Console.WriteLine($"{file} does not exist!");
-                return;
-            }
-
-            var archive = new InstallShieldArchiveV3(file);
-            if (archive?.Header == null)
-            {
-                Console.WriteLine($"{file} could not be opened as an InstallShield V3 Archive!");
-                return;
-            }
-
-            if (outputInfo)
-            {
-                Console.WriteLine($"File count: {archive.Header.FileCount}");
-                Console.WriteLine($"Archive size: {archive.Header.CompressedSize}");
-                Console.WriteLine($"Directory count: {archive.Header.DirCount}");
-
-                Console.WriteLine("Directory List:");
-                foreach (IA3.Directory directory in archive.Directories)
-                {
-                    Console.WriteLine($"Directory: {directory.Name ?? string.Empty}, File Count: {directory.FileCount}");
-                }
-
-                Console.WriteLine("File list:");
-                foreach (var cfile in archive.Files)
-                {
-                    Console.WriteLine($"File: {cfile.Key ?? string.Empty}, Compressed Size: {cfile.Value.CompressedSize}, Offset: {cfile.Value.Offset}");
-                }
-            }
-
-            if (extract)
-            {
-                if (string.IsNullOrEmpty(outputDirectory))
-                    outputDirectory = CreateOutdir(file) ?? string.Empty;
-
-                if (!Directory.Exists(outputDirectory))
-                    Directory.CreateDirectory(outputDirectory);
-
-                foreach (var cfile in archive.Files)
-                {
-                    string filename = CleanPathSegment(cfile.Key);
-                    string newfile = Path.Combine(outputDirectory, filename);
-
-                    string? directoryName = Path.GetDirectoryName(newfile);
-                    if (!string.IsNullOrEmpty(directoryName) && !Directory.Exists(directoryName))
-                        Directory.CreateDirectory(directoryName);
-
-                    byte[]? fileContents = archive.Extract(cfile.Key, out string? error);
-                    if (fileContents == null || !string.IsNullOrEmpty(error))
-                    {
-                        Console.WriteLine($"Error detected while reading '{cfile.Key}': {error}");
-                        continue;
-                    }
-
-                    Console.WriteLine($"Outputting file {cfile.Key} to {newfile}...");
-                    using (FileStream fs = File.OpenWrite(newfile))
-                    {
-                        fs.Write(fileContents, 0, fileContents.Length);
-                    }
-                }
-            }
         }
 
         /// <summary>
