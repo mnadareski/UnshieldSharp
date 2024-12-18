@@ -18,7 +18,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Current volume ID
         /// </summary>
-        public int Volume { get; private set; }
+        public ushort Volume { get; private set; }
 
         /// <summary>
         /// Handle to the current volume stream
@@ -98,7 +98,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Open the volume at the inputted index
         /// </summary>
-        public bool OpenVolume(int volume)
+        public bool OpenVolume(ushort volume)
         {
             // Normalize the volume ID for odd cases
             if (volume == ushort.MinValue || volume == ushort.MaxValue)
@@ -207,7 +207,7 @@ namespace UnshieldSharp
                 if (bytesLeft > 0)
                 {
                     // Open next volume
-                    if (!OpenVolume(Volume + 1))
+                    if (!OpenVolume((ushort)(Volume + 1)))
                         return false;
                 }
             }
