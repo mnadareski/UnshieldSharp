@@ -14,11 +14,6 @@ namespace UnshieldSharp
         public Stream? VolumeFile { get; private set; }
 
         /// <summary>
-        /// Number of bytes left in the current volume
-        /// </summary>
-        public ulong VolumeBytesLeft { get; private set; }
-
-        /// <summary>
         /// Cabinet file to read from
         /// </summary>
         private InstallShieldCabinet? _cabinet;
@@ -32,6 +27,11 @@ namespace UnshieldSharp
         /// File descriptor defining the currently selected index
         /// </summary>
         private FileDescriptor? _fileDescriptor;
+
+        /// <summary>
+        /// Number of bytes left in the current volume
+        /// </summary>
+        private ulong _volumeBytesLeft;
 
         /// <summary>
         /// Current volume header
@@ -124,14 +124,14 @@ namespace UnshieldSharp
             while (bytesLeft > 0)
             {
                 // Open the next volume, if necessary
-                if (VolumeBytesLeft == 0)
+                if (_volumeBytesLeft == 0)
                 {
                     if (!OpenNextVolume(out _))
                         return false;
                 }
 
                 // Get the number of bytes to read from this volume
-                int bytesToRead = (int)Math.Min(bytesLeft, (long)VolumeBytesLeft);
+                int bytesToRead = (int)Math.Min(bytesLeft, (long)_volumeBytesLeft);
                 if (bytesToRead == 0)
                     break;
 
@@ -141,7 +141,7 @@ namespace UnshieldSharp
 
                 // Set the number of bytes left
                 bytesLeft -= bytesToRead;
-                VolumeBytesLeft -= (uint)bytesToRead;
+                _volumeBytesLeft -= (uint)bytesToRead;
             }
 
 #if NET20 || NET35
@@ -233,9 +233,9 @@ namespace UnshieldSharp
 #else
             if (_fileDescriptor.Flags.HasFlag(FileFlags.FILE_COMPRESSED))
 #endif
-                VolumeBytesLeft = volumeBytesLeftCompressed;
+                _volumeBytesLeft = volumeBytesLeftCompressed;
             else
-                VolumeBytesLeft = volumeBytesLeftExpanded;
+                _volumeBytesLeft = volumeBytesLeftExpanded;
 
             VolumeFile.Seek((long)dataOffset, SeekOrigin.Begin);
             _volumeId = volume;
