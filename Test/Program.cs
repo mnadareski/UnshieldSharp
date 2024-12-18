@@ -85,17 +85,15 @@ namespace Test
             Console.WriteLine();
             Console.WriteLine("This program was created to test the functionality found");
             Console.WriteLine("in the UnshieldSharp library. It is deliberately barebones");
-            Console.WriteLine("due to this purpose. Currently this library supports both");
-            Console.WriteLine("InstallShield cabinet and V3 archive files. Default behavior");
-            Console.WriteLine("extracts the archive/cabinet to a named folder next to the");
-            Console.WriteLine("original file.");
+            Console.WriteLine("due to this purpose. Default behavior extracts the cabinet");
+            Console.WriteLine("to a named folder next to the original file.");
             Console.WriteLine();
             Console.WriteLine("Usage: Test.exe <options> <path/to/file> ...");
             Console.WriteLine();
             Console.WriteLine("Options:");
             Console.WriteLine("    -?, -h, --help       Display this help text");
-            Console.WriteLine("    -i, --info           Display archive/cabinet information");
-            Console.WriteLine("    -n, --no-extract     Don't extract the archive");
+            Console.WriteLine("    -i, --info           Display cabinet information");
+            Console.WriteLine("    -n, --no-extract     Don't extract the cabinet");
             Console.WriteLine("    -o, --output <path>  Set the output directory for extraction");
             Console.WriteLine();
         }

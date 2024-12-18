@@ -110,24 +110,25 @@ namespace UnshieldSharp
             long bytesLeft = size;
             while (bytesLeft > 0)
             {
-                // Read as much as possible from this volume
-                int bytesToRead = (int)Math.Min(bytesLeft, (long)VolumeBytesLeft);
-
-                if (bytesToRead == 0)
-                    return false;
-
-                if (bytesToRead != VolumeFile!.Read(buffer, start, bytesToRead))
-                    return false;
-
-                bytesLeft -= bytesToRead;
-                VolumeBytesLeft -= (uint)bytesToRead;
-
-                if (bytesLeft > 0)
+                // Open the next volume, if necessary
+                if (VolumeBytesLeft == 0)
                 {
-                    // Open next volume
                     if (!OpenNextVolume(out _))
                         return false;
                 }
+
+                // Get the number of bytes to read from this volume
+                int bytesToRead = (int)Math.Min(bytesLeft, (long)VolumeBytesLeft);
+                if (bytesToRead == 0)
+                    break;
+
+                // Read as much as possible from this volume
+                if (bytesToRead != VolumeFile!.Read(buffer, start, bytesToRead))
+                    return false;
+
+                // Set the number of bytes left
+                bytesLeft -= bytesToRead;
+                VolumeBytesLeft -= (uint)bytesToRead;
             }
 
 #if NET20 || NET35
