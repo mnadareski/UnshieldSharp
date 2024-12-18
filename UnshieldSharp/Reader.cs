@@ -4,11 +4,9 @@ using SabreTools.IO.Extensions;
 using SabreTools.Models.InstallShieldCabinet;
 using static SabreTools.Models.InstallShieldCabinet.Constants;
 
-#pragma warning disable IDE0051 // Private member is unused
-
 namespace UnshieldSharp
 {
-    public class Reader : IDisposable
+    internal class Reader : IDisposable
     {
         /// <summary>
         /// Cabinet file to read from
