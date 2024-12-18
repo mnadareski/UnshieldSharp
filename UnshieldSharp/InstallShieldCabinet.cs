@@ -250,9 +250,9 @@ namespace UnshieldSharp
                 ulong bytesToWrite = 0;
                 int result;
 
-                if (reader.VolumeBytesLeft == 0 && !reader.OpenVolume((ushort)(reader.Volume + 1)))
+                if (reader.VolumeBytesLeft == 0 && !reader.OpenNextVolume(out ushort nextVolume))
                 {
-                    Console.Error.WriteLine($"Failed to open volume {reader.Volume + 1} to read {bytesLeft} more bytes");
+                    Console.Error.WriteLine($"Failed to open volume {nextVolume} to read {bytesLeft} more bytes");
                     reader.Dispose();
                     output?.Close();
                     return false;

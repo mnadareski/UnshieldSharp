@@ -9,16 +9,6 @@ namespace UnshieldSharp
     internal class Reader : IDisposable
     {
         /// <summary>
-        /// Cabinet file to read from
-        /// </summary>
-        public InstallShieldCabinet? Cabinet { get; private set; }
-
-        /// <summary>
-        /// Current volume ID
-        /// </summary>
-        public ushort Volume { get; private set; }
-
-        /// <summary>
         /// Handle to the current volume stream
         /// </summary>
         public Stream? VolumeFile { get; private set; }
@@ -27,6 +17,11 @@ namespace UnshieldSharp
         /// Number of bytes left in the current volume
         /// </summary>
         public ulong VolumeBytesLeft { get; private set; }
+
+        /// <summary>
+        /// Cabinet file to read from
+        /// </summary>
+        private InstallShieldCabinet? _cabinet;
 
         /// <summary>
         /// Currently selected index
@@ -44,6 +39,11 @@ namespace UnshieldSharp
         private VolumeHeader? _volumeHeader;
 
         /// <summary>
+        /// Current volume ID
+        /// </summary>
+        private ushort _volumeId;
+
+        /// <summary>
         /// Offset for obfuscation seed
         /// </summary>
         private uint _obfuscationOffset;
@@ -55,7 +55,7 @@ namespace UnshieldSharp
         {
             var reader = new Reader
             {
-                Cabinet = cabinet,
+                _cabinet = cabinet,
                 _index = (uint)index,
                 _fileDescriptor = fileDescriptor,
             };
@@ -69,7 +69,7 @@ namespace UnshieldSharp
                 }
 
                 // Start with the correct volume for IS5 cabinets
-                if (reader.Cabinet!.HeaderList!.MajorVersion <= 5 && index > (int)reader._volumeHeader!.LastFileIndex)
+                if (reader._cabinet!.HeaderList!.MajorVersion <= 5 && index > (int)reader._volumeHeader!.LastFileIndex)
                 {
                     // Normalize the volume ID for odd cases
                     if (fileDescriptor.Volume == ushort.MinValue || fileDescriptor.Volume == ushort.MaxValue)
@@ -94,16 +94,63 @@ namespace UnshieldSharp
         }
 
         /// <summary>
+        /// Open the next volume based on the current index
+        /// </summary>
+        public bool OpenNextVolume(out ushort nextVolume)
+        {
+            nextVolume = (ushort)(_volumeId + 1);
+            return OpenVolume(nextVolume);
+        }
+
+        /// <summary>
+        /// Read a certain number of bytes from the current volume
+        /// </summary>
+        public bool Read(byte[] buffer, int start, long size)
+        {
+            long bytesLeft = size;
+            while (bytesLeft > 0)
+            {
+                // Read as much as possible from this volume
+                int bytesToRead = (int)Math.Min(bytesLeft, (long)VolumeBytesLeft);
+
+                if (bytesToRead == 0)
+                    return false;
+
+                if (bytesToRead != VolumeFile!.Read(buffer, start, bytesToRead))
+                    return false;
+
+                bytesLeft -= bytesToRead;
+                VolumeBytesLeft -= (uint)bytesToRead;
+
+                if (bytesLeft > 0)
+                {
+                    // Open next volume
+                    if (!OpenNextVolume(out _))
+                        return false;
+                }
+            }
+
+#if NET20 || NET35
+            if ((_fileDescriptor!.Flags & FileFlags.FILE_OBFUSCATED) != 0)
+#else
+            if (_fileDescriptor!.Flags.HasFlag(FileFlags.FILE_OBFUSCATED))
+#endif
+                Deobfuscate(buffer, size);
+
+            return true;
+        }
+
+        /// <summary>
         /// Open the volume at the inputted index
         /// </summary>
-        public bool OpenVolume(ushort volume)
+        private bool OpenVolume(ushort volume)
         {
             // Normalize the volume ID for odd cases
             if (volume == ushort.MinValue || volume == ushort.MaxValue)
                 volume = 1;
 
             VolumeFile?.Close();
-            VolumeFile = Cabinet!.OpenFileForReading(volume, CABINET_SUFFIX);
+            VolumeFile = _cabinet!.OpenFileForReading(volume, CABINET_SUFFIX);
             if (VolumeFile == null)
             {
                 Console.Error.WriteLine($"Failed to open input cabinet file {volume}");
@@ -114,14 +161,14 @@ namespace UnshieldSharp
             if (commonHeader == default)
                 return false;
 
-            _volumeHeader = SabreTools.Serialization.Deserializers.InstallShieldCabinet.ParseVolumeHeader(VolumeFile, Cabinet.HeaderList!.MajorVersion);
+            _volumeHeader = SabreTools.Serialization.Deserializers.InstallShieldCabinet.ParseVolumeHeader(VolumeFile, _cabinet.HeaderList!.MajorVersion);
             if (_volumeHeader == null)
                 return false;
 
             // Enable support for split archives for IS5
-            if (Cabinet.HeaderList.MajorVersion == 5)
+            if (_cabinet.HeaderList.MajorVersion == 5)
             {
-                if (_index < (Cabinet.HeaderList.FileCount - 1)
+                if (_index < (_cabinet.HeaderList.FileCount - 1)
                     && _index == _volumeHeader.LastFileIndex
                     && _volumeHeader.LastFileSizeCompressed != _fileDescriptor!.CompressedSize)
                 {
@@ -177,45 +224,7 @@ namespace UnshieldSharp
                 VolumeBytesLeft = volumeBytesLeftExpanded;
 
             VolumeFile.Seek((long)dataOffset, SeekOrigin.Begin);
-            Volume = volume;
-
-            return true;
-        }
-
-        /// <summary>
-        /// Read a certain number of bytes from the current volume
-        /// </summary>
-        public bool Read(byte[] buffer, int start, long size)
-        {
-            long bytesLeft = size;
-            while (bytesLeft > 0)
-            {
-                // Read as much as possible from this volume
-                int bytesToRead = (int)Math.Min(bytesLeft, (long)VolumeBytesLeft);
-
-                if (bytesToRead == 0)
-                    return false;
-
-                if (bytesToRead != VolumeFile!.Read(buffer, start, bytesToRead))
-                    return false;
-
-                bytesLeft -= bytesToRead;
-                VolumeBytesLeft -= (uint)bytesToRead;
-
-                if (bytesLeft > 0)
-                {
-                    // Open next volume
-                    if (!OpenVolume((ushort)(Volume + 1)))
-                        return false;
-                }
-            }
-
-#if NET20 || NET35
-            if ((_fileDescriptor!.Flags & FileFlags.FILE_OBFUSCATED) != 0)
-#else
-            if (_fileDescriptor!.Flags.HasFlag(FileFlags.FILE_OBFUSCATED))
-#endif
-                Deobfuscate(buffer, size);
+            _volumeId = volume;
 
             return true;
         }
