@@ -269,11 +269,11 @@ namespace UnshieldSharp
         /// <summary>
         /// Rotate Right 8
         /// </summary>
-        private static int ROR8(int x, int n) => (x >> n) | (x << (8 - n));
+        private static int ROR8(int x, byte n) => (x >> n) | (x << (8 - n));
 
         /// <summary>
         /// Rotate Left 8
         /// </summary>
-        private static int ROL8(int x, int n) => (x << n) | (x >> (8 - n));
+        private static int ROL8(int x, byte n) => (x << n) | (x >> (8 - n));
     }
 }
