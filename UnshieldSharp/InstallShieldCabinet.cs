@@ -509,7 +509,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Uncompress a source byte array to a destination
         /// </summary>
-        public unsafe static int Uncompress(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
+        internal unsafe static int Uncompress(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
             fixed (byte* sourcePtr = source)
             fixed (byte* destPtr = dest)
@@ -543,7 +543,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Uncompress a source byte array to a destination (old version)
         /// </summary>
-        public unsafe static int UncompressOld(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
+        internal unsafe static int UncompressOld(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
             fixed (byte* sourcePtr = source)
             fixed (byte* destPtr = dest)
