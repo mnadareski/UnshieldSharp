@@ -49,7 +49,7 @@ namespace UnshieldSharp
         private uint _obfuscationOffset;
 
         /// <summary>
-        /// Create a new UnshieldReader from an existing cabinet, index, and file descriptor
+        /// Create a new <see cref="Reader"> from an existing cabinet, index, and file descriptor
         /// </summary>
         public static Reader? Create(InstallShieldCabinet cabinet, int index, FileDescriptor fileDescriptor)
         {
@@ -60,16 +60,29 @@ namespace UnshieldSharp
                 _fileDescriptor = fileDescriptor,
             };
 
+            // If the cabinet header list is invalid
+            if (reader._cabinet.HeaderList == null)
+            {
+                Console.Error.WriteLine($"Header list is invalid");
+                return null;
+            }
+
             for (; ; )
             {
+                // If the volume is invalid
                 if (!reader.OpenVolume(fileDescriptor.Volume))
                 {
                     Console.Error.WriteLine($"Failed to open volume {fileDescriptor.Volume}");
                     return null;
                 }
+                else if (reader.VolumeFile == null || reader._volumeHeader == null)
+                {
+                    Console.Error.WriteLine($"Volume {fileDescriptor.Volume} is invalid");
+                    return null;
+                }
 
                 // Start with the correct volume for IS5 cabinets
-                if (reader._cabinet!.HeaderList!.MajorVersion <= 5 && index > (int)reader._volumeHeader!.LastFileIndex)
+                if (reader._cabinet.HeaderList.MajorVersion <= 5 && index > (int)reader._volumeHeader.LastFileIndex)
                 {
                     // Normalize the volume ID for odd cases
                     if (fileDescriptor.Volume == ushort.MinValue || fileDescriptor.Volume == ushort.MaxValue)
