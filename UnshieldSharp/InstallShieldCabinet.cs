@@ -80,7 +80,7 @@ namespace UnshieldSharp
                 return FileSave((int)fileDescriptor.LinkPrevious, filename);
 
             // Get the reader at the index
-            var reader = GetReader(index, fileDescriptor);
+            var reader = Reader.Create(this, index, fileDescriptor);
             if (reader == null)
                 return false;
 
@@ -228,7 +228,7 @@ namespace UnshieldSharp
                 return FileSaveRaw((int)fileDescriptor.LinkPrevious, filename);
 
             // Get the reader at the index
-            var reader = GetReader(index, fileDescriptor);
+            var reader = Reader.Create(this, index, fileDescriptor);
             if (reader == null)
                 return false;
 
@@ -307,28 +307,6 @@ namespace UnshieldSharp
             }
 
             return fileDescriptor;
-        }
-
-        /// <summary>
-        /// Common code for getting the reader
-        /// </summary>
-        private Reader? GetReader(int index, FileDescriptor fd)
-        {
-            var reader = Reader.Create(this, index, fd);
-            if (reader?.VolumeFile == null)
-            {
-                Console.Error.WriteLine($"Failed to create data reader for file {index}");
-                return null;
-            }
-
-            if (reader.VolumeFile.Length == (long)fd.DataOffset)
-            {
-                Console.Error.WriteLine($"File {index} is not inside the cabinet.");
-                reader.Dispose();
-                return null;
-            }
-
-            return reader;
         }
 
         #endregion

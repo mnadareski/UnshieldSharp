@@ -8,10 +8,7 @@ namespace UnshieldSharp
 {
     internal class Reader : IDisposable
     {
-        /// <summary>
-        /// Handle to the current volume stream
-        /// </summary>
-        public Stream? VolumeFile { get; private set; }
+        #region Private Instance Variables
 
         /// <summary>
         /// Cabinet file to read from
@@ -34,6 +31,11 @@ namespace UnshieldSharp
         private ulong _volumeBytesLeft;
 
         /// <summary>
+        /// Handle to the current volume stream
+        /// </summary>
+        private Stream? _volumeFile;
+
+        /// <summary>
         /// Current volume header
         /// </summary>
         private VolumeHeader? _volumeHeader;
@@ -47,6 +49,8 @@ namespace UnshieldSharp
         /// Offset for obfuscation seed
         /// </summary>
         private uint _obfuscationOffset;
+
+        #endregion
 
         /// <summary>
         /// Create a new <see cref="Reader"> from an existing cabinet, index, and file descriptor
@@ -75,7 +79,7 @@ namespace UnshieldSharp
                     Console.Error.WriteLine($"Failed to open volume {fileDescriptor.Volume}");
                     return null;
                 }
-                else if (reader.VolumeFile == null || reader._volumeHeader == null)
+                else if (reader._volumeFile == null || reader._volumeHeader == null)
                 {
                     Console.Error.WriteLine($"Volume {fileDescriptor.Volume} is invalid");
                     return null;
@@ -103,8 +107,10 @@ namespace UnshieldSharp
         /// </summary>
         public void Dispose()
         {
-            VolumeFile?.Close();
+            _volumeFile?.Close();
         }
+
+        #region Reading
 
         /// <summary>
         /// Open the next volume based on the current index
@@ -136,7 +142,7 @@ namespace UnshieldSharp
                     break;
 
                 // Read as much as possible from this volume
-                if (bytesToRead != VolumeFile!.Read(buffer, start, bytesToRead))
+                if (bytesToRead != _volumeFile!.Read(buffer, start, bytesToRead))
                     return false;
 
                 // Set the number of bytes left
@@ -163,19 +169,19 @@ namespace UnshieldSharp
             if (volume == ushort.MinValue || volume == ushort.MaxValue)
                 volume = 1;
 
-            VolumeFile?.Close();
-            VolumeFile = _cabinet!.OpenFileForReading(volume, CABINET_SUFFIX);
-            if (VolumeFile == null)
+            _volumeFile?.Close();
+            _volumeFile = _cabinet!.OpenFileForReading(volume, CABINET_SUFFIX);
+            if (_volumeFile == null)
             {
                 Console.Error.WriteLine($"Failed to open input cabinet file {volume}");
                 return false;
             }
 
-            var commonHeader = VolumeFile.ReadType<CommonHeader>();
+            var commonHeader = _volumeFile.ReadType<CommonHeader>();
             if (commonHeader == default)
                 return false;
 
-            _volumeHeader = SabreTools.Serialization.Deserializers.InstallShieldCabinet.ParseVolumeHeader(VolumeFile, _cabinet.HeaderList!.MajorVersion);
+            _volumeHeader = SabreTools.Serialization.Deserializers.InstallShieldCabinet.ParseVolumeHeader(_volumeFile, _cabinet.HeaderList!.MajorVersion);
             if (_volumeHeader == null)
                 return false;
 
@@ -237,11 +243,15 @@ namespace UnshieldSharp
             else
                 _volumeBytesLeft = volumeBytesLeftExpanded;
 
-            VolumeFile.Seek((long)dataOffset, SeekOrigin.Begin);
+            _volumeFile.Seek((long)dataOffset, SeekOrigin.Begin);
             _volumeId = volume;
 
             return true;
         }
+
+        #endregion
+
+        #region Obfuscation
 
         /// <summary>
         /// Deobfuscate a buffer
@@ -296,5 +306,7 @@ namespace UnshieldSharp
         /// Rotate Left 8
         /// </summary>
         private static int ROL8(int x, byte n) => (x << n) | (x >> (8 - n));
+
+        #endregion
     }
 }
