@@ -17,7 +17,7 @@
         <!-- Package Properties -->
         <Authors>Matt Nadareski;David Eriksson</Authors>
         <Description>Port of Unshield and unshieldv3 to C#</Description>
-        <Copyright>Copyright (c)2018-2024 Matt Nadareski</Copyright>
+        <Copyright>Copyright (c)2018-2025 Matt Nadareski</Copyright>
         <PackageProjectUrl>https://github.com/SabreTools/</PackageProjectUrl>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/mnadareski/UnshieldSharp</RepositoryUrl>
