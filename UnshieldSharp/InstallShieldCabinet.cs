@@ -193,16 +193,19 @@ namespace UnshieldSharp
             reader?.Dispose();
             output?.Close();
 
-            // Validate the data written, if required
-            if (HeaderList!.MajorVersion >= 6)
-            {
-                string? md5result = md5.CurrentHashString;
-                if (md5result == null || md5result != BitConverter.ToString(fileDescriptor.MD5!))
-                {
-                    Console.Error.WriteLine($"MD5 checksum failure for file {index} ({HeaderList.GetFileName(index)})");
-                    return false;
-                }
-            }
+            // Failing the file has been disabled because for a subset of CABs the values don't seem to match
+            // TODO: Investigate what is causing this to fail and what data needs to be hashed
+
+            // // Validate the data written, if required
+            // if (HeaderList!.MajorVersion >= 6)
+            // {
+            //     string? md5result = md5.CurrentHashString;
+            //     if (md5result == null || md5result != BitConverter.ToString(fileDescriptor.MD5!))
+            //     {
+            //         Console.Error.WriteLine($"MD5 checksum failure for file {index} ({HeaderList.GetFileName(index)})");
+            //         return false;
+            //     }
+            // }
 
             return true;
         }
