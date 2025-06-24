@@ -12,6 +12,7 @@ namespace Test
             bool extract = true;
             bool outputInfo = false;
             string outputDirectory = string.Empty;
+            bool useOld = false;
 
             // If we have no args, show the help and quit
             if (args == null || args.Length == 0)
@@ -41,6 +42,10 @@ namespace Test
                 {
                     extract = false;
                 }
+                else if (arg == "-u" || arg == "--use-old")
+                {
+                    useOld = true;
+                }
                 else if (arg == "-o" || arg == "--output")
                 {
                     if (firstFileIndex == args.Length - 1)
@@ -68,9 +73,9 @@ namespace Test
             {
                 string arg = args[i];
                 if (arg.EndsWith(".cab", StringComparison.OrdinalIgnoreCase))
-                    ProcessCabinetPath(arg, outputInfo, extract, outputDirectory);
+                    ProcessCabinetPath(arg, outputInfo, extract, useOld, outputDirectory);
                 else if (arg.EndsWith(".hdr", StringComparison.OrdinalIgnoreCase))
-                    ProcessCabinetPath(arg, outputInfo, extract, outputDirectory);
+                    ProcessCabinetPath(arg, outputInfo, extract, useOld, outputDirectory);
                 else
                     Console.WriteLine($"{arg} is not a recognized file by extension");
             }
@@ -95,6 +100,7 @@ namespace Test
             Console.WriteLine("    -i, --info           Display cabinet information");
             Console.WriteLine("    -n, --no-extract     Don't extract the cabinet");
             Console.WriteLine("    -o, --output <path>  Set the output directory for extraction");
+            Console.WriteLine("    -u, --use-old        Use old extraction method");
             Console.WriteLine();
         }
 
@@ -104,7 +110,7 @@ namespace Test
         /// <param name="file">Name of the file to process</param>
         /// <param name="outputInfo">True to display the cabinet information, false otherwise</param>
         /// <param name="outputDirectory">Output directory for extraction</param>
-        private static void ProcessCabinetPath(string file, bool outputInfo, bool extract, string outputDirectory)
+        private static void ProcessCabinetPath(string file, bool outputInfo, bool extract, bool useOld, string outputDirectory)
         {
             if (!File.Exists(file))
             {
@@ -178,7 +184,7 @@ namespace Test
                         Directory.CreateDirectory(directoryName);
 
                     Console.WriteLine($"Outputting file at index {i} to {newfile}...");
-                    cab.FileSave(i, newfile);
+                    cab.FileSave(i, newfile, useOld);
                 }
             }
         }

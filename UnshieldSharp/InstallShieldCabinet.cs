@@ -62,7 +62,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Save the file at the given index to the filename specified
         /// </summary>
-        public bool FileSave(int index, string filename)
+        public bool FileSave(int index, string filename, bool useOld = false)
         {
             if (HeaderList == null)
             {
@@ -77,7 +77,7 @@ namespace UnshieldSharp
 
             // If the file is split
             if (fileDescriptor.LinkFlags == LinkFlags.LINK_PREV)
-                return FileSave((int)fileDescriptor.LinkPrevious, filename);
+                return FileSave((int)fileDescriptor.LinkPrevious, filename, useOld);
 
             // Get the reader at the index
             var reader = Reader.Create(this, index, fileDescriptor);
@@ -141,7 +141,10 @@ namespace UnshieldSharp
                     ulong readBytes = (ulong)(bytesToRead + 1);
 
                     // Uncompress into a buffer
-                    result = Uncompress(outputBuffer, ref bytesToWrite, inputBuffer, ref readBytes);
+                    if (useOld)
+                        result = UncompressOld(outputBuffer, ref bytesToWrite, inputBuffer, ref readBytes);
+                    else
+                        result = Uncompress(outputBuffer, ref bytesToWrite, inputBuffer, ref readBytes);
 
                     // If we didn't get a positive result that's not a data error (false positives)
                     if (result != zlibConst.Z_OK && result != zlibConst.Z_DATA_ERROR)
