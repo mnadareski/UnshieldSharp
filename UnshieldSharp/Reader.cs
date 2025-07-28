@@ -256,6 +256,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Deobfuscate a buffer
         /// </summary>
+        /// TODO: Remove when Serialization is updated
         private void Deobfuscate(byte[] buffer, long size)
         {
             _obfuscationOffset = Deobfuscate(buffer, size, _obfuscationOffset);
@@ -265,6 +266,7 @@ namespace UnshieldSharp
         /// Deobfuscate a buffer with a seed value
         /// </summary>
         /// <remarks>Seed is 0 at file start</remarks>
+        /// TODO: Remove when Serialization is updated
         private static uint Deobfuscate(byte[] buffer, long size, uint seed)
         {
             for (int i = 0; size > 0; size--, i++, seed++)
@@ -278,6 +280,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Obfuscate a buffer
         /// </summary>
+        /// TODO: Remove when Serialization is updated
         private void Obfuscate(byte[] buffer, long size)
         {
             _obfuscationOffset = Obfuscate(buffer, size, _obfuscationOffset);
@@ -287,6 +290,7 @@ namespace UnshieldSharp
         /// Obfuscate a buffer with a seed value
         /// </summary>
         /// <remarks>Seed is 0 at file start</remarks>
+        /// TODO: Remove when Serialization is updated
         private static uint Obfuscate(byte[] buffer, long size, uint seed)
         {
             for (int i = 0; size > 0; size--, i++, seed++)
@@ -300,11 +304,13 @@ namespace UnshieldSharp
         /// <summary>
         /// Rotate Right 8
         /// </summary>
+        /// TODO: Remove when Serialization is updated
         private static int ROR8(int x, byte n) => (x >> n) | (x << (8 - n));
 
         /// <summary>
         /// Rotate Left 8
         /// </summary>
+        /// TODO: Remove when Serialization is updated
         private static int ROL8(int x, byte n) => (x << n) | (x >> (8 - n));
 
         #endregion
