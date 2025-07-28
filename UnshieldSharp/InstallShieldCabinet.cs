@@ -30,6 +30,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Maximum size of the window in bits
         /// </summary>
+        /// TODO: Remove when Serialization is updated
         private const int MAX_WBITS = 15;
 
         #region Open Cabinet
@@ -272,6 +273,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Common code for getting the bytes to read
         /// </summary>
+        /// TODO: Replace with GetReadableBytes when Serialization is updated
         private static ulong GetBytesToRead(FileDescriptor fd)
         {
 #if NET20 || NET35
@@ -287,6 +289,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Common code for getting the file descriptor
         /// </summary>
+        /// TODO: Replace with GetFileDescriptorWithVerification when Serialization is updated
         private FileDescriptor? GetFileDescriptor(int index)
         {
             if (HeaderList == null)
@@ -322,6 +325,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Uncompress a source byte array to a destination
         /// </summary>
+        /// TODO: Remove when Serialization is updated
         internal unsafe static int Uncompress(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
             fixed (byte* sourcePtr = source)
@@ -356,6 +360,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Uncompress a source byte array to a destination (old version)
         /// </summary>
+        /// TODO: Remove when Serialization is updated
         internal unsafe static int UncompressOld(byte[] dest, ref ulong destLen, byte[] source, ref ulong sourceLen)
         {
             fixed (byte* sourcePtr = source)
@@ -400,6 +405,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Open a cabinet file for reading
         /// </summary>
+        /// TODO: Remove when Serialization is updated
         public Stream? OpenFileForReading(int index, string suffix)
         {
             if (string.IsNullOrEmpty(filenamePattern))
@@ -421,6 +427,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Create the generic filename pattern to look for from the input filename
         /// </summary>
+        /// TODO: Remove when Serialization is updated
         private bool CreateFilenamePattern(string filename)
         {
             if (string.IsNullOrEmpty(filename))
@@ -440,6 +447,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Read headers from the current file
         /// </summary>
+        /// TODO: Remove when Serialization is updated
         private bool ReadHeaders()
         {
             if (HeaderList != null)
