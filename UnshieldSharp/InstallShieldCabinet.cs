@@ -289,7 +289,7 @@ namespace UnshieldSharp
         /// <summary>
         /// Common code for getting the file descriptor
         /// </summary>
-        /// TODO: Replace with GetFileDescriptorWithVerification when Serialization is updated
+        /// TODO: Replace with TryGetFileDescriptor when Serialization is updated
         private FileDescriptor? GetFileDescriptor(int index)
         {
             if (HeaderList == null)
