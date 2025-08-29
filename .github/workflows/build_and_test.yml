@@ -31,7 +31,7 @@ jobs:
       uses: ncipollo/release-action@v1.14.0
       with:
         allowUpdates: True
-        artifacts: "*.nupkg,*.snupkg,*.zip"
+        artifacts: "*.zip"
         body: 'Last built commit: ${{ github.sha }}'
         name: 'Rolling Release'
         prerelease: True

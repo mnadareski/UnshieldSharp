@@ -2,10 +2,10 @@
 
 [![Build and Test](https://github.com/mnadareski/UnshieldSharp/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/mnadareski/UnshieldSharp/actions/workflows/build_and_test.yml)
 
-This library is a C# port of [Unshield](https://github.com/twogood/unshield/), an InstallShield CAB information and extractor. The library code has had changes to structure to make it more object-oriented.
+This program is a wrapper around a C# port of [Unshield](https://github.com/twogood/unshield/), an InstallShield CAB information and extractor. The library code has had changes to structure to make it more object-oriented.
 For an example of usage, please see [Binary Object Scanner](https://github.com/SabreTools/BinaryObjectScanner).
 
-Find the link to the Nuget package [here](https://www.nuget.org/packages/UnshieldSharp).
+This code used to compile to a library, but all functionality included is now in [SabreTools.Serialization](https://github.com/SabreTools/SabreTools.Serialization). Do not use old versions of the package as there are critical issues found and fixed since it was integrated.
 
 ## Releases
 

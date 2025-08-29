@@ -69,14 +69,11 @@ if [ $NO_BUILD = false ]; then
     echo "Restoring Nuget packages"
     dotnet restore
 
-    # Create Nuget Package
-    dotnet pack UnshieldSharp/UnshieldSharp.csproj --output $BUILD_FOLDER
-
-    # Build Program
+    # Build UnshieldSharp
     for FRAMEWORK in "${FRAMEWORKS[@]}"; do
         for RUNTIME in "${RUNTIMES[@]}"; do
             # Output the current build
-            echo "===== Build Program - $FRAMEWORK, $RUNTIME ====="
+            echo "===== Build UnshieldSharp - $FRAMEWORK, $RUNTIME ====="
 
             # If we have an invalid combination of framework and runtime
             if [[ ! $(echo ${VALID_CROSS_PLATFORM_FRAMEWORKS[@]} | fgrep -w $FRAMEWORK) ]]; then
@@ -98,15 +95,15 @@ if [ $NO_BUILD = false ]; then
             if [[ $(echo ${SINGLE_FILE_CAPABLE[@]} | fgrep -w $FRAMEWORK) ]]; then
                 # Only include Debug if set
                 if [ $INCLUDE_DEBUG = true ]; then
-                    dotnet publish Test/Test.csproj -f $FRAMEWORK -r $RUNTIME -c Debug --self-contained true --version-suffix $COMMIT -p:PublishSingleFile=true
+                    dotnet publish UnshieldSharp/UnshieldSharp.csproj -f $FRAMEWORK -r $RUNTIME -c Debug --self-contained true --version-suffix $COMMIT -p:PublishSingleFile=true
                 fi
-                dotnet publish Test/Test.csproj -f $FRAMEWORK -r $RUNTIME -c Release --self-contained true --version-suffix $COMMIT -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false
+                dotnet publish UnshieldSharp/UnshieldSharp.csproj -f $FRAMEWORK -r $RUNTIME -c Release --self-contained true --version-suffix $COMMIT -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false
             else
                 # Only include Debug if set
                 if [ $INCLUDE_DEBUG = true ]; then
-                    dotnet publish Test/Test.csproj -f $FRAMEWORK -r $RUNTIME -c Debug --self-contained true --version-suffix $COMMIT
+                    dotnet publish UnshieldSharp/UnshieldSharp.csproj -f $FRAMEWORK -r $RUNTIME -c Debug --self-contained true --version-suffix $COMMIT
                 fi
-                dotnet publish Test/Test.csproj -f $FRAMEWORK -r $RUNTIME -c Release --self-contained true --version-suffix $COMMIT -p:DebugType=None -p:DebugSymbols=false
+                dotnet publish UnshieldSharp/UnshieldSharp.csproj -f $FRAMEWORK -r $RUNTIME -c Release --self-contained true --version-suffix $COMMIT -p:DebugType=None -p:DebugSymbols=false
             fi
         done
     done
@@ -114,11 +111,11 @@ fi
 
 # Only create archives if requested
 if [ $NO_ARCHIVE = false ]; then
-    # Create Test archives
+    # Create UnshieldSharp archives
     for FRAMEWORK in "${FRAMEWORKS[@]}"; do
         for RUNTIME in "${RUNTIMES[@]}"; do
             # Output the current build
-            echo "===== Archive Program - $FRAMEWORK, $RUNTIME ====="
+            echo "===== Archive UnshieldSharp - $FRAMEWORK, $RUNTIME ====="
 
             # If we have an invalid combination of framework and runtime
             if [[ ! $(echo ${VALID_CROSS_PLATFORM_FRAMEWORKS[@]} | fgrep -w $FRAMEWORK) ]]; then
@@ -138,10 +135,10 @@ if [ $NO_ARCHIVE = false ]; then
 
             # Only include Debug if set
             if [ $INCLUDE_DEBUG = true ]; then
-                cd $BUILD_FOLDER/Test/bin/Debug/${FRAMEWORK}/${RUNTIME}/publish/
+                cd $BUILD_FOLDER/UnshieldSharp/bin/Debug/${FRAMEWORK}/${RUNTIME}/publish/
                 zip -r $BUILD_FOLDER/UnshieldSharp_${FRAMEWORK}_${RUNTIME}_debug.zip .
             fi
-            cd $BUILD_FOLDER/Test/bin/Release/${FRAMEWORK}/${RUNTIME}/publish/
+            cd $BUILD_FOLDER/UnshieldSharp/bin/Release/${FRAMEWORK}/${RUNTIME}/publish/
             zip -r $BUILD_FOLDER/UnshieldSharp_${FRAMEWORK}_${RUNTIME}_release.zip .
         done
     done

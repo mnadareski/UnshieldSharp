@@ -60,14 +60,11 @@ if (!$NO_BUILD.IsPresent) {
     Write-Host "Restoring Nuget packages"
     dotnet restore
 
-    # Create Nuget Package
-    dotnet pack UnshieldSharp\UnshieldSharp.csproj --output $BUILD_FOLDER
-
-    # Build Test
+    # Build UnshieldSharp
     foreach ($FRAMEWORK in $FRAMEWORKS) {
         foreach ($RUNTIME in $RUNTIMES) {
             # Output the current build
-            Write-Host "===== Build Program - $FRAMEWORK, $RUNTIME ====="
+            Write-Host "===== Build UnshieldSharp - $FRAMEWORK, $RUNTIME ====="
 
             # If we have an invalid combination of framework and runtime
             if ($VALID_CROSS_PLATFORM_FRAMEWORKS -notcontains $FRAMEWORK -and $VALID_CROSS_PLATFORM_RUNTIMES -contains $RUNTIME) {
@@ -85,16 +82,16 @@ if (!$NO_BUILD.IsPresent) {
             if ($SINGLE_FILE_CAPABLE -contains $FRAMEWORK) {
                 # Only include Debug if set
                 if ($INCLUDE_DEBUG.IsPresent) {
-                    dotnet publish Test\Test.csproj -f $FRAMEWORK -r $RUNTIME -c Debug --self-contained true --version-suffix $COMMIT -p:PublishSingleFile=true
+                    dotnet publish UnshieldSharp\UnshieldSharp.csproj -f $FRAMEWORK -r $RUNTIME -c Debug --self-contained true --version-suffix $COMMIT -p:PublishSingleFile=true
                 }
-                dotnet publish Test\Test.csproj -f $FRAMEWORK -r $RUNTIME -c Release --self-contained true --version-suffix $COMMIT -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false
+                dotnet publish UnshieldSharp\UnshieldSharp.csproj -f $FRAMEWORK -r $RUNTIME -c Release --self-contained true --version-suffix $COMMIT -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false
             }
             else {
                 # Only include Debug if set
                 if ($INCLUDE_DEBUG.IsPresent) {
-                    dotnet publish Test\Test.csproj -f $FRAMEWORK -r $RUNTIME -c Debug --self-contained true --version-suffix $COMMIT
+                    dotnet publish UnshieldSharp\UnshieldSharp.csproj -f $FRAMEWORK -r $RUNTIME -c Debug --self-contained true --version-suffix $COMMIT
                 }
-                dotnet publish Test\Test.csproj -f $FRAMEWORK -r $RUNTIME -c Release --self-contained true --version-suffix $COMMIT -p:DebugType=None -p:DebugSymbols=false
+                dotnet publish UnshieldSharp\UnshieldSharp.csproj -f $FRAMEWORK -r $RUNTIME -c Release --self-contained true --version-suffix $COMMIT -p:DebugType=None -p:DebugSymbols=false
             }
         }
     }
@@ -102,11 +99,11 @@ if (!$NO_BUILD.IsPresent) {
 
 # Only create archives if requested
 if (!$NO_ARCHIVE.IsPresent) {
-    # Create Test archives
+    # Create UnshieldSharp archives
     foreach ($FRAMEWORK in $FRAMEWORKS) {
         foreach ($RUNTIME in $RUNTIMES) {
             # Output the current build
-            Write-Host "===== Archive Program - $FRAMEWORK, $RUNTIME ====="
+            Write-Host "===== Archive UnshieldSharp - $FRAMEWORK, $RUNTIME ====="
 
             # If we have an invalid combination of framework and runtime
             if ($VALID_CROSS_PLATFORM_FRAMEWORKS -notcontains $FRAMEWORK -and $VALID_CROSS_PLATFORM_RUNTIMES -contains $RUNTIME) {
@@ -122,11 +119,11 @@ if (!$NO_ARCHIVE.IsPresent) {
 
             # Only include Debug if set
             if ($INCLUDE_DEBUG.IsPresent) {
-                Set-Location -Path $BUILD_FOLDER\Test\bin\Debug\${FRAMEWORK}\${RUNTIME}\publish\
+                Set-Location -Path $BUILD_FOLDER\UnshieldSharp\bin\Debug\${FRAMEWORK}\${RUNTIME}\publish\
                 7z a -tzip $BUILD_FOLDER\UnshieldSharp_${FRAMEWORK}_${RUNTIME}_debug.zip *
             }
         
-            Set-Location -Path $BUILD_FOLDER\Test\bin\Release\${FRAMEWORK}\${RUNTIME}\publish\
+            Set-Location -Path $BUILD_FOLDER\UnshieldSharp\bin\Release\${FRAMEWORK}\${RUNTIME}\publish\
             7z a -tzip $BUILD_FOLDER\UnshieldSharp_${FRAMEWORK}_${RUNTIME}_release.zip *
         }
     }
