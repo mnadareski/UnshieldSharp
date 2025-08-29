@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using UnshieldSharp;
+using SabreTools.Serialization.Wrappers;
 
 namespace Test
 {
@@ -118,8 +118,9 @@ namespace Test
                 return;
             }
 
-            var cab = InstallShieldCabinet.Open(file);
-            if (cab?.HeaderList == null)
+            using var fs = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var cab = InstallShieldCabinet.Create(fs);
+            if (cab == null)
             {
                 Console.WriteLine($"{file} could not be opened as an InstallShield Cabinet!");
                 return;
@@ -128,31 +129,31 @@ namespace Test
             if (outputInfo)
             {
                 // Component
-                Console.WriteLine($"Component Count: {cab.HeaderList.ComponentCount}");
-                for (int i = 0; i < cab.HeaderList.ComponentCount; i++)
+                Console.WriteLine($"Component Count: {cab.ComponentCount}");
+                for (int i = 0; i < cab.ComponentCount; i++)
                 {
-                    Console.WriteLine($"\tComponent {i}: {cab.HeaderList.GetComponentName(i)}");
+                    Console.WriteLine($"\tComponent {i}: {cab.GetComponentName(i)}");
                 }
 
                 // Directory -- TODO: multi-volume support...
-                Console.WriteLine($"Directory Count: {cab.HeaderList.DirectoryCount}");
-                for (int i = 0; i < cab.HeaderList.DirectoryCount; i++)
+                Console.WriteLine($"Directory Count: {cab.DirectoryCount}");
+                for (int i = 0; i < cab.DirectoryCount; i++)
                 {
-                    Console.WriteLine($"\tDirectory {i}: {cab.HeaderList.GetDirectoryName(i)}");
+                    Console.WriteLine($"\tDirectory {i}: {cab.GetDirectoryName(i)}");
                 }
 
                 // File -- TODO: multi-volume support...
-                Console.WriteLine($"File Count: {cab.HeaderList.FileCount}");
-                for (int i = 0; i < cab.HeaderList.FileCount; i++)
+                Console.WriteLine($"File Count: {cab.FileCount}");
+                for (int i = 0; i < cab.FileCount; i++)
                 {
-                    Console.WriteLine($"\tFile {i}: {cab.HeaderList.GetFileName(i)}");
+                    Console.WriteLine($"\tFile {i}: {cab.GetFileName(i)}");
                 }
 
                 // File Group
-                Console.WriteLine($"File Group Count: {cab.HeaderList.FileGroupCount}");
-                for (int i = 0; i < cab.HeaderList.FileGroupCount; i++)
+                Console.WriteLine($"File Group Count: {cab.FileGroupCount}");
+                for (int i = 0; i < cab.FileGroupCount; i++)
                 {
-                    Console.WriteLine($"\tFile Group {i}: {cab.HeaderList.GetFileGroupName(i)}");
+                    Console.WriteLine($"\tFile Group {i}: {cab.GetFileGroupName(i)}");
                 }
             }
 
@@ -164,12 +165,12 @@ namespace Test
                 if (!Directory.Exists(outputDirectory))
                     Directory.CreateDirectory(outputDirectory);
 
-                for (int i = 0; i < cab.HeaderList.FileCount; i++)
+                for (int i = 0; i < cab.FileCount; i++)
                 {
                     // Get and clean each path segment
-                    string filename = CleanPathSegment(cab.HeaderList.GetFileName(i));
-                    string directory = CleanPathSegment(cab.HeaderList.GetDirectoryName((int)cab.HeaderList.GetDirectoryIndexFromFile(i)));
-                    string fileGroup = CleanPathSegment(cab.HeaderList.GetFileGroupNameFromFile(i));
+                    string filename = CleanPathSegment(cab.GetFileName(i));
+                    string directory = CleanPathSegment(cab.GetDirectoryName((int)cab.GetDirectoryIndexFromFile(i)));
+                    string fileGroup = CleanPathSegment(cab.GetFileGroupNameFromFile(i));
 
                     // Assemble the complete output path
 #if NET20 || NET35
