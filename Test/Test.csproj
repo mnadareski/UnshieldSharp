@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>net20;net35;net40;net452;net462;net472;net48;netcoreapp3.1;net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
         <OutputType>Exe</OutputType>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
         <LangVersion>latest</LangVersion>
@@ -27,7 +28,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\UnshieldSharp\UnshieldSharp.csproj" />
+        <None Include="../README.md" Pack="true" PackagePath="" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="SabreTools.Compression" Version="0.6.3" />
+        <PackageReference Include="SabreTools.Hashing" Version="1.5.0" />
+        <PackageReference Include="SabreTools.IO" Version="1.7.0" />
+        <PackageReference Include="SabreTools.Models" Version="1.6.1" />
     </ItemGroup>
 
 </Project>
