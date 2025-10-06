@@ -83,7 +83,7 @@ namespace Test
         private static CommandSet CreateCommands()
         {
             List<string> header = [
-                "Usage: UnshieldSharp.exe <options> <path/to/file> ...",
+                "Usage: UnshieldSharp <options> file|directory ...",
                 string.Empty,
             ];
 

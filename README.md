@@ -16,6 +16,17 @@ For the latest WIP build here: [Rolling Release](https://github.com/mnadareski/U
 
 This code can currently list and extract the contents of all supported files that the base projects can. As more things are added to the source libraries, they will be ported to this as well so the code should be relatively up to date.
 
+```text
+Usage: UnshieldSharp <options> file|directory ...
+
+Available options:
+  -?, -h, --help              Display this help text
+  -i, --info                  Display cabinet information
+  -n, --no-extract            Don't extract the cabinet
+  -o=, --output=              Set the output directory for extraction
+  -u, --use-old               Use old extraction method
+```
+
 ## Contributions
 
 Contributions to the project are welcome. Please follow the current coding styles and do not add any proprietary or legally dubious things to the code. Thank you to all of the testers, particularly from the MPF project who helped get this rolling.
