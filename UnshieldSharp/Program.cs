@@ -5,7 +5,7 @@ using SabreTools.CommandLine;
 using SabreTools.CommandLine.Inputs;
 using SabreTools.Serialization.Wrappers;
 
-namespace Test
+namespace UnshieldSharp
 {
     public class Program
     {
@@ -51,24 +51,30 @@ namespace Test
                 return;
             }
 
-            // Parse out the required flags
-            bool outputInfo = commandSet.GetBoolean(_infoName);
-            bool extract = !commandSet.GetBoolean(_noExtractName);
-            bool useOld = commandSet.GetBoolean(_useOldName);
-            string outputDirectory = commandSet.GetString(_outputDirectoryName) ?? string.Empty;
+            // Get the options from the arguments
+            var options = new Options
+            {
+                OutputInfo = commandSet.GetBoolean(_infoName),
+                Extract = !commandSet.GetBoolean(_noExtractName),
+                UseOld = commandSet.GetBoolean(_useOldName),
+                OutputDirectory = commandSet.GetString(_outputDirectoryName) ?? string.Empty,
+            };
 
             // If we have a no-op situation, just cancel out
-            if (!outputInfo && !extract)
+            if (!options.OutputInfo && !options.Extract)
+            {
                 Console.WriteLine("Neither info nor extraction were selected, skipping all files...");
+                return;
+            }
 
             // Loop through all of the input files
             for (int i = firstFileIndex; i < args.Length; i++)
             {
                 string arg = args[i];
                 if (arg.EndsWith(".cab", StringComparison.OrdinalIgnoreCase))
-                    ProcessCabinetPath(arg, outputInfo, extract, useOld, outputDirectory);
+                    ProcessCabinetPath(arg, options);
                 else if (arg.EndsWith(".hdr", StringComparison.OrdinalIgnoreCase))
-                    ProcessCabinetPath(arg, outputInfo, extract, useOld, outputDirectory);
+                    ProcessCabinetPath(arg, options);
                 else
                     Console.WriteLine($"{arg} is not a recognized file by extension");
             }
@@ -99,9 +105,8 @@ namespace Test
         /// Process a single file path as a cabinet file
         /// </summary>
         /// <param name="file">Name of the file to process</param>
-        /// <param name="outputInfo">True to display the cabinet information, false otherwise</param>
-        /// <param name="outputDirectory">Output directory for extraction</param>
-        private static void ProcessCabinetPath(string file, bool outputInfo, bool extract, bool useOld, string outputDirectory)
+        /// <param name="options">Options containing all settings</param>
+        private static void ProcessCabinetPath(string file, Options options)
         {
             if (!File.Exists(file))
             {
@@ -117,7 +122,7 @@ namespace Test
                 return;
             }
 
-            if (outputInfo)
+            if (options.OutputInfo)
             {
                 // Component
                 Console.WriteLine($"Component Count: {cab.ComponentCount}");
@@ -148,13 +153,13 @@ namespace Test
                 }
             }
 
-            if (extract)
+            if (options.Extract)
             {
-                if (string.IsNullOrEmpty(outputDirectory))
-                    outputDirectory = CreateOutdir(file) ?? string.Empty;
+                if (string.IsNullOrEmpty(options.OutputDirectory))
+                    options.OutputDirectory = CreateOutdir(file) ?? string.Empty;
 
-                if (!Directory.Exists(outputDirectory))
-                    Directory.CreateDirectory(outputDirectory);
+                if (!Directory.Exists(options.OutputDirectory))
+                    Directory.CreateDirectory(options.OutputDirectory);
 
                 for (int i = 0; i < cab.FileCount; i++)
                 {
@@ -165,9 +170,9 @@ namespace Test
 
                     // Assemble the complete output path
 #if NET20 || NET35
-                    string newfile = Path.Combine(Path.Combine(outputDirectory, directory), filename);
+                    string newfile = Path.Combine(Path.Combine(options.OutputDirectory, directory), filename);
 #else
-                    string newfile = Path.Combine(outputDirectory, directory, filename);
+                    string newfile = Path.Combine(options.OutputDirectory, directory, filename);
 #endif
 
                     // Ensure the output directory exists
@@ -176,7 +181,7 @@ namespace Test
                         Directory.CreateDirectory(directoryName);
 
                     Console.WriteLine($"Outputting file at index {i} to {newfile}...");
-                    cab.FileSave(i, newfile, useOld);
+                    cab.FileSave(i, newfile, options.UseOld);
                 }
             }
         }
