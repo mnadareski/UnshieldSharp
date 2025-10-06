@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using SabreTools.CommandLine.Inputs;
 using SabreTools.Serialization.Wrappers;
 
 namespace Test
@@ -9,10 +10,11 @@ namespace Test
         public static void Main(string[] args)
         {
             // Setup options
-            bool extract = true;
-            bool outputInfo = false;
-            string outputDirectory = string.Empty;
-            bool useOld = false;
+            var help = new FlagInput("help", ["-?", "-h", "--help"], "Display this help text");
+            var info = new FlagInput("info", ["-i", "--info"], "Display cabinet information");
+            var noExtract = new FlagInput("no-extract", ["-n", "--no-extract"], "Don't extract the cabinet");
+            var outputDirectory = new StringInput("output-directory", ["-o", "--output"], "Set the output directory for extraction");
+            var useOld = new FlagInput("use-old", ["-u", "--use-old"], "Use old extraction method");
 
             // If we have no args, show the help and quit
             if (args == null || args.Length == 0)
@@ -29,34 +31,26 @@ namespace Test
                 if (string.IsNullOrEmpty(arg))
                     continue;
 
-                if (arg == "-?" || arg == "-h" || arg == "--help")
+                if (help.ProcessInput(args, ref firstFileIndex))
                 {
                     DisplayHelp();
                     return;
                 }
-                else if (arg == "-i" || arg == "--info")
+                else if (info.ProcessInput(args, ref firstFileIndex))
                 {
-                    outputInfo = true;
+                    continue;
                 }
-                else if (arg == "-n" || arg == "--no-extract")
+                else if (noExtract.ProcessInput(args, ref firstFileIndex))
                 {
-                    extract = false;
+                    continue;
                 }
-                else if (arg == "-u" || arg == "--use-old")
+                else if (outputDirectory.ProcessInput(args, ref firstFileIndex))
                 {
-                    useOld = true;
+                    continue;
                 }
-                else if (arg == "-o" || arg == "--output")
+                else if (useOld.ProcessInput(args, ref firstFileIndex))
                 {
-                    if (firstFileIndex == args.Length - 1)
-                    {
-                        Console.WriteLine("ERROR: No output directory provided");
-                        DisplayHelp();
-                        return;
-                    }
-
-                    firstFileIndex++;
-                    outputDirectory = args[firstFileIndex].Trim('"');
+                    continue;
                 }
                 else
                 {
@@ -65,7 +59,7 @@ namespace Test
             }
 
             // If we have a no-op situation, just cancel out
-            if (!outputInfo && !extract)
+            if (!info.Value && !noExtract.Value)
                 Console.WriteLine("Neither info nor extraction were selected, skipping all files...");
 
             // Loop through all of the input files
@@ -73,9 +67,9 @@ namespace Test
             {
                 string arg = args[i];
                 if (arg.EndsWith(".cab", StringComparison.OrdinalIgnoreCase))
-                    ProcessCabinetPath(arg, outputInfo, extract, useOld, outputDirectory);
+                    ProcessCabinetPath(arg, info.Value, noExtract.Value, useOld.Value, outputDirectory.Value ?? string.Empty);
                 else if (arg.EndsWith(".hdr", StringComparison.OrdinalIgnoreCase))
-                    ProcessCabinetPath(arg, outputInfo, extract, useOld, outputDirectory);
+                    ProcessCabinetPath(arg, info.Value, noExtract.Value, useOld.Value, outputDirectory.Value ?? string.Empty);
                 else
                     Console.WriteLine($"{arg} is not a recognized file by extension");
             }
