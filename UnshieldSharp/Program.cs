@@ -45,20 +45,17 @@ namespace Test
             }
 
             // If help was specified
-            if (commandSet[_helpName] is FlagInput hfi && hfi.Value)
+            if (commandSet.GetBoolean(_helpName))
             {
                 commandSet.OutputGenericHelp();
                 return;
             }
 
             // Parse out the required flags
-            // TODO: Replace when CommandLine is updated to include retrieval
-            bool outputInfo = commandSet[_infoName] is FlagInput ifi && ifi.Value;
-            bool extract = commandSet[_noExtractName] is FlagInput efi && !efi.Value;
-            bool useOld = commandSet[_useOldName] is FlagInput uofi && uofi.Value;
-            string outputDirectory = commandSet[_outputDirectoryName] is StringInput odsi
-                ? odsi.Value ?? string.Empty
-                : string.Empty;
+            bool outputInfo = commandSet.GetBoolean(_infoName);
+            bool extract = !commandSet.GetBoolean(_noExtractName);
+            bool useOld = commandSet.GetBoolean(_useOldName);
+            string outputDirectory = commandSet.GetString(_outputDirectoryName) ?? string.Empty;
 
             // If we have a no-op situation, just cancel out
             if (!outputInfo && !extract)
