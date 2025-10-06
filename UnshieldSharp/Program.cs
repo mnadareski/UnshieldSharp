@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using SabreTools.CommandLine;
 using SabreTools.CommandLine.Inputs;
 using SabreTools.Serialization.Wrappers;
 
@@ -7,19 +9,25 @@ namespace Test
 {
     public class Program
     {
+        #region Constants
+
+        private const string _helpName = "help";
+        private const string _infoName = "info";
+        private const string _noExtractName = "no-extract";
+        private const string _outputDirectoryName = "output-directory";
+        private const string _useOldName = "use-old";
+
+        #endregion
+
         public static void Main(string[] args)
         {
-            // Setup options
-            var help = new FlagInput("help", ["-?", "-h", "--help"], "Display this help text");
-            var info = new FlagInput("info", ["-i", "--info"], "Display cabinet information");
-            var noExtract = new FlagInput("no-extract", ["-n", "--no-extract"], "Don't extract the cabinet");
-            var outputDirectory = new StringInput("output-directory", ["-o", "--output"], "Set the output directory for extraction");
-            var useOld = new FlagInput("use-old", ["-u", "--use-old"], "Use old extraction method");
+            // Create the command set
+            var commandSet = CreateCommands();
 
             // If we have no args, show the help and quit
             if (args == null || args.Length == 0)
             {
-                DisplayHelp();
+                commandSet.OutputGenericHelp();
                 return;
             }
 
@@ -28,38 +36,32 @@ namespace Test
             for (; firstFileIndex < args.Length; firstFileIndex++)
             {
                 string arg = args[firstFileIndex];
-                if (string.IsNullOrEmpty(arg))
-                    continue;
 
-                if (help.ProcessInput(args, ref firstFileIndex))
-                {
-                    DisplayHelp();
-                    return;
-                }
-                else if (info.ProcessInput(args, ref firstFileIndex))
-                {
-                    continue;
-                }
-                else if (noExtract.ProcessInput(args, ref firstFileIndex))
-                {
-                    continue;
-                }
-                else if (outputDirectory.ProcessInput(args, ref firstFileIndex))
-                {
-                    continue;
-                }
-                else if (useOld.ProcessInput(args, ref firstFileIndex))
-                {
-                    continue;
-                }
-                else
-                {
+                var input = commandSet.GetTopLevel(arg);
+                if (input == null)
                     break;
-                }
+
+                input.ProcessInput(args, ref firstFileIndex);
             }
 
+            // If help was specified
+            if (commandSet[_helpName] is FlagInput hfi && hfi.Value)
+            {
+                commandSet.OutputGenericHelp();
+                return;
+            }
+
+            // Parse out the required flags
+            // TODO: Replace when CommandLine is updated to include retrieval
+            bool outputInfo = commandSet[_infoName] is FlagInput ifi && ifi.Value;
+            bool extract = commandSet[_noExtractName] is FlagInput efi && !efi.Value;
+            bool useOld = commandSet[_useOldName] is FlagInput uofi && uofi.Value;
+            string outputDirectory = commandSet[_outputDirectoryName] is StringInput odsi
+                ? odsi.Value ?? string.Empty
+                : string.Empty;
+
             // If we have a no-op situation, just cancel out
-            if (!info.Value && !noExtract.Value)
+            if (!outputInfo && !extract)
                 Console.WriteLine("Neither info nor extraction were selected, skipping all files...");
 
             // Loop through all of the input files
@@ -67,35 +69,33 @@ namespace Test
             {
                 string arg = args[i];
                 if (arg.EndsWith(".cab", StringComparison.OrdinalIgnoreCase))
-                    ProcessCabinetPath(arg, info.Value, noExtract.Value, useOld.Value, outputDirectory.Value ?? string.Empty);
+                    ProcessCabinetPath(arg, outputInfo, extract, useOld, outputDirectory);
                 else if (arg.EndsWith(".hdr", StringComparison.OrdinalIgnoreCase))
-                    ProcessCabinetPath(arg, info.Value, noExtract.Value, useOld.Value, outputDirectory.Value ?? string.Empty);
+                    ProcessCabinetPath(arg, outputInfo, extract, useOld, outputDirectory);
                 else
                     Console.WriteLine($"{arg} is not a recognized file by extension");
             }
         }
 
         /// <summary>
-        /// Display the help text to console
+        /// Create the command set for the program
         /// </summary>
-        private static void DisplayHelp()
+        private static CommandSet CreateCommands()
         {
-            Console.WriteLine("Test     - UnshieldSharp test program");
-            Console.WriteLine();
-            Console.WriteLine("This program was created to test the functionality found");
-            Console.WriteLine("in the UnshieldSharp library. It is deliberately barebones");
-            Console.WriteLine("due to this purpose. Default behavior extracts the cabinet");
-            Console.WriteLine("to a named folder next to the original file.");
-            Console.WriteLine();
-            Console.WriteLine("Usage: Test.exe <options> <path/to/file> ...");
-            Console.WriteLine();
-            Console.WriteLine("Options:");
-            Console.WriteLine("    -?, -h, --help       Display this help text");
-            Console.WriteLine("    -i, --info           Display cabinet information");
-            Console.WriteLine("    -n, --no-extract     Don't extract the cabinet");
-            Console.WriteLine("    -o, --output <path>  Set the output directory for extraction");
-            Console.WriteLine("    -u, --use-old        Use old extraction method");
-            Console.WriteLine();
+            List<string> header = [
+                "Usage: UnshieldSharp.exe <options> <path/to/file> ...",
+                string.Empty,
+            ];
+
+            var commandSet = new CommandSet(header);
+
+            commandSet.Add(new FlagInput(_helpName, ["-?", "-h", "--help"], "Display this help text"));
+            commandSet.Add(new FlagInput(_infoName, ["-i", "--info"], "Display cabinet information"));
+            commandSet.Add(new FlagInput(_noExtractName, ["-n", "--no-extract"], "Don't extract the cabinet"));
+            commandSet.Add(new StringInput(_outputDirectoryName, ["-o", "--output"], "Set the output directory for extraction"));
+            commandSet.Add(new FlagInput(_useOldName, ["-u", "--use-old"], "Use old extraction method"));
+
+            return commandSet;
         }
 
         /// <summary>
