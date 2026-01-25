@@ -119,7 +119,7 @@ namespace UnshieldSharp.Features
 
             using var fs = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             var cab = InstallShieldCabinet.Create(fs);
-            if (cab == null)
+            if (cab is null)
             {
                 Console.WriteLine($"{file} could not be opened as an InstallShield Cabinet!");
                 return;
@@ -197,7 +197,7 @@ namespace UnshieldSharp.Features
         private static string CleanPathSegment(string? segment)
         {
             // Invalid pieces are returned as empty strings
-            if (segment == null)
+            if (segment is null)
                 return string.Empty;
 
             // Replace directory separators
