@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using SabreTools.CommandLine;
 using SabreTools.CommandLine.Inputs;
-using SabreTools.Serialization.Wrappers;
+using SabreTools.Wrappers;
 
 namespace UnshieldSharp.Features
 {
