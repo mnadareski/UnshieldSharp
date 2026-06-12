@@ -22,6 +22,9 @@ namespace UnshieldSharp.Features
 
         #region Inputs
 
+        private const string _debugName = "debug";
+        internal readonly FlagInput DebugInput = new(_debugName, ["-d", "--debug"], "Output debug information");
+
         private const string _infoName = "info";
         internal readonly FlagInput InfoInput = new(_infoName, ["-i", "--info"], "Display cabinet information");
 
@@ -30,9 +33,6 @@ namespace UnshieldSharp.Features
 
         private const string _outputDirectoryName = "output-directory";
         internal readonly StringInput OutputDirectoryInput = new(_outputDirectoryName, ["-o", "--output"], "Set the output directory for extraction");
-
-        private const string _useOldName = "use-old";
-        internal readonly FlagInput UseOldInput = new(_useOldName, ["-u", "--use-old"], "Use old extraction method");
 
         #endregion
 
@@ -49,9 +49,9 @@ namespace UnshieldSharp.Features
         public bool Extract { get; private set; }
 
         /// <summary>
-        /// Enable using old extraction method
+        /// Output debug information
         /// </summary>
-        public bool UseOld { get; private set; }
+        public bool Debug { get; private set; }
 
         /// <summary>
         /// Output path for cabinet extraction
@@ -68,7 +68,7 @@ namespace UnshieldSharp.Features
             Add(InfoInput);
             Add(NoExtractInput);
             Add(OutputDirectoryInput);
-            Add(UseOldInput);
+            Add(DebugInput);
         }
 
         /// <inheritdoc/>
@@ -77,8 +77,8 @@ namespace UnshieldSharp.Features
             // Get the options from the arguments
             OutputInfo = GetBoolean(_infoName);
             Extract = !GetBoolean(_noExtractName);
-            UseOld = GetBoolean(_useOldName);
             OutputDirectory = GetString(_outputDirectoryName) ?? string.Empty;
+            Debug = GetBoolean(_debugName);
 
             // If we have a no-op situation, just cancel out
             if (!OutputInfo && !Extract)
@@ -164,55 +164,8 @@ namespace UnshieldSharp.Features
                 if (!Directory.Exists(OutputDirectory))
                     Directory.CreateDirectory(OutputDirectory);
 
-                for (int i = 0; i < cab.FileCount; i++)
-                {
-                    // Get and clean each path segment
-                    string filename = CleanPathSegment(cab.GetFileName(i));
-                    string directory = CleanPathSegment(cab.GetDirectoryName((int)cab.GetDirectoryIndexFromFile(i)));
-                    string fileGroup = CleanPathSegment(cab.GetFileGroupNameFromFile(i));
-
-                    // Assemble the complete output path
-#if NET20 || NET35
-                    string newfile = Path.Combine(Path.Combine(OutputDirectory, directory), filename);
-#else
-                    string newfile = Path.Combine(OutputDirectory, directory, filename);
-#endif
-
-                    // Ensure the output directory exists
-                    string? directoryName = Path.GetDirectoryName(newfile);
-                    if (!string.IsNullOrEmpty(directoryName) && !Directory.Exists(directoryName))
-                        Directory.CreateDirectory(directoryName);
-
-                    Console.WriteLine($"Outputting file at index {i} to {newfile}...");
-                    cab.FileSave(i, newfile, UseOld);
-                }
+                cab.Extract(OutputDirectory, Debug);
             }
-        }
-
-        /// <summary>
-        /// Clean a path segment by normalizing as much as possible
-        /// </summary>
-        /// <param name="segment">Path segment as provided by the cabinet</param>
-        /// <returns>Cleaned path segment, if possible</returns>
-        private static string CleanPathSegment(string? segment)
-        {
-            // Invalid pieces are returned as empty strings
-            if (segment is null)
-                return string.Empty;
-
-            // Replace directory separators
-            if (Path.DirectorySeparatorChar == '\\')
-                segment = segment.Replace('/', '\\');
-            else if (Path.DirectorySeparatorChar == '/')
-                segment = segment.Replace('\\', '/');
-
-            // Replace invalid path characters
-            foreach (char c in Path.GetInvalidFileNameChars())
-            {
-                segment = segment.Replace(c, '_');
-            }
-
-            return segment;
         }
 
         /// <summary>

@@ -66,7 +66,7 @@ namespace UnshieldSharp
             commandSet.Add(mainFeature.InfoInput);
             commandSet.Add(mainFeature.NoExtractInput);
             commandSet.Add(mainFeature.OutputDirectoryInput);
-            commandSet.Add(mainFeature.UseOldInput);
+            commandSet.Add(mainFeature.DebugInput);
 
             return commandSet;
         }
