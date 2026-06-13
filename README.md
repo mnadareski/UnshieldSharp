@@ -24,7 +24,7 @@ Available options:
   -i, --info                  Display cabinet information
   -n, --no-extract            Don't extract the cabinet
   -o=, --output=              Set the output directory for extraction
-  -u, --use-old               Use old extraction method
+  -d, --debug                 Output debug information
 ```
 
 ## Contributions
