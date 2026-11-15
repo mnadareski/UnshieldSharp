@@ -22,7 +22,7 @@
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <DebugSymbols>false</DebugSymbols>
         <DebugType>None</DebugType>
-    </PropertyGroup>s
+    </PropertyGroup>
 
     <!-- Support All Frameworks -->
     <PropertyGroup Condition="$(TargetFramework.StartsWith(`net2`)) OR $(TargetFramework.StartsWith(`net3`)) OR $(TargetFramework.StartsWith(`net4`))">
